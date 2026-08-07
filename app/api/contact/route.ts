@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
-import { sendTelegram } from '@/lib/telegram';
+import { sendTelegram, siteUrl } from '@/lib/telegram';
 
 export const runtime = 'nodejs';
 
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
       'INSERT INTO contact_messages (name, email, message) VALUES ($1,$2,$3)',
       [name, email, message]
     );
-    sendTelegram(`✉️ New contact message from <b>${name}</b> (${email}):\n${message.slice(0, 300)}`);
+    sendTelegram(`✉️ New contact message from <b>${name}</b> (${email}):\n${message.slice(0, 300)}\n🔗 ${siteUrl()}/admin/messages`);
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error('contact', e);

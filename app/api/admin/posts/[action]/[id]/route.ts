@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
-import { sendTelegram } from '@/lib/telegram';
+import { sendTelegram, siteUrl } from '@/lib/telegram';
 import { getAdmin } from '@/lib/admin-auth';
 
 export const runtime = 'nodejs';
 
 const ACTIONS: Record<string, { sql: string; telegram?: (row: { title: string }) => string }> = {
   publish: {
-    sql: "UPDATE blog_posts SET status='published', publish_at=COALESCE(publish_at, now()) WHERE id=$1 RETURNING title",
-    telegram: (r) => `📝 Blog post published: <b>${r.title}</b>`
+    sql: "UPDATE blog_posts SET status='published', publish_at=COALESCE(publish_at, now()) WHERE id=$1 RETURNING title, slug",
+    telegram: (r) => `📝 Blog post published: <b>${r.title}</b>\n🔗 ${siteUrl()}/blog/${r.slug}`
   },
   unpublish: {
     sql: "UPDATE blog_posts SET status='draft' WHERE id=$1 RETURNING title"

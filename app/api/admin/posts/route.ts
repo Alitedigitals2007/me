@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
-import { sendTelegram } from '@/lib/telegram';
+import { sendTelegram, siteUrl } from '@/lib/telegram';
 import { getAdmin } from '@/lib/admin-auth';
 import { slugify } from '@/lib/utils';
 
@@ -29,14 +29,14 @@ export async function POST(req: NextRequest) {
          WHERE id=$9 RETURNING title, status`,
         [title, slug, excerpt, content, coverImage, tags, status, publishAt, id]
       );
-      if (rows.length && rows[0].status === 'published') sendTelegram(`📝 Blog post published: <b>${rows[0].title}</b>`);
+      if (rows.length && rows[0].status === 'published') sendTelegram(`📝 Blog post published: <b>${rows[0].title}</b>\n🔗 ${siteUrl()}/blog/${slug}`);
     } else {
       await pool.query(
         `INSERT INTO blog_posts (title, slug, excerpt, content, cover_image, tags, status, publish_at)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
         [title, slug, excerpt, content, coverImage, tags, status, publishAt]
       );
-      if (status === 'published') sendTelegram(`📝 New blog post published: <b>${title}</b>`);
+      if (status === 'published') sendTelegram(`📝 New blog post published: <b>${title}</b>\n🔗 ${siteUrl()}/blog/${slug}`);
     }
     return NextResponse.json({ ok: true });
   } catch (e) {

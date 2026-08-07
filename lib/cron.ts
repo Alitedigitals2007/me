@@ -1,5 +1,5 @@
 import pool from './db';
-import { sendTelegram } from './telegram';
+import { sendTelegram, siteUrl } from './telegram';
 
 let running = false;
 
@@ -10,10 +10,10 @@ export async function runScheduledTasks() {
     const posts = await pool.query(
       `UPDATE blog_posts SET status='published', publish_at=COALESCE(publish_at, now())
        WHERE status='scheduled' AND publish_at <= now()
-       RETURNING title`
+       RETURNING title, slug`
     );
     for (const p of posts.rows) {
-      await sendTelegram(`📝 Blog post published: <b>${p.title}</b>`);
+      await sendTelegram(`📝 Blog post published: <b>${p.title}</b>\n🔗 ${siteUrl()}/blog/${p.slug}`);
     }
     const ads = await pool.query(
       `UPDATE ad_submissions SET status='expired'

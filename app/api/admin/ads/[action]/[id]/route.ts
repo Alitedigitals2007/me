@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
-import { sendTelegram } from '@/lib/telegram';
+import { sendTelegram, siteUrl } from '@/lib/telegram';
 import { getAdmin } from '@/lib/admin-auth';
 
 export const runtime = 'nodejs';
@@ -10,12 +10,12 @@ const ACTIONS: Record<string, { sql: string; telegram?: (row: { advertiser_name:
     sql: `UPDATE ad_submissions SET status='approved', start_date=CURRENT_DATE,
       end_date=CURRENT_DATE + (duration_days || ' days')::interval
       WHERE id=$1 AND status IN ('paid','pending_payment') RETURNING advertiser_name`,
-    telegram: (row: { advertiser_name: string }) => `✅ Ad approved and live: <b>${row.advertiser_name}</b>`
+    telegram: (row: { advertiser_name: string }) => `✅ Ad approved and live: <b>${row.advertiser_name}</b>\n🔗 ${siteUrl()}/admin/ads`
   },
   reject: {
     sql: `UPDATE ad_submissions SET status='rejected' WHERE id=$1 AND status IN ('paid','pending_payment') RETURNING advertiser_name, paystack_ref`,
     telegram: (row: { advertiser_name: string; paystack_ref?: string }) =>
-      `⛔ Ad rejected: <b>${row.advertiser_name}</b>${row.paystack_ref ? ` (ref ${row.paystack_ref}) — arrange refund` : ''}`
+      `⛔ Ad rejected: <b>${row.advertiser_name}</b>${row.paystack_ref ? ` (ref ${row.paystack_ref}) — arrange refund` : ''}\n🔗 ${siteUrl()}/admin/ads`
   },
   delete: {
     sql: `WITH del AS (DELETE FROM ad_clicks WHERE ad_id=$1 RETURNING 1) DELETE FROM ad_submissions WHERE id=$1`

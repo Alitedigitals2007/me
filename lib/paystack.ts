@@ -66,7 +66,7 @@ export async function finalizePayment(reference: string): Promise<{ success: boo
       [meta.id, amountNaira, reference]
     );
     if (rowCount) {
-      sendTelegram(`💰 New ad payment received from <b>${rows[0].advertiser_name}</b> (₦${amountNaira.toLocaleString()}, ref ${reference}). Review it in the dashboard.`);
+      sendTelegram(`💰 New ad payment received from <b>${rows[0].advertiser_name}</b> (₦${amountNaira.toLocaleString()}, ref ${reference}).\n🔗 ${siteUrl()}/admin/ads`);
     }
     return { success: !!rowCount, message: rowCount ? 'Your ad is now in the review queue — it goes live after approval.' : 'This payment was already processed.', type: 'ad' };
   }

@@ -1,5 +1,7 @@
 import { getSettings } from './settings';
 
+export const siteUrl = () => (process.env.SITE_URL || '').replace(/\/$/, '');
+
 export async function tgApi(method: string, payload: Record<string, any>): Promise<any> {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) return { ok: false, description: 'TELEGRAM_BOT_TOKEN not set' };

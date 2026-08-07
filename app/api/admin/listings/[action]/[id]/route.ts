@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
-import { sendTelegram } from '@/lib/telegram';
+import { sendTelegram, siteUrl } from '@/lib/telegram';
 import { getAdmin } from '@/lib/admin-auth';
 
 export const runtime = 'nodejs';
@@ -8,15 +8,15 @@ export const runtime = 'nodejs';
 const ACTIONS: Record<string, { sql: string; telegram?: (row: { title: string; owner_name?: string }) => string }> = {
   approve: {
     sql: "UPDATE marketplace_listings SET status='active' WHERE id=$1 AND status IN ('pending','rejected') RETURNING title, owner_name",
-    telegram: (r) => `✅ Listing approved: <b>${r.title}</b> by ${r.owner_name || 'you'}`
+    telegram: (r) => `✅ Listing approved: <b>${r.title}</b> by ${r.owner_name || 'you'}\n🔗 ${siteUrl()}/admin/marketplace`
   },
   reject: {
     sql: "UPDATE marketplace_listings SET status='rejected' WHERE id=$1 RETURNING title",
-    telegram: (r) => `⛔ Listing rejected: <b>${r.title}</b>`
+    telegram: (r) => `⛔ Listing rejected: <b>${r.title}</b>\n🔗 ${siteUrl()}/admin/marketplace`
   },
   sold: {
     sql: "UPDATE marketplace_listings SET status='sold' WHERE id=$1 RETURNING title",
-    telegram: (r) => `🏷 Listing marked sold: <b>${r.title}</b>`
+    telegram: (r) => `🏷 Listing marked sold: <b>${r.title}</b>\n🔗 ${siteUrl()}/admin/marketplace`
   },
   delete: { sql: 'DELETE FROM marketplace_listings WHERE id=$1' }
 };
