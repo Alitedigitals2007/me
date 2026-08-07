@@ -5,7 +5,7 @@ import { getAdmin } from '@/lib/admin-auth';
 
 export const runtime = 'nodejs';
 
-const ACTIONS: Record<string, { sql: string; telegram?: (row: { title: string }) => string }> = {
+const ACTIONS: Record<string, { sql: string; telegram?: (row: { title: string; slug?: string }) => string }> = {
   publish: {
     sql: "UPDATE blog_posts SET status='published', publish_at=COALESCE(publish_at, now()) WHERE id=$1 RETURNING title, slug",
     telegram: (r) => `📝 Blog post published: <b>${r.title}</b>\n🔗 ${siteUrl()}/blog/${r.slug}`

@@ -1,6 +1,6 @@
 import pool from './db';
 import { getSettings } from './settings';
-import { tgSend, tgEdit, tgAnswer } from './telegram';
+import { tgSend, tgEdit, tgAnswer, siteUrl } from './telegram';
 
 const esc = (s: string) => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
@@ -13,6 +13,7 @@ I manage your site from here:
 /listings — pending marketplace listings
 /posts — draft blog posts (list, then type the number to publish)
 /publish &lt;id&gt; — publish a draft post by id
+/status &lt;id&gt; &lt;draft|published|scheduled&gt; — change a post's status
 /stats — quick site numbers
 
 Tap the buttons under each list to act instantly.`;
@@ -155,13 +156,12 @@ async function runAction(action: string, id: number): Promise<string> {
   }
   if (action === 'post:publish') {
     const { rows } = await pool.query(
-      `UPDATE blog_posts SET status='published', publish_at=COALESCE(publish_at, now()), updated_at=now()
+      `UPDATE blog_posts SET status='published', publish_at=COALESCE(publish_at, now())
        WHERE id=$1 AND status='draft' RETURNING title, slug`,
       [id]
     );
     if (!rows.length) return `Post #${id} — not found or already published.`;
-    const base = (process.env.SITE_URL || 'https://example.com').replace(/\/$/, '');
-    return `🚀 <b>Post #${id} published</b> — ${esc(rows[0].title)}\n🔗 ${base}/blog/${esc(rows[0].slug)}`;
+    return `🚀 <b>Post #${id} published</b> — ${esc(rows[0].title)}\n🔗 ${siteUrl()}/blog/${esc(rows[0].slug)}`;
   }
   return 'Unknown action.';
 }
@@ -213,6 +213,24 @@ export async function handleTelegramUpdate(update: any): Promise<void> {
       case '/stats':
         await showStats(chatId);
         break;
+      case '/status': {
+        const parts = text.trim().split(/\s+/);
+        const pid = Number(parts[1]);
+        const st = (parts[2] || '').toLowerCase();
+        if (!pid || !['draft', 'published', 'scheduled'].includes(st)) {
+          await tgSend(chatId, 'Usage: /status &lt;id&gt; &lt;draft|published|scheduled&gt;');
+          break;
+        }
+        const { rows } = await pool.query(
+          `UPDATE blog_posts SET status=$2, updated_at=now(), publish_at=COALESCE(publish_at, now())
+           WHERE id=$1 RETURNING title, slug`,
+          [pid, st]
+        );
+        if (!rows.length) { await tgSend(chatId, `Post #${pid} — not found.`); break; }
+        const link = st === 'published' ? `\n🔗 ${siteUrl()}/blog/${esc(rows[0].slug)}` : `\n✏️ Edit in admin: ${siteUrl()}/admin/blog`;
+        await tgSend(chatId, `📝 <b>Post #${pid} set to ${st}</b> — ${esc(rows[0].title)}${link}`);
+        break;
+      }
       default: {
         const n = Number(text.trim());
         if (Number.isInteger(n) && n > 0) {

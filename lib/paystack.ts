@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import pool from './db';
-import { sendTelegram } from './telegram';
+import { sendTelegram, siteUrl } from './telegram';
 
 const SECRET = process.env.PAYSTACK_SECRET_KEY || '';
 
