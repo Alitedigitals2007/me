@@ -1,0 +1,47 @@
+<%- include('../partials/head', { description: 'Advertise on ' + site.site_name }) %>
+<body>
+<%- include('../partials/header') %>
+<main class="container section">
+  <h1>Advertise with <%= site.site_name %></h1>
+  <p class="lead">Reach my audience. Pick a slot and duration, pay securely with Paystack, and your ad goes live after approval.</p>
+
+  <div class="grid">
+    <% slots.forEach(slot => { %>
+      <% const liveSlot = live.find(l => l.position === slot.position); %>
+      <div class="card">
+        <div class="card-body">
+          <h3><%= slot.name %></h3>
+          <p><%= slot.description %></p>
+          <p class="price">₦<%= Number(slot.price_per_day).toLocaleString() %>/day</p>
+          <p class="muted small"><%= liveSlot ? `${liveSlot.active_count}/${liveSlot.max_active} slots filled` : '0 slots filled' %></p>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+
+  <div class="card section">
+    <div class="card-body">
+      <h2>Book a slot</h2>
+      <form action="/advertise/submit" method="POST" class="form">
+        <label>Slot
+          <select name="slot_id" required>
+            <% slots.forEach(slot => { %>
+              <option value="<%= slot.id %>"><%= slot.name %> — ₦<%= Number(slot.price_per_day).toLocaleString() %>/day</option>
+            <% }) %>
+          </select>
+        </label>
+        <label>Duration
+          <select name="duration_days" required>
+            <% durations.forEach(d => { %><option value="<%= d %>"><%= d %> days</option><% }) %>
+          </select>
+        </label>
+        <label>Your name / business <input name="advertiser_name" required></label>
+        <label>Email or phone <input name="contact" required></label>
+        <label>Ad image URL <input name="image_url" placeholder="https://your-ad-image.png" required></label>
+        <label>Link your ad points to <input name="target_url" placeholder="https://..." required></label>
+        <button class="btn btn-primary" type="submit">Continue to payment</button>
+      </form>
+    </div>
+  </div>
+</main>
+<%- include('../partials/footer') %>

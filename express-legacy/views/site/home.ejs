@@ -1,0 +1,88 @@
+<%- include('../partials/head', { description: site.hero_bio }) %>
+<body>
+<%- include('../partials/header') %>
+<main>
+  <section class="hero">
+    <div class="container hero-inner">
+      <div class="hero-text">
+        <h1>Hi, I'm <span class="accent"><%= site.hero_name %></span></h1>
+        <p class="hero-title"><%= site.hero_title %></p>
+        <p class="hero-bio"><%= site.hero_bio %></p>
+        <div class="hero-actions">
+          <% if (site.contact_whatsapp) { %>
+            <a class="btn btn-primary" href="https://wa.me/<%= site.contact_whatsapp %>" target="_blank" rel="noopener">Let's talk</a>
+          <% } %>
+          <a class="btn btn-outline" href="/portfolio">View my work</a>
+          <a class="btn btn-outline" href="/contact">Contact</a>
+        </div>
+      </div>
+      <% if (site.hero_photo) { %>
+        <img class="hero-photo" src="<%= site.hero_photo %>" alt="<%= site.hero_name %>">
+      <% } %>
+    </div>
+  </section>
+
+  <%- include('../partials/ads', { position: 'home_banner' }) %>
+
+  <% if (projects.length) { %>
+  <section class="container section">
+    <div class="section-head">
+      <h2>Featured work</h2>
+      <a href="/portfolio">All projects →</a>
+    </div>
+    <div class="grid">
+      <% projects.forEach(p => { %>
+        <a class="card" href="/portfolio/<%= p.slug %>">
+          <% if (p.image_url) { %><img src="<%= p.image_url %>" alt="<%= p.title %>" loading="lazy"><% } %>
+          <div class="card-body">
+            <h3><%= p.title %></h3>
+            <p><%= p.description.slice(0, 120) %></p>
+          </div>
+        </a>
+      <% }) %>
+    </div>
+  </section>
+  <% } %>
+
+  <% if (posts.length) { %>
+  <section class="container section">
+    <div class="section-head">
+      <h2>Latest from the blog</h2>
+      <a href="/blog">All posts →</a>
+    </div>
+    <div class="grid">
+      <% posts.forEach(p => { %>
+        <a class="card" href="/blog/<%= p.slug %>">
+          <% if (p.cover_image) { %><img src="<%= p.cover_image %>" alt="<%= p.title %>" loading="lazy"><% } %>
+          <div class="card-body">
+            <h3><%= p.title %></h3>
+            <p><%= p.excerpt || p.content.slice(0, 120) %></p>
+          </div>
+        </a>
+      <% }) %>
+    </div>
+  </section>
+  <% } %>
+
+  <% if (listings.length) { %>
+  <section class="container section">
+    <div class="section-head">
+      <h2>Marketplace</h2>
+      <a href="/marketplace">Browse all →</a>
+    </div>
+    <div class="grid">
+      <% listings.forEach(l => { %>
+        <div class="card">
+          <% if (l.image_url) { %><img src="<%= l.image_url %>" alt="<%= l.title %>" loading="lazy"><% } %>
+          <div class="card-body">
+            <h3><%= l.title %></h3>
+            <p><%= l.description.slice(0, 120) %></p>
+            <p class="price">₦<%= Number(l.price).toLocaleString() %></p>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  </section>
+  <% } %>
+</main>
+<%- include('../partials/footer') %>

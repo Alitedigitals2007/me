@@ -1,0 +1,21 @@
+<header class="site-header">
+  <div class="container header-inner">
+    <a href="/" class="logo">
+      <img src="/img/logo.png" alt="<%= site.site_name %> logo" class="logo-img">
+      <span><%= site.site_name %></span>
+    </a>
+    <nav class="main-nav" id="mainNav">
+      <a href="/">Home</a>
+      <a href="/about">About</a>
+      <a href="/portfolio">Portfolio</a>
+      <a href="/courses">Courses</a>
+      <a href="/blog">Blog</a>
+      <a href="/marketplace">Marketplace</a>
+      <a href="/advertise">Advertise</a>
+      <a href="/contact">Contact</a>
+      <% if (user) { %><a href="/admin">Dashboard</a><% } %>
+    </nav>
+    <button class="nav-toggle" id="navToggle" aria-label="Menu">☰</button>
+  </div>
+</header>
+<%- include('flash') %>

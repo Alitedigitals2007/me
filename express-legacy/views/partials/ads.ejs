@@ -1,0 +1,10 @@
+<% const slotAds = typeof ads !== 'undefined' && ads[position] ? ads[position] : []; %>
+<% if (slotAds.length) { %>
+  <div class="ad-slot">
+    <% slotAds.forEach(ad => { %>
+      <a href="/click/<%= ad.id %>" target="_blank" rel="sponsored noopener">
+        <img src="<%= ad.image_url %>" alt="Sponsored ad" loading="lazy">
+      </a>
+    <% }) %>
+  </div>
+<% } %>

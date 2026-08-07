@@ -1,0 +1,24 @@
+<% const socials = [
+  ['Twitter', site.social_twitter], ['GitHub', site.social_github],
+  ['LinkedIn', site.social_linkedin], ['Instagram', site.social_instagram]
+].filter(s => s[1]); %>
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div>
+        <strong><%= site.site_name %></strong>
+        <p class="muted"><%= site.tagline %></p>
+      </div>
+      <div class="footer-social">
+        <% socials.forEach(s => { %>
+          <a href="<%= s[1] %>" target="_blank" rel="noopener"><%= s[0] %></a>
+        <% }) %>
+        <a href="/admin">Admin</a>
+      </div>
+    </div>
+    <p class="muted small">© <%= currentYear %> <%= site.site_name %>. All rights reserved.</p>
+  </div>
+</footer>
+<script src="/js/main.js"></script>
+</body>
+</html>

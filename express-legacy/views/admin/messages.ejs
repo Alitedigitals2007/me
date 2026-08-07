@@ -1,0 +1,30 @@
+<%- include('../partials/head') %>
+<body class="admin-page">
+<%- include('../partials/header') %>
+<main class="admin-layout container">
+  <%- include('partials/nav') %>
+  <div class="admin-content">
+    <h1>Messages</h1>
+    <% if (messages.length) { %>
+      <table class="table">
+        <tr><th>From</th><th>Message</th><th>Status</th><th>Actions</th></tr>
+        <% messages.forEach(m => { %>
+          <tr class="<%= m.is_read ? '' : 'unread' %>">
+            <td><%= m.name %><br><span class="muted small"><%= m.email %></span></td>
+            <td><%= m.message %></td>
+            <td><%= m.is_read ? 'read' : 'unread' %></td>
+            <td class="row-actions">
+              <% if (!m.is_read) { %>
+                <form method="POST" action="/admin/messages/<%= m.id %>/read"><button class="btn btn-sm">Mark read</button></form>
+              <% } %>
+              <form method="POST" action="/admin/messages/<%= m.id %>/delete" onsubmit="return confirm('Delete this message?')"><button class="btn btn-sm btn-danger">Delete</button></form>
+            </td>
+          </tr>
+        <% }) %>
+      </table>
+    <% } else { %>
+      <p class="muted">No messages yet.</p>
+    <% } %>
+  </div>
+</main>
+<%- include('../partials/footer') %>

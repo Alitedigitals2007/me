@@ -1,0 +1,28 @@
+<%- include('../partials/head') %>
+<body class="admin-page">
+<%- include('../partials/header') %>
+<main class="admin-layout container">
+  <%- include('partials/nav') %>
+  <div class="admin-content">
+    <div class="section-head">
+      <h1>Projects</h1>
+      <a class="btn btn-primary btn-sm" href="/admin/projects/new">+ New project</a>
+    </div>
+    <table class="table">
+      <tr><th>Title</th><th>Featured</th><th>Order</th><th>Actions</th></tr>
+      <% items.forEach(p => { %>
+        <tr>
+          <td><%= p.title %></td>
+          <td><%= p.featured ? 'Yes' : '' %></td>
+          <td><%= p.order_index %></td>
+          <td class="row-actions">
+            <a class="btn btn-sm" href="/admin/projects/edit/<%= p.id %>">Edit</a>
+            <form method="POST" action="/admin/projects/delete/<%= p.id %>" onsubmit="return confirm('Delete this project?')"><button class="btn btn-sm btn-danger">Delete</button></form>
+          </td>
+        </tr>
+      <% }) %>
+      <% if (!items.length) { %><tr><td colspan="4" class="muted">No projects yet.</td></tr><% } %>
+    </table>
+  </div>
+</main>
+<%- include('../partials/footer') %>

@@ -1,0 +1,37 @@
+<%- include('../partials/head') %>
+<body class="admin-page">
+<%- include('../partials/header') %>
+<main class="admin-layout container">
+  <%- include('partials/nav') %>
+  <div class="admin-content">
+    <h1>Ad slots</h1>
+    <form method="POST" action="/admin/ads/slots" class="form">
+      <div class="form-row">
+        <label>Name <input name="name" required placeholder="Sidebar"></label>
+        <label>Position (unique key) <input name="position" required placeholder="sidebar"></label>
+        <label>Price/day (₦) <input name="price_per_day" type="number" step="0.01" value="0"></label>
+        <label>Max active <input name="max_active" type="number" value="1"></label>
+      </div>
+      <label>Description <input name="description"></label>
+      <button class="btn btn-primary" type="submit">Save slot</button>
+    </form>
+
+    <h2>Existing slots</h2>
+    <table class="table">
+      <tr><th>Name</th><th>Position</th><th>₦/day</th><th>Max active</th><th>Status</th><th>Actions</th></tr>
+      <% slots.forEach(s => { %>
+        <tr>
+          <td><%= s.name %></td>
+          <td><%= s.position %></td>
+          <td><%= Number(s.price_per_day).toLocaleString() %></td>
+          <td><%= s.max_active %></td>
+          <td><span class="badge badge-<%= s.is_active ? 'active' : 'inactive' %>"><%= s.is_active ? 'active' : 'inactive' %></span></td>
+          <td>
+            <form method="POST" action="/admin/ads/slots/<%= s.id %>/toggle"><button class="btn btn-sm"><%= s.is_active ? 'Disable' : 'Enable' %></button></form>
+          </td>
+        </tr>
+      <% }) %>
+    </table>
+  </div>
+</main>
+<%- include('../partials/footer') %>

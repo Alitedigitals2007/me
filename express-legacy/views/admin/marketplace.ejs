@@ -1,0 +1,36 @@
+<%- include('../partials/head') %>
+<body class="admin-page">
+<%- include('../partials/header') %>
+<main class="admin-layout container">
+  <%- include('partials/nav') %>
+  <div class="admin-content">
+    <div class="section-head">
+      <h1>Marketplace</h1>
+      <a class="btn btn-primary btn-sm" href="/admin/marketplace/new">+ New listing (mine)</a>
+    </div>
+    <table class="table">
+      <tr><th>Title</th><th>Price</th><th>Owner</th><th>Type</th><th>Status</th><th>Actions</th></tr>
+      <% items.forEach(l => { %>
+        <tr>
+          <td><%= l.title %></td>
+          <td>₦<%= Number(l.price).toLocaleString() %></td>
+          <td class="small"><%= l.is_own ? 'You' : (l.owner_name || l.owner_contact) %></td>
+          <td><%= l.is_own ? 'own' : 'external' %></td>
+          <td><span class="badge badge-<%= l.status %>"><%= l.status %></span></td>
+          <td class="row-actions">
+            <% if (l.status === 'pending' || l.status === 'rejected') { %>
+              <form method="POST" action="/admin/marketplace/<%= l.id %>/approve"><button class="btn btn-sm">Approve</button></form>
+              <form method="POST" action="/admin/marketplace/<%= l.id %>/reject"><button class="btn btn-sm btn-danger">Reject</button></form>
+            <% } %>
+            <% if (l.status === 'active') { %>
+              <form method="POST" action="/admin/marketplace/<%= l.id %>/sold"><button class="btn btn-sm">Mark sold</button></form>
+            <% } %>
+            <form method="POST" action="/admin/marketplace/<%= l.id %>/delete" onsubmit="return confirm('Delete this listing?')"><button class="btn btn-sm btn-danger">Delete</button></form>
+          </td>
+        </tr>
+      <% }) %>
+      <% if (!items.length) { %><tr><td colspan="6" class="muted">No listings.</td></tr><% } %>
+    </table>
+  </div>
+</main>
+<%- include('../partials/footer') %>

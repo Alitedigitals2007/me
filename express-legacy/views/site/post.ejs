@@ -1,0 +1,22 @@
+<%- include('../partials/head', { description: post.excerpt || post.title }) %>
+<body>
+<%- include('../partials/header') %>
+<main class="container section narrow">
+  <p class="muted"><a href="/blog">← Back to blog</a></p>
+  <h1><%= post.title %></h1>
+  <p class="muted small"><%= fmtDate(post.publish_at) %><% if (post.tags) { %> · <%= post.tags.split(',').filter(Boolean).map(t => '#' + t.trim()).join(' ') %><% } %></p>
+  <% if (post.cover_image) { %><img class="cover" src="<%= post.cover_image %>" alt="<%= post.title %>"><% } %>
+  <article class="prose"><%- post.content %></article>
+
+  <%- include('../partials/ads', { position: 'blog_inline' }) %>
+
+  <% if (related.length) { %>
+    <h2>Keep reading</h2>
+    <div class="grid">
+      <% related.forEach(r => { %>
+        <a class="card" href="/blog/<%= r.slug %>"><div class="card-body"><h3><%= r.title %></h3></div></a>
+      <% }) %>
+    </div>
+  <% } %>
+</main>
+<%- include('../partials/footer') %>

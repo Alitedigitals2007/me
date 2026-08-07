@@ -1,0 +1,12 @@
+<%- include('../partials/head') %>
+<body>
+<%- include('../partials/header') %>
+<main class="container section narrow center">
+  <h1><%= kind === 'ad' ? 'Ad submitted — thanks!' : 'Listing submitted — thanks!' %></h1>
+  <p class="lead">
+    <%= kind === 'ad' ? 'Your payment is being confirmed. Once I review and approve your ad, it goes live automatically.' : 'Your listing fee is being confirmed. Once I approve your listing, it appears on the marketplace.' %>
+  </p>
+  <% if (ref) { %><p class="muted small">Reference: <%= ref %></p><% } %>
+  <p><a class="btn btn-primary" href="/">Back home</a></p>
+</main>
+<%- include('../partials/footer') %>

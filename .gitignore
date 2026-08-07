@@ -1,0 +1,10 @@
+node_modules/
+.env
+.env.local
+public/uploads/*
+!public/uploads/.gitkeep
+npm-debug.log*
+.DS_Store
+.vercel/
+.next/
+next-env.d.ts

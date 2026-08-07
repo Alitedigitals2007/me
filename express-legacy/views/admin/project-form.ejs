@@ -1,0 +1,24 @@
+<%- include('../partials/head') %>
+<body class="admin-page">
+<%- include('../partials/header') %>
+<main class="admin-layout container">
+  <%- include('partials/nav') %>
+  <div class="admin-content">
+    <h1><%= project ? 'Edit project' : 'New project' %></h1>
+    <form method="POST" action="<%= project ? '/admin/projects/edit/' + project.id : '/admin/projects' %>" enctype="multipart/form-data" class="form">
+      <label>Title <input name="title" value="<%= project ? project.title : '' %>" required></label>
+      <label>Description / case study (HTML ok) <textarea name="description" rows="8"><%= project ? project.description : '' %></textarea></label>
+      <label>Stack (comma separated) <input name="stack" value="<%= project ? project.stack : '' %>"></label>
+      <label>Image <input type="file" name="image" accept="image/*"></label>
+      <% if (!project || !project.image_url) { %>
+        <label>...or image URL <input name="image_url" value="<%= project ? project.image_url : '' %>"></label>
+      <% } %>
+      <label>Live URL <input name="live_url" value="<%= project ? project.live_url : '' %>"></label>
+      <label>Repo URL <input name="repo_url" value="<%= project ? project.repo_url : '' %>"></label>
+      <label class="checkbox"><input type="checkbox" name="featured" <%= project && project.featured ? 'checked' : '' %>> Featured</label>
+      <label>Order index <input name="order_index" type="number" value="<%= project ? project.order_index : 0 %>"></label>
+      <button class="btn btn-primary" type="submit">Save</button>
+    </form>
+  </div>
+</main>
+<%- include('../partials/footer') %>

@@ -1,0 +1,31 @@
+<%- include('../partials/head') %>
+<body class="admin-page">
+<%- include('../partials/header') %>
+<main class="admin-layout container">
+  <%- include('partials/nav') %>
+  <div class="admin-content">
+    <h1>Analytics</h1>
+    <h2>Views — last 14 days</h2>
+    <div class="bar-chart">
+      <% const max = Math.max(1, ...daily.map(d => d.views)); %>
+      <% daily.forEach(d => { %>
+        <div class="bar-wrap">
+          <div class="bar" style="height:<%= Math.round((d.views / max) * 120) %>px" title="<%= d.day %>: <%= d.views %> views"></div>
+          <span class="bar-label"><%= d.day.slice(5) %></span>
+        </div>
+      <% }) %>
+    </div>
+    <h2>Top pages</h2>
+    <table class="table">
+      <tr><th>Path</th><th>Views</th></tr>
+      <% topPaths.forEach(p => { %><tr><td><%= p.path %></td><td><%= p.views %></td></tr><% }) %>
+    </table>
+    <h2>Ad clicks</h2>
+    <table class="table">
+      <tr><th>Advertiser</th><th>Slot</th><th>Clicks</th></tr>
+      <% clicks.forEach(c => { %><tr><td><%= c.advertiser_name %></td><td><%= c.slot %></td><td><%= c.clicks %></td></tr><% }) %>
+      <% if (!clicks.length) { %><tr><td colspan="3" class="muted">No clicks yet.</td></tr><% } %>
+    </table>
+  </div>
+</main>
+<%- include('../partials/footer') %>

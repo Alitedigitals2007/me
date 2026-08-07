@@ -1,0 +1,16 @@
+<%- include('../partials/head') %>
+<body class="admin-page">
+<%- include('../partials/header') %>
+<main class="container section narrow">
+  <h1>Admin login</h1>
+  <div class="card">
+    <div class="card-body">
+      <form action="/admin/login" method="POST" class="form">
+        <label>Email or username <input name="email" required autofocus></label>
+        <label>Password <input name="password" type="password" required></label>
+        <button class="btn btn-primary" type="submit">Sign in</button>
+      </form>
+    </div>
+  </div>
+</main>
+<%- include('../partials/footer') %>

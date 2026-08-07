@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title ? `${title} — ${site.site_name}` : site.site_name %></title>
+  <meta name="description" content="<%= typeof description !== 'undefined' && description ? description : site.tagline %>">
+  <meta property="og:title" content="<%= title ? `${title} — ${site.site_name}` : site.site_name %>">
+  <meta property="og:description" content="<%= typeof description !== 'undefined' && description ? description : site.tagline %>">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="<%= site.og_image %>">
+  <link rel="icon" href="/img/logo.png">
+  <link rel="stylesheet" href="/css/style.css">
+  <script>document.documentElement.classList.add('js', 'motion-ready');</script>
+</head>

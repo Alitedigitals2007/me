@@ -1,0 +1,49 @@
+<%- include('../partials/head') %>
+<body class="admin-page">
+<%- include('../partials/header') %>
+<main class="admin-layout container">
+  <%- include('partials/nav') %>
+  <div class="admin-content">
+    <h1>Settings</h1>
+    <form method="POST" action="/admin/settings" class="form form-grid">
+      <fieldset>
+        <legend>Site</legend>
+        <label>Site name <input name="site_name" value="<%= settings.site_name %>"></label>
+        <label>Tagline <input name="tagline" value="<%= settings.tagline %>"></label>
+        <label>OG image URL (sharing preview) <input name="og_image" value="<%= settings.og_image %>"></label>
+      </fieldset>
+      <fieldset>
+        <legend>Hero</legend>
+        <label>Name <input name="hero_name" value="<%= settings.hero_name %>"></label>
+        <label>Title <input name="hero_title" value="<%= settings.hero_title %>"></label>
+        <label>Bio <textarea name="hero_bio" rows="3"><%= settings.hero_bio %></textarea></label>
+        <label>Photo URL <input name="hero_photo" value="<%= settings.hero_photo %>"></label>
+      </fieldset>
+      <fieldset>
+        <legend>About</legend>
+        <label>About bio <textarea name="about_bio" rows="5"><%= settings.about_bio %></textarea></label>
+      </fieldset>
+      <fieldset>
+        <legend>Socials</legend>
+        <label>Twitter <input name="social_twitter" value="<%= settings.social_twitter %>"></label>
+        <label>GitHub <input name="social_github" value="<%= settings.social_github %>"></label>
+        <label>LinkedIn <input name="social_linkedin" value="<%= settings.social_linkedin %>"></label>
+        <label>Instagram <input name="social_instagram" value="<%= settings.social_instagram %>"></label>
+      </fieldset>
+      <fieldset>
+        <legend>Contact & Telegram</legend>
+        <label>Contact email <input name="contact_email" value="<%= settings.contact_email %>"></label>
+        <label>WhatsApp number (digits only, e.g. 2349154681851) <input name="contact_whatsapp" value="<%= settings.contact_whatsapp %>"></label>
+        <label>Telegram chat ID (for notifications) <input name="telegram_chat_id" value="<%= settings.telegram_chat_id %>"></label>
+      </fieldset>
+      <fieldset>
+        <legend>Marketplace</legend>
+        <label>Listing fee (₦) <input name="marketplace_listing_fee" value="<%= settings.marketplace_listing_fee || 5000 %>"></label>
+      </fieldset>
+      <div class="form-full">
+        <button class="btn btn-primary" type="submit">Save settings</button>
+      </div>
+    </form>
+  </div>
+</main>
+<%- include('../partials/footer') %>

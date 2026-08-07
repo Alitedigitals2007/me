@@ -1,0 +1,21 @@
+<%- include('../partials/head', { description: 'Courses by ' + site.hero_name }) %>
+<body>
+<%- include('../partials/header') %>
+<main class="container section">
+  <h1>Courses</h1>
+  <div class="grid">
+    <% courses.forEach(c => { %>
+      <div class="card">
+        <% if (c.image_url) { %><img src="<%= c.image_url %>" alt="<%= c.title %>" loading="lazy"><% } %>
+        <div class="card-body">
+          <h3><%= c.title %><% if (c.is_own_product) { %> <span class="badge">Mine</span><% } %></h3>
+          <p><%= c.description %></p>
+          <% if (Number(c.price) > 0) { %><p class="price">₦<%= Number(c.price).toLocaleString() %></p><% } %>
+          <% if (c.link) { %><a class="btn btn-primary btn-sm" href="<%= c.link %>" target="_blank" rel="noopener">Enroll</a><% } %>
+        </div>
+      </div>
+    <% }) %>
+    <% if (!courses.length) { %><p class="muted">Courses coming soon.</p><% } %>
+  </div>
+</main>
+<%- include('../partials/footer') %>

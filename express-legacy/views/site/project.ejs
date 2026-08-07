@@ -1,0 +1,16 @@
+<%- include('../partials/head', { description: project.description.slice(0, 160) }) %>
+<body>
+<%- include('../partials/header') %>
+<main class="container section narrow">
+  <p class="muted"><a href="/portfolio">← Back to portfolio</a></p>
+  <h1><%= project.title %></h1>
+  <% if (project.image_url) { %><img class="cover" src="<%= project.image_url %>" alt="<%= project.title %>"><% } %>
+  <% if (project.stack) { %><p><strong>Stack:</strong> <%= project.stack %></p><% } %>
+  <div class="prose"><%- project.description %></div>
+  <div class="hero-actions">
+    <% if (project.live_url) { %><a class="btn btn-primary" href="<%= project.live_url %>" target="_blank" rel="noopener">Live site</a><% } %>
+    <% if (project.repo_url) { %><a class="btn btn-outline" href="<%= project.repo_url %>" target="_blank" rel="noopener">Source code</a><% } %>
+  </div>
+  <%- include('../partials/ads', { position: 'sidebar' }) %>
+</main>
+<%- include('../partials/footer') %>

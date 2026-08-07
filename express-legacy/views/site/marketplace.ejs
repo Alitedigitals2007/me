@@ -1,0 +1,42 @@
+<%- include('../partials/head', { description: 'Marketplace — products and services by ' + site.hero_name }) %>
+<body>
+<%- include('../partials/header') %>
+<main class="container section">
+  <div class="section-head">
+    <h1>Marketplace</h1>
+    <a class="btn btn-primary btn-sm" href="#submit">List something (₦<%= Number(listingFee).toLocaleString() %> fee)</a>
+  </div>
+  <div class="grid">
+    <% listings.forEach(l => { %>
+      <div class="card">
+        <% if (l.image_url) { %><img src="<%= l.image_url %>" alt="<%= l.title %>" loading="lazy"><% } %>
+        <div class="card-body">
+          <h3><%= l.title %><% if (l.is_own) { %> <span class="badge">Official</span><% } %></h3>
+          <p><%= l.description %></p>
+          <p class="price">₦<%= Number(l.price).toLocaleString() %></p>
+          <% if (!l.is_own && l.owner_contact) { %>
+            <a class="btn btn-outline btn-sm" href="<%= /@/.test(l.owner_contact) ? 'mailto:' + l.owner_contact : 'https://wa.me/' + l.owner_contact.replace(/\D/g, '') %>">Contact seller</a>
+          <% } %>
+        </div>
+      </div>
+    <% }) %>
+    <% if (!listings.length) { %><p class="muted">Nothing listed yet.</p><% } %>
+  </div>
+
+  <div class="card section" id="submit">
+    <div class="card-body">
+      <h2>Sell on the marketplace</h2>
+      <p class="muted">Listing fee: ₦<%= Number(listingFee).toLocaleString() %> (one-time). We approve before it goes live.</p>
+      <form action="/marketplace/submit" method="POST" class="form">
+        <label>Title <input name="title" required></label>
+        <label>Description <textarea name="description" rows="4" required></textarea></label>
+        <label>Price (₦) <input name="price" type="number" min="0" step="0.01" required></label>
+        <label>Image URL <input name="image_url" placeholder="https://..."></label>
+        <label>Your name <input name="owner_name"></label>
+        <label>Email or WhatsApp number <input name="owner_contact" required></label>
+        <button class="btn btn-primary" type="submit">Submit listing</button>
+      </form>
+    </div>
+  </div>
+</main>
+<%- include('../partials/footer') %>

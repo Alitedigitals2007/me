@@ -1,0 +1,39 @@
+<%- include('../partials/head') %>
+<body class="admin-page">
+<%- include('../partials/header') %>
+<main class="admin-layout container">
+  <%- include('partials/nav') %>
+  <div class="admin-content">
+    <div class="section-head">
+      <h1>Ad submissions</h1>
+      <div class="tabs">
+        <% const tabs = [['pending', 'Pending'], ['paid', 'Paid'], ['approved', 'Approved'], ['rejected', 'Rejected'], ['expired', 'Expired'], ['all', 'All']]; %>
+        <% tabs.forEach(t => { %>
+          <a class="btn btn-sm <%= filter === t[0] ? 'btn-primary' : 'btn-outline' %>" href="/admin/ads?filter=<%= t[0] %>"><%= t[1] %> (<%= countMap[t[0]] || 0 %>)</a>
+        <% }) %>
+      </div>
+    </div>
+    <table class="table">
+      <tr><th>Advertiser</th><th>Slot</th><th>Amount</th><th>Dates</th><th>Status</th><th>Actions</th></tr>
+      <% subs.forEach(s => { %>
+        <tr>
+          <td><%= s.advertiser_name %><br><span class="muted small"><%= s.contact %></span></td>
+          <td><%= s.slot_name %></td>
+          <td>₦<%= Number(s.amount_paid).toLocaleString() %></td>
+          <td class="small"><%= s.start_date %> → <%= s.end_date %></td>
+          <td><span class="badge badge-<%= s.status %>"><%= s.status %></span></td>
+          <td class="row-actions">
+            <% if (s.image_url) { %><a class="btn btn-sm" href="<%= s.image_url %>" target="_blank">View ad</a><% } %>
+            <% if (s.status === 'paid' || s.status === 'pending_payment') { %>
+              <form method="POST" action="/admin/ads/<%= s.id %>/approve"><button class="btn btn-sm">Approve</button></form>
+              <form method="POST" action="/admin/ads/<%= s.id %>/reject" onsubmit="return confirm('Reject? Refund manually if paid.')"><button class="btn btn-sm btn-danger">Reject</button></form>
+            <% } %>
+            <form method="POST" action="/admin/ads/<%= s.id %>/delete" onsubmit="return confirm('Delete?')"><button class="btn btn-sm btn-danger">Delete</button></form>
+          </td>
+        </tr>
+      <% }) %>
+      <% if (!subs.length) { %><tr><td colspan="6" class="muted">Nothing here.</td></tr><% } %>
+    </table>
+  </div>
+</main>
+<%- include('../partials/footer') %>

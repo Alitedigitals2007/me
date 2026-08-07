@@ -1,0 +1,26 @@
+<%- include('../partials/head', { description: 'Contact ' + site.hero_name }) %>
+<body>
+<%- include('../partials/header') %>
+<main class="container section narrow">
+  <h1>Contact</h1>
+  <p class="lead">I'm always open to discussing new projects, creative ideas, or opportunities to collaborate.</p>
+  <div class="hero-actions" style="margin-bottom: 24px">
+    <% if (site.contact_whatsapp) { %>
+      <a class="btn btn-primary" href="https://wa.me/<%= site.contact_whatsapp %>" target="_blank" rel="noopener">Chat on WhatsApp</a>
+    <% } %>
+    <% if (site.contact_email) { %>
+      <a class="btn btn-outline" href="mailto:<%= site.contact_email %>"><%= site.contact_email %></a>
+    <% } %>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <form action="/contact" method="POST" class="form">
+        <label>Name <input name="name" required></label>
+        <label>Email <input name="email" type="email" required></label>
+        <label>Message <textarea name="message" rows="5" required></textarea></label>
+        <button class="btn btn-primary" type="submit">Send message</button>
+      </form>
+    </div>
+  </div>
+</main>
+<%- include('../partials/footer') %>

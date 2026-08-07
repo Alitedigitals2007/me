@@ -1,0 +1,31 @@
+<%- include('../partials/head') %>
+<body class="admin-page">
+<%- include('../partials/header') %>
+<main class="admin-layout container">
+  <%- include('partials/nav') %>
+  <div class="admin-content">
+    <div class="section-head">
+      <h1>Blog</h1>
+      <a class="btn btn-primary btn-sm" href="/admin/blog/new">+ New post</a>
+    </div>
+    <table class="table">
+      <tr><th>Title</th><th>Status</th><th>Publish date</th><th>Actions</th></tr>
+      <% posts.forEach(p => { %>
+        <tr>
+          <td><%= p.title %></td>
+          <td><span class="badge badge-<%= p.status %>"><%= p.status %></span></td>
+          <td><%= p.publish_at ? new Date(p.publish_at).toLocaleString('en-GB', { dateStyle: 'short', timeStyle: 'short' }) : '—' %></td>
+          <td class="row-actions">
+            <a class="btn btn-sm" href="/admin/blog/edit/<%= p.id %>">Edit</a>
+            <% if (p.status !== 'published') { %>
+              <form method="POST" action="/admin/blog/<%= p.id %>/publish"><button class="btn btn-sm">Publish now</button></form>
+            <% } %>
+            <form method="POST" action="/admin/blog/delete/<%= p.id %>" onsubmit="return confirm('Delete this post?')"><button class="btn btn-sm btn-danger">Delete</button></form>
+          </td>
+        </tr>
+      <% }) %>
+      <% if (!posts.length) { %><tr><td colspan="4" class="muted">No posts yet.</td></tr><% } %>
+    </table>
+  </div>
+</main>
+<%- include('../partials/footer') %>

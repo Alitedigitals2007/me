@@ -1,0 +1,29 @@
+<%- include('../partials/head', { description: 'Blog by ' + site.hero_name }) %>
+<body>
+<%- include('../partials/header') %>
+<main class="container section">
+  <h1>Blog</h1>
+  <% if (tag) { %><p class="muted">Posts tagged "<%= tag %>" — <a href="/blog">clear</a></p><% } %>
+  <% if (allTags.length) { %>
+    <div class="tags">
+      <% allTags.forEach(t => { %>
+        <a class="tag <%= t === tag ? 'tag-active' : '' %>" href="/blog?tag=<%= encodeURIComponent(t) %>">#<%= t %></a>
+      <% }) %>
+    </div>
+  <% } %>
+  <div class="grid">
+    <% posts.forEach(p => { %>
+      <a class="card" href="/blog/<%= p.slug %>">
+        <% if (p.cover_image) { %><img src="<%= p.cover_image %>" alt="<%= p.title %>" loading="lazy"><% } %>
+        <div class="card-body">
+          <h3><%= p.title %></h3>
+          <p><%= p.excerpt || p.content.slice(0, 140) %></p>
+          <p class="muted small"><%= new Date(p.publish_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) %></p>
+        </div>
+      </a>
+    <% }) %>
+    <% if (!posts.length) { %><p class="muted">No posts yet — check back soon.</p><% } %>
+  </div>
+  <%- include('../partials/ads', { position: 'sidebar' }) %>
+</main>
+<%- include('../partials/footer') %>

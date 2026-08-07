@@ -1,0 +1,34 @@
+<%- include('../partials/head') %>
+<body class="admin-page">
+<%- include('../partials/header') %>
+<main class="admin-layout container">
+  <%- include('partials/nav') %>
+  <div class="admin-content">
+    <h1>Dashboard</h1>
+    <div class="stat-grid">
+      <div class="stat"><span class="stat-num"><%= stats.pendingAds %></span><span class="stat-label">Ads awaiting review</span><a href="/admin/ads">Review →</a></div>
+      <div class="stat"><span class="stat-num"><%= stats.pendingListings %></span><span class="stat-label">Listings awaiting approval</span><a href="/admin/marketplace">Review →</a></div>
+      <div class="stat"><span class="stat-num"><%= stats.unreadMessages %></span><span class="stat-label">Unread messages</span><a href="/admin/messages">View →</a></div>
+      <div class="stat"><span class="stat-num"><%= stats.scheduledPosts %></span><span class="stat-label">Scheduled posts</span><a href="/admin/blog">View →</a></div>
+      <div class="stat"><span class="stat-num"><%= stats.viewsToday %></span><span class="stat-label">Views today</span></div>
+      <div class="stat"><span class="stat-num"><%= stats.viewsWeek %></span><span class="stat-label">Views (7 days)</span></div>
+      <div class="stat"><span class="stat-num"><%= stats.clicksWeek %></span><span class="stat-label">Ad clicks (7 days)</span></div>
+    </div>
+    <h2>Recent messages</h2>
+    <% if (recentMessages.length) { %>
+      <table class="table">
+        <tr><th>From</th><th>Message</th><th>When</th></tr>
+        <% recentMessages.forEach(m => { %>
+          <tr>
+            <td><%= m.name %><br><span class="muted small"><%= m.email %></span></td>
+            <td><%= m.message.slice(0, 80) %></td>
+            <td class="muted small"><%= new Date(m.created_at).toLocaleDateString() %></td>
+          </tr>
+        <% }) %>
+      </table>
+    <% } else { %>
+      <p class="muted">No messages yet.</p>
+    <% } %>
+  </div>
+</main>
+<%- include('../partials/footer') %>
