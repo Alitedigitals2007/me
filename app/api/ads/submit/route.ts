@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { getSettings } from '@/lib/settings';
+import { sendTelegram, siteUrl } from '@/lib/telegram';
 import { initializePayment, makeReference, hasPaystackKeys } from '@/lib/paystack';
 
 export const runtime = 'nodejs';
@@ -53,6 +54,17 @@ export async function POST(req: NextRequest) {
     );
     const ref = makeReference('ad');
     await pool.query('UPDATE ad_submissions SET paystack_ref=$2 WHERE id=$1', [sub[0].id, ref]);
+
+    const wa = contact.replace(/[^\d+]/g, '').replace(/^\+/, '');
+    const isPhone = /^\+?\d{7,15}$/.test(contact.trim());
+    sendTelegram(
+      `🛒 <b>New ad order #${sub[0].id}</b>\n` +
+      `👤 ${advertiserName} (${contact})\n` +
+      `📦 ${pkg.name} · ${days} day${days > 1 ? 's' : ''} · ₦${Number(amount).toLocaleString()}\n` +
+      `🔗 ${targetUrl}\n` +
+      `${isPhone ? `💬 WhatsApp: https://wa.me/${wa}\n` : ''}` +
+      `🔗 ${siteUrl()}/admin/ads`
+    );
 
     if (!hasPaystackKeys()) {
       await pool.query(

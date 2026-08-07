@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { getAdmin } from '@/lib/admin-auth';
+import { sendTelegram, siteUrl } from '@/lib/telegram';
 
 export const runtime = 'nodejs';
 
