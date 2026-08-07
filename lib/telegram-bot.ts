@@ -11,7 +11,7 @@ I manage your site from here:
 /start · /help — this message
 /ads — pending ad submissions (approve / reject)
 /listings — pending marketplace listings
-/posts — draft blog posts (publish)
+/posts — draft blog posts (list, then type the number to publish)
 /publish &lt;id&gt; — publish a draft post by id
 /stats — quick site numbers
 
@@ -77,9 +77,20 @@ async function showPosts(chatId: number, messageId?: number) {
     return messageId ? tgEdit(chatId, messageId, text) : tgSend(chatId, text);
   }
   const lines = rows.map((r, i) => `${i + 1}. <b>#${r.id}</b> — ${esc(r.title)}`);
-  const keyboard = { inline_keyboard: rows.map((r) => [{ text: '🚀 Publish', callback_data: `post:publish:${r.id}` }]) };
-  if (messageId) await tgEdit(chatId, messageId, `📝 <b>Draft posts (${rows.length})</b>\n\n${lines.join('\n\n')}`, keyboard);
-  else await tgSend(chatId, `📝 <b>Draft posts (${rows.length})</b>\n\n${lines.join('\n\n')}`, keyboard);
+  const text = `📝 <b>Draft posts (${rows.length})</b>\n\n${lines.join('\n\n')}\n\n✏️ Type the number to publish it (e.g. <b>1</b>)`;
+  if (messageId) await tgEdit(chatId, messageId, text);
+  else await tgSend(chatId, text);
+}
+
+async function publishByNumber(chatId: number, n: number): Promise<boolean> {
+  const { rows } = await pool.query(
+    `SELECT id FROM blog_posts WHERE status = 'draft' ORDER BY id DESC LIMIT 10`
+  );
+  const byPos = rows[n - 1];
+  const id = byPos ? byPos.id : n;
+  const out = await runAction('post:publish', id);
+  await tgSend(chatId, out);
+  return true;
 }
 
 async function showStats(chatId: number) {
@@ -194,7 +205,7 @@ export async function handleTelegramUpdate(update: any): Promise<void> {
         break;
       case '/publish': {
         const id = Number(text.trim().split(/\s+/)[1]);
-        if (!id) { await tgSend(chatId, 'Usage: /publish &lt;post id&gt;'); break; }
+        if (!id) { await tgSend(chatId, 'Usage: /publish &lt;post id&gt; — or just type the number from /posts'); break; }
         const out = await runAction('post:publish', id);
         await tgSend(chatId, out);
         break;
@@ -202,8 +213,14 @@ export async function handleTelegramUpdate(update: any): Promise<void> {
       case '/stats':
         await showStats(chatId);
         break;
-      default:
-        await tgSend(chatId, HELP);
+      default: {
+        const n = Number(text.trim());
+        if (Number.isInteger(n) && n > 0) {
+          await publishByNumber(chatId, n);
+        } else {
+          await tgSend(chatId, HELP);
+        }
+      }
     }
   } catch (e) {
     console.error('telegram bot handler', e);
