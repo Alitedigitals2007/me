@@ -195,7 +195,7 @@ export default function BlogPostActions({ slug, title, initialLikes }: BlogPostA
                 <div key={c.id} className="rounded-xl bg-card ring-1 ring-line p-4">
                   <div className="flex items-center justify-between gap-2 mb-2">
                     <span className="font-semibold text-sm">{c.name}</span>
-                    <span className="text-xs text-muted">{new Date(c.created_at).toLocaleDateString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}</span>
+                    <span className="text-xs text-muted">{new Date(c.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + new Date(c.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</span>
                   </div>
                   <p className="text-sm text-ink-soft whitespace-pre-wrap">{c.content}</p>
                 </div>
