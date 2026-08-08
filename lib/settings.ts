@@ -17,7 +17,10 @@ const DEFAULTS: Record<string, string> = {
   contact_whatsapp: '',
   telegram_chat_id: '',
   og_image: '/img/logo.png',
-  marketplace_listing_fee: '5000'
+  marketplace_listing_fee: '5000',
+  telegram_daily_report: 'false',
+  telegram_weekly_digest: 'false',
+  telegram_expiring_ads: 'false'
 };
 
 let cache: Record<string, string> | null = null;

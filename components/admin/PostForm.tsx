@@ -42,10 +42,11 @@ export default function PostForm({ editing }: { editing?: BlogPost | null }) {
           fd.set('content', content);
           if (p) fd.set('id', String(p.id));
           const res = await fetch('/api/admin/posts', { method: 'POST', body: fd });
-          if (!res.ok) throw new Error();
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Save failed');
           window.location.href = '/admin/blog';
-        } catch {
-          window.alert('Save failed');
+        } catch (err) {
+          window.alert(err instanceof Error ? err.message : 'Save failed');
           setBusy(false);
         }
       }}

@@ -15,6 +15,9 @@ export interface Settings {
   telegram_chat_id: string;
   og_image: string;
   marketplace_listing_fee: string;
+  telegram_daily_report: string;
+  telegram_weekly_digest: string;
+  telegram_expiring_ads: string;
 }
 
 export interface Project {

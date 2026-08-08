@@ -1,9 +1,12 @@
 import pool from './db';
 import { sendTelegram, siteUrl } from './telegram';
+import { getSettings } from './settings';
 
 let running = false;
 
 async function dailyReport() {
+  const settings = await getSettings();
+  if (settings.telegram_daily_report !== 'true') return;
   const { rows } = await pool.query(
     `SELECT
        (SELECT COUNT(*) FROM page_views WHERE viewed_at::date = CURRENT_DATE - 1) AS views,
@@ -31,6 +34,8 @@ async function dailyReport() {
 }
 
 async function weeklyDigest() {
+  const settings = await getSettings();
+  if (settings.telegram_weekly_digest !== 'true') return;
   const isMonday = new Date().getDay() === 1;
   if (!isMonday) return;
   const total = await pool.query(
@@ -64,6 +69,8 @@ async function weeklyDigest() {
 }
 
 async function expiringAds() {
+  const settings = await getSettings();
+  if (settings.telegram_expiring_ads !== 'true') return;
   const { rows } = await pool.query(
     `SELECT advertiser_name, contact, end_date FROM ad_submissions
       WHERE status='approved' AND end_date BETWEEN CURRENT_DATE AND CURRENT_DATE + 2

@@ -15,10 +15,11 @@ export default function ListingForm() {
         setBusy(true);
         try {
           const res = await fetch('/api/admin/listings', { method: 'POST', body: new FormData(e.currentTarget) });
-          if (!res.ok) throw new Error();
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Save failed');
           window.location.reload();
-        } catch {
-          window.alert('Save failed');
+        } catch (err) {
+          window.alert(err instanceof Error ? err.message : 'Save failed');
           setBusy(false);
         }
       }}
@@ -40,6 +41,10 @@ export default function ListingForm() {
       <label>
         <span className="text-xs font-semibold text-ink-soft">Category</span>
         <input name="category" placeholder="e.g. Course, Design, Service" className="mt-1 w-full rounded-lg bg-paper ring-1 ring-line px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-accent" />
+      </label>
+      <label className="sm:col-span-2">
+        <span className="text-xs font-semibold text-ink-soft">Your name / business *</span>
+        <input name="owner_name" required className="mt-1 w-full rounded-lg bg-paper ring-1 ring-line px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-accent" />
       </label>
       <label className="sm:col-span-2">
         <span className="text-xs font-semibold text-ink-soft">Delivery type *</span>

@@ -1,6 +1,8 @@
 import { getSettings } from './settings';
 
-export const siteUrl = () => (process.env.SITE_URL || '').replace(/\/$/, '');
+const PRODUCTION_URL = 'https://myalite.vercel.app';
+
+export const siteUrl = () => PRODUCTION_URL;
 
 export async function tgApi(method: string, payload: Record<string, any>): Promise<any> {
   const token = process.env.TELEGRAM_BOT_TOKEN;
