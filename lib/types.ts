@@ -93,6 +93,8 @@ export interface Listing {
   fee_paid: boolean;
   paystack_ref: string;
   status: string;
+  delivery_type: string;
+  file_id: string | null;
   created_at: string;
 }
 

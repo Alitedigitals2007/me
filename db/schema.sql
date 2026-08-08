@@ -154,6 +154,8 @@ CREATE TABLE IF NOT EXISTS marketplace_listings (
   fee_paid BOOLEAN NOT NULL DEFAULT true,
   paystack_ref TEXT NOT NULL DEFAULT '',
   status TEXT NOT NULL DEFAULT 'active',
+  delivery_type TEXT NOT NULL DEFAULT 'link',
+  file_id UUID,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -169,6 +171,8 @@ CREATE TABLE IF NOT EXISTS contact_messages (
 -- Migrate marketplace listings (categories + external links, admin-managed)
 ALTER TABLE marketplace_listings ADD COLUMN IF NOT EXISTS category TEXT NOT NULL DEFAULT '';
 ALTER TABLE marketplace_listings ADD COLUMN IF NOT EXISTS link TEXT NOT NULL DEFAULT '';
+ALTER TABLE marketplace_listings ADD COLUMN IF NOT EXISTS delivery_type TEXT NOT NULL DEFAULT 'link';
+ALTER TABLE marketplace_listings ADD COLUMN IF NOT EXISTS file_id UUID;
 
 -- Migrate ad submissions (package-based pricing, slot optional)
 ALTER TABLE ad_submissions ADD COLUMN IF NOT EXISTS package_id INT;
@@ -203,3 +207,15 @@ CREATE TABLE IF NOT EXISTS social_accounts (
   is_active BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE TABLE IF NOT EXISTS uploaded_images (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  filename TEXT NOT NULL,
+  content_type TEXT NOT NULL DEFAULT 'image/jpeg',
+  data BYTEA NOT NULL,
+  folder TEXT NOT NULL DEFAULT 'general',
+  size_bytes BIGINT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS uploaded_images_folder_idx ON uploaded_images (folder);

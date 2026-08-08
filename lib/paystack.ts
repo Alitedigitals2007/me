@@ -54,7 +54,7 @@ export function hasPaystackKeys(): boolean {
   return !!SECRET && !!process.env.PAYSTACK_PUBLIC_KEY;
 }
 
-export async function finalizePayment(reference: string): Promise<{ success: boolean; message: string; type?: string }> {
+export async function finalizePayment(reference: string): Promise<{ success: boolean; message: string; type?: string; delivery?: { type: 'file' | 'link'; file_id?: string; link?: string; title?: string } }> {
   const txn = await verifyTransaction(reference);
   if (!txn) return { success: false, message: 'Payment could not be verified.' };
   const meta = txn.metadata || {};
@@ -71,7 +71,28 @@ export async function finalizePayment(reference: string): Promise<{ success: boo
     return { success: !!rowCount, message: rowCount ? 'Your ad is now in the review queue — it goes live after approval.' : 'This payment was already processed.', type: 'ad' };
   }
   if (meta.type === 'listing') {
-    return { success: false, message: 'Marketplace listings are managed directly — contact me to list your product.' };
+    const { rowCount, rows } = await pool.query(
+      `UPDATE marketplace_listings SET status='sold'
+       WHERE id=$1 AND status IN ('pending_payment','paid') RETURNING title, price, owner_contact, delivery_type, file_id, link`,
+      [meta.id]
+    );
+    if (rowCount) {
+      sendTelegram(
+        `💰 <b>Listing sold:</b> ${rows[0].title} — ₦${amountNaira.toLocaleString()}\n📧 buyer email on Paystack receipt\n🔗 ${siteUrl()}/admin/marketplace`
+      );
+    }
+    const delivery = rowCount ? {
+      type: rows[0].delivery_type === 'file' ? 'file' as const : 'link' as const,
+      file_id: rows[0].file_id || undefined,
+      link: rows[0].link || undefined,
+      title: rows[0].title
+    } : undefined;
+    return { 
+      success: !!rowCount, 
+      message: rowCount ? 'Purchase complete! Check your email for details.' : 'This order was already processed.', 
+      type: 'listing',
+      delivery
+    };
   }
   return { success: false, message: 'Payment reference is not recognised.' };
 }

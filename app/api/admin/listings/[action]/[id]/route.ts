@@ -5,7 +5,7 @@ import { getAdmin } from '@/lib/admin-auth';
 
 export const runtime = 'nodejs';
 
-const ACTIONS: Record<string, { sql: string; telegram?: (row: { title: string; owner_name?: string; owner_contact?: string }) => string }> = {
+const ACTIONS: Record<string, { sql: string; telegram?: (row: { title: string; owner_name?: string; owner_contact?: string; status?: string }) => string }> = {
   approve: {
     sql: "UPDATE marketplace_listings SET status='active' WHERE id=$1 AND status IN ('pending','rejected') RETURNING title, owner_name",
     telegram: (r) => `✅ Listing approved: <b>${r.title}</b> by ${r.owner_name || 'you'}\n🔗 ${siteUrl()}/admin/marketplace`
@@ -15,8 +15,12 @@ const ACTIONS: Record<string, { sql: string; telegram?: (row: { title: string; o
     telegram: (r) => `⛔ Listing rejected: <b>${r.title}</b>\n🔗 ${siteUrl()}/admin/marketplace`
   },
   sold: {
-    sql: "UPDATE marketplace_listings SET status='sold' WHERE id=$1 RETURNING title, owner_contact",
-    telegram: (r) => `🏷 <b>Listing sold:</b> ${r.title}\n📞 ${r.owner_contact || 'no contact saved'}\n🔗 ${siteUrl()}/admin/marketplace`
+    sql: `UPDATE marketplace_listings SET status = CASE WHEN status='sold' THEN 'active' ELSE 'sold' END
+          WHERE id=$1 RETURNING title, status, owner_contact`,
+    telegram: (r) =>
+      r.status === 'sold'
+        ? `🏷 <b>Listing sold:</b> ${r.title}\n📞 ${r.owner_contact || 'no contact saved'}\n🔗 ${siteUrl()}/admin/marketplace`
+        : `↩️ <b>Listing back on sale:</b> ${r.title}\n🔗 ${siteUrl()}/marketplace`
   },
   delete: { sql: 'DELETE FROM marketplace_listings WHERE id=$1' }
 };

@@ -29,8 +29,8 @@ export async function POST(req: NextRequest) {
         );
       } else if (meta.type === 'listing') {
         await pool.query(
-          `UPDATE marketplace_listings SET status='pending', fee_paid=true, paystack_ref=$2
-           WHERE id=$1 AND status='pending_payment'`,
+          `UPDATE marketplace_listings SET status='sold', fee_paid=true, paystack_ref=$2
+           WHERE id=$1 AND status IN ('pending_payment','paid')`,
           [meta.id, ref]
         );
       }

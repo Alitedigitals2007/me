@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { BlogPost, Listing, Project } from '@/lib/types';
 import { formatDate, formatMoney } from '@/lib/utils';
+import { BuyNow } from './BuyNow';
 
 export function SectionHead({ title, sub, link, linkLabel }: { title: string; sub?: string; link?: string; linkLabel?: string }) {
   return (
@@ -66,7 +67,7 @@ export function BlogCard({ p }: { p: BlogPost }) {
       <div className="p-5 flex flex-col gap-2 flex-1">
         <p className="text-xs text-muted">{formatDate(p.publish_at)}</p>
         <h3 className="font-display font-bold text-lg leading-snug group-hover:text-accent transition-colors">{p.title}</h3>
-        <p className="text-sm text-muted line-clamp-2 flex-1">{p.excerpt || p.content.replace(/<[^>]+>/g, '').slice(0, 120)}</p>
+        <p className="text-sm text-muted line-clamp-2 flex-1">{p.excerpt || (p.content?.replace(/<[^>]+>/g, '') ?? '').slice(0, 120)}</p>
         {p.tags && (
           <div className="flex gap-1.5 flex-wrap mt-1">
             {p.tags.split(',').slice(0, 3).map((t) => t.trim()).filter(Boolean).map((t) => (
@@ -98,12 +99,19 @@ export function ListingCard({ l }: { l: Listing }) {
             {l.category}
           </span>
         )}
+        {l.delivery_type && (
+          <span className="absolute bottom-3 right-3 bg-ink/80 backdrop-blur text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full">
+            {l.delivery_type === 'file' ? '📁 File' : '🔗 Link'}
+          </span>
+        )}
       </div>
       <div className="p-5 flex flex-col gap-2 flex-1">
         <h3 className="font-display font-bold text-lg">{l.title}</h3>
         <p className="text-sm text-muted line-clamp-2 flex-1">{l.description.slice(0, 120)}</p>
-        <p className="font-display font-bold text-xl text-accent">{formatMoney(l.price)}</p>
-        {l.link ? (
+        {Number(l.price) > 0 && <p className="font-display font-bold text-xl text-accent">{formatMoney(l.price)}</p>}
+        {l.is_own && Number(l.price) > 0 ? (
+          <BuyNow listingId={l.id} title={l.title} priceLabel={formatMoney(l.price)} />
+        ) : l.delivery_type === 'link' && l.link ? (
           <a
             href={l.link}
             target="_blank"

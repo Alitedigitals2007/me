@@ -4,7 +4,8 @@ import type { NextRequest } from 'next/server';
 import type { AdminUser } from './types';
 
 export const SESSION_COOKIE = 'alite_session';
-const MAX_AGE = 7 * 24 * 60 * 60; // 7 days
+// Short session: 5 minutes. For browser-session-only, remove maxAge/expires
+const MAX_AGE = 5 * 60; // 5 minutes
 
 function secret(): Uint8Array {
   const s = process.env.SESSION_SECRET || 'alite-dev-secret-change-me';
