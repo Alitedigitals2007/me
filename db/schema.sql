@@ -181,6 +181,18 @@ CREATE TABLE IF NOT EXISTS marketplace_listings (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS marketplace_purchases (
+  id SERIAL PRIMARY KEY,
+  listing_id INT NOT NULL REFERENCES marketplace_listings(id) ON DELETE CASCADE,
+  email TEXT NOT NULL,
+  amount NUMERIC(12,2) NOT NULL,
+  paystack_ref TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'completed',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS marketplace_purchases_listing_idx ON marketplace_purchases (listing_id);
+
 CREATE TABLE IF NOT EXISTS contact_messages (
   id SERIAL PRIMARY KEY,
   name TEXT NOT NULL,

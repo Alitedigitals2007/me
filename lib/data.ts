@@ -38,7 +38,15 @@ export async function getCourses(): Promise<Course[]> {
 
 export async function getPublishedPosts(tag?: string): Promise<BlogPost[]> {
   const { rows } = await pool.query(
-    "SELECT * FROM blog_posts WHERE status='published' ORDER BY publish_at DESC"
+    `SELECT bp.*, COALESCE(bc.comment_count, 0) as comment_count
+     FROM blog_posts bp
+     LEFT JOIN (
+       SELECT post_id, COUNT(*) as comment_count
+       FROM blog_comments
+       WHERE is_approved = true
+       GROUP BY post_id
+     ) bc ON bc.post_id = bp.id
+     WHERE bp.status='published' ORDER BY bp.publish_at DESC`
   );
   const filtered = tag ? rows.filter((p) => p.tags.toLowerCase().includes(tag.toLowerCase())) : rows;
   return filtered;
@@ -46,7 +54,15 @@ export async function getPublishedPosts(tag?: string): Promise<BlogPost[]> {
 
 export async function getPost(slug: string): Promise<BlogPost | null> {
   const { rows } = await pool.query(
-    "SELECT * FROM blog_posts WHERE slug=$1 AND status='published'",
+    `SELECT bp.*, COALESCE(bc.comment_count, 0) as comment_count
+     FROM blog_posts bp
+     LEFT JOIN (
+       SELECT post_id, COUNT(*) as comment_count
+       FROM blog_comments
+       WHERE is_approved = true
+       GROUP BY post_id
+     ) bc ON bc.post_id = bp.id
+     WHERE bp.slug=$1 AND bp.status='published'`,
     [slug]
   );
   return rows[0] ?? null;
@@ -54,7 +70,15 @@ export async function getPost(slug: string): Promise<BlogPost | null> {
 
 export async function getRelatedPosts(excludeId: number, limit = 3): Promise<BlogPost[]> {
   const { rows } = await pool.query(
-    "SELECT id,title,slug,excerpt,cover_image,tags,publish_at FROM blog_posts WHERE status='published' AND id != $1 ORDER BY publish_at DESC LIMIT $2",
+    `SELECT bp.id, bp.title, bp.slug, bp.excerpt, bp.cover_image, bp.tags, bp.publish_at, bp.like_count, COALESCE(bc.comment_count, 0) as comment_count
+     FROM blog_posts bp
+     LEFT JOIN (
+       SELECT post_id, COUNT(*) as comment_count
+       FROM blog_comments
+       WHERE is_approved = true
+       GROUP BY post_id
+     ) bc ON bc.post_id = bp.id
+     WHERE bp.status='published' AND bp.id != $1 ORDER BY bp.publish_at DESC LIMIT $2`,
     [excludeId, limit]
   );
   return rows;

@@ -66,7 +66,7 @@ export default function BlogPostActions({ slug, title, initialLikes }: BlogPostA
       const res = await fetch(`/api/blog/comments/${slug}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), comment: comment.trim() })
+        body: JSON.stringify({ name: name.trim(), content: comment.trim() })
       });
       if (res.ok) {
         setName('');

@@ -72,21 +72,29 @@ export async function finalizePayment(reference: string): Promise<{ success: boo
   }
   if (meta.type === 'listing') {
     const { rowCount, rows } = await pool.query(
-      `UPDATE marketplace_listings SET status='sold'
-       WHERE id=$1 AND status IN ('pending_payment','paid') RETURNING title, price, owner_contact, delivery_type, file_id, link`,
-      [meta.id]
+      `UPDATE marketplace_purchases SET status='completed'
+       WHERE paystack_ref=$1 AND status='pending' RETURNING listing_id`,
+      [reference]
     );
+    let delivery: { type: 'file' | 'link'; file_id?: string; link?: string; title?: string } | undefined;
     if (rowCount) {
-      sendTelegram(
-        `💰 <b>Listing sold:</b> ${rows[0].title} — ₦${amountNaira.toLocaleString()}\n📧 buyer email on Paystack receipt\n🔗 ${siteUrl()}/admin/marketplace`
+      const listingId = rows[0].listing_id;
+      const { rows: listingRows } = await pool.query(
+        `SELECT title, delivery_type, file_id, link FROM marketplace_listings WHERE id=$1`,
+        [listingId]
       );
+      if (listingRows.length) {
+        sendTelegram(
+          `💰 <b>Listing sold:</b> ${listingRows[0].title} — ₦${amountNaira.toLocaleString()}\n📧 buyer email on Paystack receipt\n🔗 ${siteUrl()}/admin/marketplace`
+        );
+        delivery = {
+          type: listingRows[0].delivery_type === 'file' ? 'file' as const : 'link' as const,
+          file_id: listingRows[0].file_id || undefined,
+          link: listingRows[0].link || undefined,
+          title: listingRows[0].title
+        };
+      }
     }
-    const delivery = rowCount ? {
-      type: rows[0].delivery_type === 'file' ? 'file' as const : 'link' as const,
-      file_id: rows[0].file_id || undefined,
-      link: rows[0].link || undefined,
-      title: rows[0].title
-    } : undefined;
     return { 
       success: !!rowCount, 
       message: rowCount ? 'Purchase complete! Check your email for details.' : 'This order was already processed.', 

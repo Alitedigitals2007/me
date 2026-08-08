@@ -23,12 +23,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     const ref = makeReference('listing');
     await pool.query(
-      `UPDATE marketplace_listings SET status='pending_payment', paystack_ref=$2 WHERE id=$1`,
-      [id, ref]
+      `INSERT INTO marketplace_purchases (listing_id, email, amount, paystack_ref, status)
+       VALUES ($1, $2, $3, $4, 'pending')`,
+      [id, email, amount, ref]
     );
 
     if (!hasPaystackKeys()) {
-      await pool.query(`UPDATE marketplace_listings SET status='sold' WHERE id=$1 AND status='pending_payment'`, [id]);
+      await pool.query(`UPDATE marketplace_purchases SET status='completed' WHERE paystack_ref=$1`, [ref]);
       return NextResponse.json({ url: `/thanks?ref=${ref}&type=listing` });
     }
 
