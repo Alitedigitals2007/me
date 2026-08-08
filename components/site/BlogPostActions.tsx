@@ -83,7 +83,7 @@ export default function BlogPostActions({ slug, title, initialLikes }: BlogPostA
     setCommenting(false);
   }
 
-  async function handleShare(platform: 'twitter' | 'linkedin' | 'copy') {
+  async function handleShare(platform: 'twitter' | 'linkedin' | 'whatsapp' | 'facebook' | 'copy') {
     const url = window.location.href;
     const text = title;
     
@@ -91,6 +91,10 @@ export default function BlogPostActions({ slug, title, initialLikes }: BlogPostA
       window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank', 'width=600,height=400');
     } else if (platform === 'linkedin') {
       window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank', 'width=600,height=400');
+    } else if (platform === 'whatsapp') {
+      window.open(`https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`, '_blank', 'width=600,height=400');
+    } else if (platform === 'facebook') {
+      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(text)}`, '_blank', 'width=600,height=400');
     } else if (platform === 'copy') {
       await navigator.clipboard.writeText(url);
       alert('Link copied to clipboard!');
@@ -207,7 +211,7 @@ export default function BlogPostActions({ slug, title, initialLikes }: BlogPostA
           <div className="bg-card rounded-2xl shadow-lift ring-1 ring-line p-6 max-w-sm w-full" onClick={e => e.stopPropagation()}>
             <h3 className="font-display font-bold text-lg mb-4">Share this post</h3>
             <p className="text-sm text-muted mb-6 truncate">{title}</p>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-4 gap-3">
               <button onClick={() => handleShare('twitter')} className="flex flex-col items-center gap-2 px-4 py-3 rounded-xl bg-paper ring-1 ring-line hover:ring-accent/50 transition-colors">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-sky-500">
                   <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 9.24-3.363.92-8.8-9.693-5.327 7.79-3.286-.954L.43 11.493l8.32-9.663 8.494 9.228zm0 0" />
@@ -220,14 +224,26 @@ export default function BlogPostActions({ slug, title, initialLikes }: BlogPostA
                 </svg>
                 <span className="text-xs font-semibold">LinkedIn</span>
               </button>
-              <button onClick={() => handleShare('copy')} className="flex flex-col items-center gap-2 px-4 py-3 rounded-xl bg-paper ring-1 ring-line hover:ring-accent/50 transition-colors">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              <button onClick={() => handleShare('whatsapp')} className="flex flex-col items-center gap-2 px-4 py-3 rounded-xl bg-paper ring-1 ring-line hover:ring-accent/50 transition-colors">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-green-500">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.472.099-.174.05-.372-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.372-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.263.489 1.694.625.712.227 1.36.195 1.872.118.57-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a19.79 19.79 0 0 1-4.944-1.132 17.8 17.8 0 0 1-4.126-3.37 20.5 20.5 0 0 1-2.89-4.817C1.56 13.906.33 13.61 0 13.156v-.362c.376-.52.978-.803 1.856-1.238a34.035 34.035 0 0 1 5.284-4.146 14.3 14.3 0 0 1 3.185-1.44c1.645-.375 3.184-.663 4.833-.786 1.635-.112 3.27-.112 4.828 0 1.653.123 3.187.41 4.833.786 1.502.43 2.849 1.03 3.932 1.82 1.067.777 1.86 1.744 2.388 2.848.637 1.299.637 2.646.52 3.876-.11 1.262-.31 1.894-.83 2.475a16.5 16.5 0 0 1-4.521 5.074c-1.617 1.262-3.35 2.172-5.472 2.528-.507.084-1.015.134-1.522.134zm4.074-4.464c-.418.694-1.246 1.164-2.025 1.262-.779.087-1.758-.298-2.463-.992-.705-.694-1.01-1.443-1.083-1.722-.074-.272-.458-.694-.087-1.082.488-.507 1.298-.675 2.125-.719.71-.027 1.408.134 1.767.447.348.306.625.779.699 1.138.087.418-.2.918-.719 1.262-.42.272-1.016.372-1.556.372-.735 0-1.353-.298-1.872-.94zm5.934-6.96c-.135.372-.568.867-1.277 1.164-.71.306-1.42.373-2.275.298-.854-.074-1.664-.41-2.36-1.06-.695-.676-.967-1.376-1.01-1.706-.043-.329.306-.616.704-.77.398-.149 1.06-.298 1.776-.223.705.074 1.41.306 2.025 1.01.615.71.694 1.695.497 2.417-.185.71-.644 1.164-1.04 1.413z" />
                 </svg>
-                <span className="text-xs font-semibold">Copy link</span>
+                <span className="text-xs font-semibold">WhatsApp</span>
+              </button>
+              <button onClick={() => handleShare('facebook')} className="flex flex-col items-center gap-2 px-4 py-3 rounded-xl bg-paper ring-1 ring-line hover:ring-accent/50 transition-colors">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-blue-600">
+                  <path d="M18.77 7.46H14.5v-1.9c0-.9.6-1.1 1-1.1h3V.5h-4.33C10.24.5 9.5 3.44 9.5 5.32v2.15h-3v4h3v12h5v-12h3.85l.42-4Z" />
+                </svg>
+                <span className="text-xs font-semibold">Facebook</span>
               </button>
             </div>
+            <button onClick={() => handleShare('copy')} className="flex flex-col items-center gap-2 px-4 py-3 rounded-xl bg-paper ring-1 ring-line hover:ring-accent/50 transition-colors w-full mt-3">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+              <span className="text-xs font-semibold">Copy link</span>
+            </button>
             <button onClick={() => setShareOpen(false)} className="mt-4 w-full rounded-lg ring-1 ring-line text-sm font-semibold px-3 py-2 hover:bg-paper transition">
               Cancel
             </button>

@@ -17,6 +17,7 @@ export default function ListingForm() {
           const res = await fetch('/api/admin/listings', { method: 'POST', body: new FormData(e.currentTarget) });
           const data = await res.json();
           if (!res.ok) throw new Error(data.error || 'Save failed');
+          alert('Product added successfully!');
           window.location.reload();
         } catch (err) {
           window.alert(err instanceof Error ? err.message : 'Save failed');

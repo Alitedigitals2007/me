@@ -5,6 +5,7 @@ import MarketplaceGrid from '@/components/site/MarketplaceGrid';
 import { getActiveListings } from '@/lib/data';
 
 export const metadata: Metadata = { title: 'Marketplace' };
+export const dynamic = 'force-dynamic';
 
 export default async function MarketplacePage() {
   const listings = await getActiveListings();
