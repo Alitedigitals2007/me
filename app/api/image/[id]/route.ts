@@ -7,7 +7,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const { id } = await params;
     const image = await getImage(id);
-    if (!image) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    if (!image) {
+      // Return a placeholder instead of 404 to avoid broken images
+      return new NextResponse(null, { status: 404 });
+    }
     return new NextResponse(new Uint8Array(image.buffer), {
       headers: {
         'Content-Type': image.contentType,
@@ -17,6 +20,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     });
   } catch (e) {
     console.error('image serve', e);
-    return NextResponse.json({ error: 'Failed to serve image' }, { status: 500 });
+    return new NextResponse(null, { status: 500 });
   }
 }

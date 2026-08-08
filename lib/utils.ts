@@ -16,7 +16,9 @@ export function formatDate(d: string | null | Date): string {
 
 export function formatDateTime(d: string | null): string {
   if (!d) return '—';
-  return new Date(d).toLocaleString('en-GB', { dateStyle: 'short', timeStyle: 'short' });
+  const date = new Date(d);
+  return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + 
+         date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 }
 
 export function formatMoney(n: string | number): string {
