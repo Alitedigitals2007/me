@@ -6,13 +6,21 @@ import { BlogCard, SectionHead } from '@/components/site/Cards';
 import { getPost, getRelatedPosts } from '@/lib/data';
 import { loadAds } from '@/lib/ads';
 import { formatDate } from '@/lib/utils';
+import BlogPostActions from '@/components/site/BlogPostActions';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const post = await getPost(slug);
   return {
     title: post?.title ?? 'Post',
-    description: post?.excerpt || post?.content.replace(/<[^>]+>/g, '').slice(0, 160)
+    description: post?.excerpt || post?.content.replace(/<[^>]+>/g, '').slice(0, 160),
+    openGraph: {
+      title: post?.title ?? 'Post',
+      description: post?.excerpt || post?.content.replace(/<[^>]+>/g, '').slice(0, 160),
+      images: post?.cover_image ? [post.cover_image] : [],
+      type: 'article',
+      publishedTime: post?.publish_at ?? undefined,
+    }
   };
 }
 
@@ -48,6 +56,8 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
       )}
 
       <article className="prose-alite mt-8" dangerouslySetInnerHTML={{ __html: post.content }} />
+
+      <BlogPostActions slug={slug} title={post.title} initialLikes={post.like_count} />
 
       <div className="mt-12">
         <AdSlot ads={ads} position="blog_inline" />

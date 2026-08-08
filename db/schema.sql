@@ -98,8 +98,30 @@ CREATE TABLE IF NOT EXISTS blog_posts (
   status TEXT NOT NULL DEFAULT 'draft',
   publish_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  like_count INT NOT NULL DEFAULT 0
 );
+
+CREATE TABLE IF NOT EXISTS blog_likes (
+  id SERIAL PRIMARY KEY,
+  post_id INT NOT NULL REFERENCES blog_posts(id) ON DELETE CASCADE,
+  ip_hash TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (post_id, ip_hash)
+);
+
+CREATE TABLE IF NOT EXISTS blog_comments (
+  id SERIAL PRIMARY KEY,
+  post_id INT NOT NULL REFERENCES blog_posts(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  content TEXT NOT NULL,
+  ip_hash TEXT NOT NULL,
+  is_approved BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS blog_likes_post_idx ON blog_likes (post_id);
+CREATE INDEX IF NOT EXISTS blog_comments_post_idx ON blog_comments (post_id);
 
 CREATE TABLE IF NOT EXISTS ad_slots (
   id SERIAL PRIMARY KEY,
@@ -178,6 +200,30 @@ ALTER TABLE marketplace_listings ADD COLUMN IF NOT EXISTS file_id UUID;
 ALTER TABLE ad_submissions ADD COLUMN IF NOT EXISTS package_id INT;
 ALTER TABLE ad_submissions ADD COLUMN IF NOT EXISTS mediums TEXT NOT NULL DEFAULT '';
 ALTER TABLE ad_submissions ALTER COLUMN slot_id DROP NOT NULL;
+
+-- Migrate blog posts (likes + comments)
+ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS like_count INT NOT NULL DEFAULT 0;
+
+CREATE TABLE IF NOT EXISTS blog_likes (
+  id SERIAL PRIMARY KEY,
+  post_id INT NOT NULL REFERENCES blog_posts(id) ON DELETE CASCADE,
+  ip_hash TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (post_id, ip_hash)
+);
+
+CREATE TABLE IF NOT EXISTS blog_comments (
+  id SERIAL PRIMARY KEY,
+  post_id INT NOT NULL REFERENCES blog_posts(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  content TEXT NOT NULL,
+  ip_hash TEXT NOT NULL,
+  is_approved BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS blog_likes_post_idx ON blog_likes (post_id);
+CREATE INDEX IF NOT EXISTS blog_comments_post_idx ON blog_comments (post_id);
 
 CREATE TABLE IF NOT EXISTS ad_clicks (
   id SERIAL PRIMARY KEY,

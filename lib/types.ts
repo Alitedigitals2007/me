@@ -79,6 +79,7 @@ export interface BlogPost {
   publish_at: string | null;
   created_at: string;
   updated_at: string;
+  like_count: number;
 }
 
 export interface Listing {
