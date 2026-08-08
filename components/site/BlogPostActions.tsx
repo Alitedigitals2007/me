@@ -68,17 +68,20 @@ export default function BlogPostActions({ slug, title, initialLikes }: BlogPostA
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: name.trim(), content: comment.trim() })
       });
+      const data = await res.json();
       if (res.ok) {
         setName('');
         setComment('');
-        const data = await fetch(`/api/blog/comments/${slug}`).then(r => r.json());
-        setComments(data.comments || []);
+        // Refetch comments
+        const fetchRes = await fetch(`/api/blog/comments/${slug}`);
+        const fetchData = await fetchRes.json();
+        setComments(fetchData.comments || []);
       } else {
-        const data = await res.json();
         alert(data.error || 'Failed to post comment');
       }
     } catch (e) {
-      alert('Failed to post comment');
+      console.error('Comment error:', e);
+      alert('Failed to post comment: ' + (e instanceof Error ? e.message : 'Unknown error'));
     }
     setCommenting(false);
   }
