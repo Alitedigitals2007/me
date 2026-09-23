@@ -13,8 +13,7 @@
     "lint": "next lint",
     "seed": "node db/seed.js",
     "tg:dev": "node scripts/telegram-poll.cjs",
-    "tg:setup": "node scripts/telegram-setup.cjs",
-    "postinstall": "node db/seed.js"
+    "tg:setup": "node scripts/telegram-setup.cjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",

@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { saveUploadFile } from '@/lib/uploads';
+import { getAdmin } from '@/lib/admin-auth';
 
 export const runtime = 'nodejs';
 
 const MAX_BYTES = 50 * 1024 * 1024; // 50MB for files
 const ALLOWED_TYPES = [
-  'image/',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'image/avif',
   'application/pdf',
   'application/zip',
   'application/x-zip-compressed',
@@ -15,15 +20,17 @@ const ALLOWED_TYPES = [
 ];
 
 export async function POST(req: NextRequest) {
+  const admin = await getAdmin();
+  if (!admin) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   try {
     const fd = await req.formData();
     const file = fd.get('file');
     if (!(file instanceof File)) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
-    const isAllowed = ALLOWED_TYPES.some(type => file.type.startsWith(type)) || 
-                      ALLOWED_TYPES.includes(file.type) ||
-                      file.name.match(/\.(pdf|zip|rar|epub|docx?|xlsx?|pptx?)$/i);
+    const genericType = !file.type || file.type === 'application/octet-stream';
+    const isAllowed = ALLOWED_TYPES.includes(file.type) ||
+                      (genericType && file.name.match(/\.(pdf|zip|rar|epub|docx?|xlsx?|pptx?)$/i) !== null);
     if (!isAllowed) {
       return NextResponse.json({ error: 'File type not allowed. Allowed: images, PDF, ZIP, RAR, EPUB, Office docs.' }, { status: 400 });
     }

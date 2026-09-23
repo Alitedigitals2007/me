@@ -2,10 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { getSettings } from '@/lib/settings';
 import { initializePayment, makeReference, hasPaystackKeys } from '@/lib/paystack';
+import { rateLimit, clientIp } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  if (!rateLimit(`buy:${clientIp(req)}`, 10, 10 * 60 * 1000)) {
+    return NextResponse.json({ error: 'Too many checkout attempts. Try again later.' }, { status: 429 });
+  }
   try {
     const { id } = await params;
     const { email } = await req.json();

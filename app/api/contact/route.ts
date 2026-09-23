@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { sendTelegram, siteUrl } from '@/lib/telegram';
+import { rateLimit, clientIp } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
+  if (!rateLimit(`contact:${clientIp(req)}`, 5, 10 * 60 * 1000)) {
+    return NextResponse.json({ error: 'Too many messages sent. Try again later.' }, { status: 429 });
+  }
   try {
     const fd = await req.formData();
     const name = String(fd.get('name') || '').trim();

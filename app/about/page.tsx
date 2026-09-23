@@ -7,6 +7,8 @@ import { getSettings } from '@/lib/settings';
 
 export const metadata: Metadata = { title: 'About' };
 
+export const dynamic = 'force-dynamic';
+
 const VALUES = [
   ['Growth', 'Improvement is non-negotiable'],
   ['Discipline', 'Execution over excuses'],

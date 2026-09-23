@@ -9,6 +9,8 @@ import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = { title: 'Blog' };
 
+export const dynamic = 'force-dynamic';
+
 export default async function BlogPage({ searchParams }: { searchParams: Promise<{ tag?: string }> }) {
   const { tag } = await searchParams;
   const posts = await getPublishedPosts(tag);

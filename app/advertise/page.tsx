@@ -6,6 +6,8 @@ import { getActiveSlots, getAdPackages } from '@/lib/data';
 
 export const metadata: Metadata = { title: 'Advertise with me' };
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdvertisePage() {
   const [packages, slots] = await Promise.all([getAdPackages(), getActiveSlots()]);
 

@@ -7,6 +7,8 @@ import { loadAds } from '@/lib/ads';
 
 export const metadata: Metadata = { title: 'Portfolio' };
 
+export const dynamic = 'force-dynamic';
+
 export default async function PortfolioPage() {
   const [projects, ads] = await Promise.all([getAllProjects(), loadAds()]);
 

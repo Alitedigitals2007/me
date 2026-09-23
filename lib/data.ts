@@ -86,7 +86,7 @@ export async function getRelatedPosts(excludeId: number, limit = 3): Promise<Blo
 
 export async function getActiveListings(): Promise<Listing[]> {
   const { rows } = await pool.query(
-    "SELECT * FROM marketplace_listings WHERE status='active' ORDER BY is_own DESC, created_at DESC"
+    "SELECT id, title, description, price, image_url, category, link, is_own, owner_name, owner_contact, listing_fee, fee_paid, paystack_ref, status, delivery_type, created_at FROM marketplace_listings WHERE status='active' ORDER BY is_own DESC, created_at DESC"
   );
   return rows;
 }

@@ -1,14 +1,13 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
-import type { NextRequest } from 'next/server';
 import type { AdminUser } from './types';
 
 export const SESSION_COOKIE = 'alite_session';
-// Short session: 5 minutes. For browser-session-only, remove maxAge/expires
-const MAX_AGE = 5 * 60; // 5 minutes
+const MAX_AGE = 30 * 60; // 30 minutes
 
 function secret(): Uint8Array {
-  const s = process.env.SESSION_SECRET || 'alite-dev-secret-change-me';
+  const s = process.env.SESSION_SECRET;
+  if (!s) throw new Error('SESSION_SECRET is not set');
   return new TextEncoder().encode(s);
 }
 
@@ -49,25 +48,4 @@ export async function readSession(): Promise<AdminUser | null> {
   } catch {
     return null;
   }
-}
-
-export async function requireAdmin(): Promise<AdminUser | null> {
-  const user = await readSession();
-  if (!user) return null;
-  return user;
-}
-
-/** For middleware (edge-safe verification) */
-export async function verifySessionToken(token: string): Promise<AdminUser | null> {
-  try {
-    const { payload } = await jwtVerify(token, secret());
-    const p = payload as unknown as SessionPayload;
-    return p.user ?? null;
-  } catch {
-    return null;
-  }
-}
-
-export function getSessionCookie(req: NextRequest): string | undefined {
-  return req.cookies.get(SESSION_COOKIE)?.value;
 }

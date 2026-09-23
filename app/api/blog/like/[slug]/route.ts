@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import crypto from 'crypto';
+import { rateLimit, clientIp } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 
@@ -9,6 +10,9 @@ function hashIp(ip: string): string {
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
+  if (!rateLimit(`like:${clientIp(req)}`, 20, 60 * 1000)) {
+    return NextResponse.json({ error: 'Slow down' }, { status: 429 });
+  }
   try {
     const { slug } = await params;
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 

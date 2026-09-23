@@ -125,9 +125,10 @@ const WELCOME_POST = {
 };
 
 async function seedRealContent() {
+  // DO NOTHING everywhere: never overwrite values the admin changed from the dashboard
   for (const [k, v] of Object.entries(REAL_CONTENT_SETTINGS)) {
     await pool.query(
-      'INSERT INTO settings (key, value) VALUES ($1,$2) ON CONFLICT (key) DO UPDATE SET value=$2',
+      'INSERT INTO settings (key, value) VALUES ($1,$2) ON CONFLICT (key) DO NOTHING',
       [k, v]
     );
   }
@@ -176,7 +177,7 @@ async function main() {
     await pool.query(
       `INSERT INTO ad_slots (name, position, price_per_day, max_active, description)
        VALUES ($1,$2,$3,$4,$5)
-       ON CONFLICT (position) DO UPDATE SET name=$1, price_per_day=$3, max_active=$4, description=$5`,
+       ON CONFLICT (position) DO NOTHING`,
       [s.name, s.position, s.price_per_day, s.max_active, s.description]
     );
   }
@@ -186,7 +187,7 @@ async function main() {
     await pool.query(
       `INSERT INTO ad_packages (name, mediums, daily_rate, bundle_3_rate, description)
        VALUES ($1,$2,$3,$4,$5)
-       ON CONFLICT (name) DO UPDATE SET mediums=$2, daily_rate=$3, bundle_3_rate=$4, description=$5`,
+       ON CONFLICT (name) DO NOTHING`,
       [p.name, p.mediums, p.daily_rate, p.bundle_3_rate, p.description]
     );
   }

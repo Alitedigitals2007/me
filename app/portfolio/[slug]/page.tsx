@@ -6,6 +6,8 @@ import ProjectGallery from '@/components/site/ProjectGallery';
 import { getProject } from '@/lib/data';
 import { loadAds } from '@/lib/ads';
 
+export const dynamic = 'force-dynamic';
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const project = await getProject(slug);

@@ -1,6 +1,7 @@
 import pool from './db';
 
 const MAX_BYTES = 50 * 1024 * 1024;
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif', 'application/pdf', 'application/zip', 'application/x-zip-compressed', 'application/x-rar-compressed', 'application/epub+zip', 'application/octet-stream'];
 
 export async function saveUploadFile(file: File | null, folder = 'general'): Promise<string> {
   if (!file) return '';
@@ -9,8 +10,8 @@ export async function saveUploadFile(file: File | null, folder = 'general'): Pro
   if (buffer.length > MAX_BYTES) {
     throw new Error('File must be 50MB or smaller');
   }
-  const allowedTypes = ['image/', 'application/pdf', 'application/zip', 'application/x-zip-compressed', 'application/x-rar-compressed', 'application/epub+zip', 'application/octet-stream'];
-  const isAllowed = allowedTypes.some(type => file.type.startsWith(type)) || allowedTypes.includes(file.type) || file.name.match(/\.(pdf|zip|rar|epub|docx?|xlsx?|pptx?)$/i);
+  const genericType = !file.type || file.type === 'application/octet-stream';
+  const isAllowed = ALLOWED_TYPES.includes(file.type) || (genericType && file.name.match(/\.(pdf|zip|rar|epub|docx?|xlsx?|pptx?)$/i) !== null);
   if (!isAllowed) {
     throw new Error('File type not allowed');
   }
@@ -27,16 +28,21 @@ export async function saveUploadFile(file: File | null, folder = 'general'): Pro
 }
 
 export async function getImage(id: string): Promise<{ buffer: Buffer; contentType: string; filename: string } | null> {
-  const { rows } = await pool.query(
-    `SELECT data, content_type, filename FROM uploaded_images WHERE id = $1`,
-    [id]
-  );
-  if (!rows.length) return null;
-  return {
-    buffer: rows[0].data,
-    contentType: rows[0].content_type,
-    filename: rows[0].filename
-  };
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return null;
+  try {
+    const { rows } = await pool.query(
+      `SELECT data, content_type, filename FROM uploaded_images WHERE id = $1`,
+      [id]
+    );
+    if (!rows.length) return null;
+    return {
+      buffer: rows[0].data,
+      contentType: rows[0].content_type,
+      filename: rows[0].filename
+    };
+  } catch {
+    return null;
+  }
 }
 
 export function hasCloudinaryConfigured(): boolean {

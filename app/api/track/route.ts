@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
+import { rateLimit, clientIp } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
+  if (!rateLimit(`track:${clientIp(req)}`, 60, 60 * 1000)) {
+    return NextResponse.json({ ok: false });
+  }
   try {
     let path = '/';
     let referrer = '';

@@ -59,11 +59,17 @@ export default function SettingsForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(values)
       });
-      if (!res.ok) throw new Error();
+      if (res.status === 401) {
+        window.alert('Session expired — please log in again.');
+        window.location.href = '/login?next=/admin';
+        return;
+      }
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error || 'Save failed');
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-    } catch {
-      window.alert('Save failed');
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : 'Save failed');
     }
     setBusy(false);
   }

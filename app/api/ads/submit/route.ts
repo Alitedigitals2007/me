@@ -3,10 +3,14 @@ import pool from '@/lib/db';
 import { getSettings } from '@/lib/settings';
 import { sendTelegram, siteUrl } from '@/lib/telegram';
 import { initializePayment, makeReference, hasPaystackKeys } from '@/lib/paystack';
+import { rateLimit, clientIp } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
+  if (!rateLimit(`adsubmit:${clientIp(req)}`, 3, 60 * 60 * 1000)) {
+    return NextResponse.json({ error: 'Too many submissions. Try again later.' }, { status: 429 });
+  }
   try {
     const fd = await req.formData();
     const packageId = String(fd.get('package_id') || '');

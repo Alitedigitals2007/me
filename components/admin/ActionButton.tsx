@@ -26,7 +26,19 @@ export default function ActionButton({
         if (confirmText && !window.confirm(confirmText)) return;
         setBusy(true);
         try {
-          await fetch(url, { method: 'POST' });
+          const res = await fetch(url, { method: 'POST' });
+          if (res.status === 401) {
+            setBusy(false);
+            window.alert('Session expired — please log in again.');
+            window.location.href = '/login?next=/admin';
+            return;
+          }
+          if (!res.ok) {
+            const data = await res.json().catch(() => null);
+            setBusy(false);
+            window.alert(data?.error || 'Action failed');
+            return;
+          }
           window.location.reload();
         } catch {
           setBusy(false);

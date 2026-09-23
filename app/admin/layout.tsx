@@ -18,7 +18,7 @@ const NAV = [
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const user = await readSession();
-  if (!user) redirect('/admin/login');
+  if (!user) return redirect('/admin/login');
 
   return (
     <div className="min-h-screen flex">

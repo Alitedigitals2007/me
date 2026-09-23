@@ -6,6 +6,8 @@ import { getFeaturedProjects, getPublishedPosts, getActiveListings } from '@/lib
 import { loadAds } from '@/lib/ads';
 import { getSettings } from '@/lib/settings';
 
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
   const [projects, posts, listings, ads, settings] = await Promise.all([
     getFeaturedProjects(3),
