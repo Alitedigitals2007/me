@@ -13,6 +13,7 @@ function secret(): Uint8Array | null {
 interface SessionPayload {
   user?: { id: number; email: string; username: string; role: string };
   exp?: number;
+  iat?: number;
 }
 
 async function verifyToken(token: string | undefined): Promise<SessionPayload | null> {
@@ -57,7 +58,7 @@ export async function middleware(req: NextRequest) {
     // Sliding refresh: re-issue the cookie when more than half its lifetime has elapsed
     const res = NextResponse.next();
     if (payload.exp && payload.user) {
-      const elapsed = Math.floor(Date.now() / 1000) - (payload.iat as number | undefined || 0);
+      const elapsed = Math.floor(Date.now() / 1000) - (payload.iat ?? 0);
       if (elapsed > MAX_AGE / 2) {
         const token = await refreshSession(payload);
         if (token) {
