@@ -18,6 +18,4 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   } catch { /* fall through to home */ }
   return NextResponse.redirect(new URL('/', siteUrl()), 302);
 }
-  } catch { /* fall through to home */ }
-  return NextResponse.redirect(new URL('/', 'https://example.com'), 302);
-}
+
