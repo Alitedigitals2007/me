@@ -2,13 +2,17 @@ import Link from 'next/link';
 import ActionButton from '@/components/admin/ActionButton';
 import ProjectForm from '@/components/admin/ProjectForm';
 import pool from '@/lib/db';
+import { parseGallery } from '@/lib/utils';
 
 export const metadata = { title: 'Projects' };
 
 export default async function ProjectsPage({ searchParams }: { searchParams: Promise<{ new?: string; edit?: string }> }) {
   const sp = await searchParams;
   const { rows } = await pool.query('SELECT * FROM projects ORDER BY order_index ASC, created_at DESC');
-  const editing = sp.edit ? rows.find((r) => String(r.id) === sp.edit) : null;
+  const editingRaw = sp.edit ? rows.find((r) => String(r.id) === sp.edit) : null;
+  const editing = editingRaw
+    ? { ...editingRaw, gallery_images: JSON.stringify(parseGallery(editingRaw.gallery_images)) }
+    : null;
 
   return (
     <div>

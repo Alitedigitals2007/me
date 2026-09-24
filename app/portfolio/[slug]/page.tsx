@@ -5,6 +5,7 @@ import AdSlot from '@/components/site/AdSlot';
 import ProjectGallery from '@/components/site/ProjectGallery';
 import { getProject } from '@/lib/data';
 import { loadAds } from '@/lib/ads';
+import { parseGallery } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,13 +21,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
   if (!project) notFound();
   const ads = await loadAds();
 
-  let gallery: string[] = [];
-  try {
-    const arr = JSON.parse(project.gallery_images || '[]');
-    if (Array.isArray(arr)) gallery = arr.filter((u): u is string => typeof u === 'string' && !!u);
-  } catch {
-    gallery = [];
-  }
+  const gallery = parseGallery(project.gallery_images);
   const images = [project.image_url, ...gallery].filter(Boolean);
 
   return (

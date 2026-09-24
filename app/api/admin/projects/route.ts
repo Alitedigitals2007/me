@@ -1,9 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { getAdmin } from '@/lib/admin-auth';
-import { slugify } from '@/lib/utils';
+import { slugify, parseGallery } from '@/lib/utils';
 
 export const runtime = 'nodejs';
+
+// Legacy DBs created gallery_images as a native text[] column; fresh schema uses TEXT (JSON).
+// Detect once and store in the format the column actually accepts.
+let galleryColIsArray: boolean | null = null;
+async function galleryColumnIsArray(): Promise<boolean> {
+  if (galleryColIsArray !== null) return galleryColIsArray;
+  try {
+    const colRes = await pool.query(
+      `SELECT udt_name FROM information_schema.columns WHERE table_name='projects' AND column_name='gallery_images'`
+    );
+    galleryColIsArray = colRes.rows[0]?.udt_name === '_text';
+  } catch {
+    galleryColIsArray = false;
+  }
+  return galleryColIsArray;
+}
+
+function toPgArrayLiteral(urls: string[]): string {
+  const escaped = urls.map((u) => '"' + u.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"');
+  return '{' + escaped.join(',') + '}';
+}
 
 export async function POST(req: NextRequest) {
   const admin = await getAdmin();
@@ -17,14 +38,8 @@ export async function POST(req: NextRequest) {
     const description = String(fd.get('description') || '').trim();
     const stack = String(fd.get('stack') || '').trim();
     const imageUrl = String(fd.get('image_url') || '').trim();
-    let galleryImages = String(fd.get('gallery_images') || '[]').trim();
-    try {
-      const arr = JSON.parse(galleryImages);
-      if (!Array.isArray(arr)) throw new Error('not array');
-      galleryImages = JSON.stringify(arr.filter((u) => typeof u === 'string' && u.trim()));
-    } catch {
-      galleryImages = '[]';
-    }
+    const galleryUrls = parseGallery(fd.get('gallery_images'));
+    const galleryImages = (await galleryColumnIsArray()) ? toPgArrayLiteral(galleryUrls) : JSON.stringify(galleryUrls);
     const liveUrl = String(fd.get('live_url') || '').trim();
     const repoUrl = String(fd.get('repo_url') || '').trim();
     const featured = fd.get('featured') === 'on' || fd.get('featured') === 'true';
