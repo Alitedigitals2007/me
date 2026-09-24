@@ -18,7 +18,8 @@ export default function ProjectForm({ editing }: { editing?: Project | null }) {
           const fd = new FormData(e.currentTarget);
           if (p) fd.set('id', String(p.id));
           const res = await fetch('/api/admin/projects', { method: 'POST', body: fd });
-          if (!res.ok) throw new Error();
+          const data = await res.json().catch(() => null);
+          if (!res.ok) throw new Error(data?.error || 'Save failed');
           window.location.href = '/admin/projects';
         } catch {
           window.alert('Save failed');

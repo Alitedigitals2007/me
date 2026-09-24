@@ -26,6 +26,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error('admin packages', e);
-    return NextResponse.json({ error: 'failed' }, { status: 500 });
+    const err = e as { code?: string; message?: string };
+    let msg = 'Save failed';
+    if (err.code === '42703') msg = 'Database column missing — run npm run seed to update the schema';
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
