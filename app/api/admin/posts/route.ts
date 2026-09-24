@@ -52,6 +52,6 @@ export async function POST(req: NextRequest) {
     if (err.code === '23505') msg = 'A post with this title/slug already exists';
     else if (err.code === '23502') msg = `Required field missing in database: ${(err.message || '').match(/column "([^"]+)"/)?.[1] ?? 'unknown'}`;
     else if (err.code === '42703') msg = 'Database column missing — run npm run seed to update the schema';
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ error: msg, detail: (err.message || String(e)).slice(0, 300) }, { status: 500 });
   }
 }
