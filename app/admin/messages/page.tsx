@@ -20,7 +20,7 @@ export default async function MessagesPage() {
                 </p>
                 <span className="text-xs text-muted">{formatDateTime(m.created_at)}</span>
               </div>
-              <p className="text-sm text-ink-soft mt-2 whitespace-pre-wrap">{m.message}</p>
+              <p className="text-sm text-ink-soft mt-2 break-words whitespace-pre-wrap">{m.message}</p>
               <div className="flex gap-2 mt-4">
                 {!m.is_read && <ActionButton url={`/api/admin/messages/read/${m.id}`} label="Mark read" />}
                 <ActionButton url={`/api/admin/messages/delete/${m.id}`} label="Delete" tone="danger" confirmText="Delete this message?" />

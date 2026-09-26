@@ -29,6 +29,7 @@ export default function CinematicIntro({ siteName, tagline }: { siteName: string
 
   const letters = Array.from(siteName.toUpperCase()).slice(0, 16);
   const step = Math.min(0.055, 0.6 / Math.max(letters.length, 1));
+  const SLATS = 6;
 
   return (
     <AnimatePresence>
@@ -40,13 +41,27 @@ export default function CinematicIntro({ siteName, tagline }: { siteName: string
           exit={{ opacity: 0, transition: { duration: 0.18 } }}
           onClick={finish}
         >
-          {/* doors */}
-          <div className="absolute inset-x-0 top-0 h-1/2 bg-ink animate-intro-door-t">
-            <div className="absolute inset-x-0 bottom-0 h-[2px] bg-gradient-to-r from-transparent via-white/70 to-transparent animate-intro-edge" />
-          </div>
-          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-ink animate-intro-door-b">
-            <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-white/70 to-transparent animate-intro-edge" />
-          </div>
+          {/* shutter slats — center-out staggered open */}
+          {Array.from({ length: SLATS }, (_, i) => {
+            const dist = Math.abs(i - (SLATS - 1) / 2);
+            const up = i % 2 === 0;
+            return (
+              <div
+                key={i}
+                className={`absolute top-0 h-full bg-ink ${up ? 'animate-intro-slat-up' : 'animate-intro-slat-down'}`}
+                style={{
+                  left: `${(i * 100) / SLATS}%`,
+                  width: `${100 / SLATS + 0.15}%`,
+                  animationDelay: `${2.65 + (dist - 0.5) * 0.07}s`,
+                }}
+              >
+                <span
+                  className="absolute inset-y-0 right-0 w-px bg-gradient-to-b from-transparent via-white/45 to-transparent"
+                  aria-hidden
+                />
+              </div>
+            );
+          })}
 
           {/* light bloom — lives in the opening gap */}
           <div
@@ -61,7 +76,7 @@ export default function CinematicIntro({ siteName, tagline }: { siteName: string
             <div className="absolute inset-0 grid grid-rows-[1fr_auto_1fr]">
               <div className="flex items-end justify-center pb-5 px-4">
                 <div className="relative animate-intro-settle">
-                  <h1 className="font-display font-extrabold uppercase text-white leading-none tracking-[-0.03em] text-[clamp(2.8rem,9vw,6rem)] flex">
+                  <h1 className="font-display font-extrabold uppercase text-white leading-none tracking-[-0.03em] text-[clamp(2.8rem,9vw,6rem)] flex flex-wrap justify-center">
                     {letters.map((ch, i) => (
                       <span key={i} className="inline-block overflow-hidden">
                         <span

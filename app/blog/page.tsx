@@ -36,7 +36,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
             <Link
               href="/blog"
               className={cn(
-                'px-4 py-1.5 rounded-full text-sm font-semibold ring-1 transition-all',
+                  'px-4 py-3 rounded-full text-sm font-semibold ring-1 transition-all',
                 !tag ? 'bg-accent text-white ring-accent' : 'bg-card ring-line text-muted hover:text-ink'
               )}
             >
@@ -47,7 +47,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                 key={t}
                 href={`/blog?tag=${encodeURIComponent(t)}`}
                 className={cn(
-                  'px-4 py-1.5 rounded-full text-sm font-semibold ring-1 transition-all',
+                'px-4 py-3 rounded-full text-sm font-semibold ring-1 transition-all',
                   tag === t ? 'bg-accent text-white ring-accent' : 'bg-card ring-line text-muted hover:text-ink'
                 )}
               >

@@ -49,7 +49,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
             {post.tags && (
               <span className="flex gap-1.5">
                 {post.tags.split(',').map((t) => t.trim()).filter(Boolean).map((t) => (
-                  <Link key={t} href={`/blog?tag=${encodeURIComponent(t)}`} className="bg-accent/8 text-accent px-2.5 py-0.5 rounded-full text-xs font-semibold hover:bg-accent/15 transition-colors">
+                  <Link key={t} href={`/blog?tag=${encodeURIComponent(t)}`} className="bg-accent/8 text-accent px-3 py-1.5 rounded-full text-xs font-semibold hover:bg-accent/15 transition-colors">
                     #{t}
                   </Link>
                 ))}

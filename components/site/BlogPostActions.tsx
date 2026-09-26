@@ -119,7 +119,7 @@ export default function BlogPostActions({ slug, title, initialLikes }: BlogPostA
       <div className="flex flex-wrap items-center gap-4">
         <button
           onClick={handleLike}
-          className={`inline-flex items-center gap-2 px-4 py-2 rounded-full transition-colors ${
+          className={`inline-flex items-center gap-2 px-4 py-3 rounded-full transition-colors ${
             liked 
               ? 'bg-accent/10 text-accent ring-1 ring-accent/30' 
               : 'bg-paper text-ink-soft ring-1 ring-line hover:ring-accent/50'
@@ -134,7 +134,7 @@ export default function BlogPostActions({ slug, title, initialLikes }: BlogPostA
 
         <button
           onClick={() => setShowComments(!showComments)}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-paper text-ink-soft ring-1 ring-line hover:ring-accent/50 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-3 rounded-full bg-paper text-ink-soft ring-1 ring-line hover:ring-accent/50 transition-colors"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -144,7 +144,7 @@ export default function BlogPostActions({ slug, title, initialLikes }: BlogPostA
 
         <button
           onClick={() => setShareOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-paper text-ink-soft ring-1 ring-line hover:ring-accent/50 transition-colors ml-auto"
+          className="inline-flex items-center gap-2 px-4 py-3 rounded-full bg-paper text-ink-soft ring-1 ring-line hover:ring-accent/50 transition-colors ml-auto"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="18" cy="5" r="3" />
@@ -197,7 +197,7 @@ export default function BlogPostActions({ slug, title, initialLikes }: BlogPostA
                     <span className="font-semibold text-sm">{c.name}</span>
                     <span className="text-xs text-muted">{new Date(c.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + new Date(c.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</span>
                   </div>
-                  <p className="text-sm text-ink-soft whitespace-pre-wrap">{c.content}</p>
+                  <p className="text-sm text-ink-soft break-words whitespace-pre-wrap">{c.content}</p>
                 </div>
               ))}
             </div>
@@ -214,7 +214,7 @@ export default function BlogPostActions({ slug, title, initialLikes }: BlogPostA
           <div className="bg-card rounded-2xl shadow-lift ring-1 ring-line p-6 max-w-sm w-full" onClick={e => e.stopPropagation()}>
             <h3 className="font-display font-bold text-lg mb-4">Share this post</h3>
             <p className="text-sm text-muted mb-6 truncate">{title}</p>
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <button onClick={() => handleShare('twitter')} className="flex flex-col items-center gap-2 px-4 py-3 rounded-xl bg-paper ring-1 ring-line hover:ring-accent/50 transition-colors">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-sky-500">
                   <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 9.24-3.363.92-8.8-9.693-5.327 7.79-3.286-.954L.43 11.493l8.32-9.663 8.494 9.228zm0 0" />

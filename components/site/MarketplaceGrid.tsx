@@ -32,7 +32,7 @@ export default function MarketplaceGrid({ listings }: { listings: Listing[] }) {
             <button
               key={c}
               onClick={() => setCategory(c)}
-              className={`px-4 py-2 rounded-full text-sm font-semibold ring-1 transition-all ${
+              className={`px-4 py-3 rounded-full text-sm font-semibold ring-1 transition-all ${
                 category === c
                   ? 'bg-gradient-cta text-white ring-transparent'
                   : 'bg-card ring-line text-muted hover:text-ink'
