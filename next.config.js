@@ -7,7 +7,7 @@ const nextConfig = {
   poweredByHeader: false,
   async redirects() {
     return [
-      { source: '/courses', destination: '/marketplace', permanent: false }
+      { source: '/courses', destination: '/academy', permanent: false }
     ];
   },
   images: {

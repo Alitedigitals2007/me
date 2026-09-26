@@ -8,7 +8,7 @@ export async function GET() {
     pool.query("SELECT slug FROM blog_posts WHERE status='published'"),
     pool.query('SELECT slug FROM projects')
   ]);
-  const urls = ['/', '/about', '/portfolio', '/courses', '/blog', '/marketplace', '/advertise', '/contact'];
+  const urls = ['/', '/about', '/portfolio', '/academy', '/blog', '/marketplace', '/advertise', '/contact'];
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.map((u) => `  <url><loc>${base}${u}</loc></url>`).join('\n')}

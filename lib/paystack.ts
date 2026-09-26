@@ -102,5 +102,25 @@ export async function finalizePayment(reference: string): Promise<{ success: boo
       delivery
     };
   }
+  if (meta.type === 'course') {
+    const courseId = Number(meta.course_id);
+    const studentId = Number(meta.student_id);
+    const { rowCount, rows } = await pool.query(
+      `UPDATE enrollments SET status='active', amount_paid=$3, payment_ref=$4
+       WHERE course_id=$1 AND student_id=$2 AND status='pending'
+       RETURNING id`,
+      [courseId, studentId, amountNaira, reference]
+    );
+    if (rowCount) {
+      const { rows: cRows } = await pool.query('SELECT title FROM courses WHERE id=$1', [courseId]);
+      sendTelegram(`🎓 <b>Paid course enrollment</b>\nCourse: ${cRows[0]?.title || courseId} — ₦${amountNaira.toLocaleString()}\nRef: ${reference}\n🔗 ${siteUrl()}/admin/academy`);
+      return { success: true, message: 'Enrollment confirmed — start learning!', type: 'course', delivery: { type: 'link' as const, link: '/dashboard', title: 'Your Academy dashboard' } };
+    }
+    const active = await pool.query(`SELECT id FROM enrollments WHERE course_id=$1 AND student_id=$2 AND status IN ('active','completed')`, [courseId, studentId]);
+    if (active.rows.length) {
+      return { success: true, message: 'You are already enrolled in this course.', type: 'course', delivery: { type: 'link' as const, link: '/dashboard', title: 'Your Academy dashboard' } };
+    }
+    return { success: false, message: 'This payment could not be matched to an enrollment.', type: 'course' };
+  }
   return { success: false, message: 'Payment reference is not recognised.' };
 }

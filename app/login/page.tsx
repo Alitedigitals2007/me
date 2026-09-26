@@ -67,6 +67,10 @@ export default function LoginPage() {
         >
           {busy ? 'Signing in…' : 'Sign in'}
         </button>
+        <p className="text-xs text-muted text-center mt-5">
+          Student?{' '}
+          <a href="/academy/login" className="text-accent font-semibold">Log in to the Academy →</a>
+        </p>
       </form>
     </div>
   );
