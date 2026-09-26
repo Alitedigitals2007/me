@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
 import PrintButton from '@/components/academy/PrintButton';
 import pool from '@/lib/db';
 import { ensureAcademySchema } from '@/lib/academy-schema';
@@ -23,7 +22,28 @@ export default async function CertificatePage({ params }: { params: Promise<{ co
      WHERE cert.code=$1`,
     [code]
   );
-  if (!rows.length) notFound();
+  if (!rows.length) {
+    return (
+      <div className="min-h-[70vh] grid place-items-center px-5 py-16">
+        <div className="w-full max-w-lg rounded-3xl bg-card ring-1 ring-line shadow-card p-8 text-center">
+          <p className="text-4xl" aria-hidden>🔍</p>
+          <h1 className="font-display font-extrabold uppercase text-2xl mt-3">Certificate not found</h1>
+          <p className="text-sm text-muted mt-2 break-words">
+            No certificate matches <span className="font-mono font-semibold text-ink">{code.toUpperCase()}</span>.
+            Double-check the code — it looks like <span className="font-mono">ALITE-7F3K</span>.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3 justify-center text-sm">
+            <Link href="/certificates" className="bg-gradient-cta text-white font-semibold px-6 py-2.5 rounded-full">
+              Try another code
+            </Link>
+            <Link href="/dashboard" className="ring-1 ring-line font-semibold px-6 py-2.5 rounded-full hover:ring-accent/50 transition-all">
+              My dashboard
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
   const cert = rows[0];
 
   return (

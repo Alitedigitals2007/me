@@ -17,65 +17,50 @@ export default async function DashboardPage() {
   if (!student) redirect('/academy/login?next=/dashboard');
   await ensureAcademySchema();
 
-  let stage = 'enrollments';
-  let enrollments: any[] = [];
-  let assignmentsRes: { rows: any[] } = { rows: [] };
-  let certsRes: { rows: any[] } = { rows: [] };
-  let classesRes: { rows: any[] } = { rows: [] };
-  const progressByCourse: Record<number, { done: number; total: number; pct: number }> = {};
-  try {
-    {
-      const r = await pool.query(
-        `SELECT e.status, e.enrolled_at, e.completed_at, c.id AS course_id, c.title, c.slug, c.image_url, c.price
-         FROM enrollments e JOIN courses c ON c.id=e.course_id
-         WHERE e.student_id=$1 AND e.status IN ('active','completed')
-         ORDER BY e.enrolled_at DESC`,
-        [student.id]
-      );
-      enrollments = r.rows;
-    }
+  const { rows: enrollments } = await pool.query(
+    `SELECT e.status, e.enrolled_at, e.completed_at, c.id AS course_id, c.title, c.slug, c.image_url, c.price
+     FROM enrollments e JOIN courses c ON c.id=e.course_id
+     WHERE e.student_id=$1 AND e.status IN ('active','completed')
+     ORDER BY e.enrolled_at DESC`,
+    [student.id]
+  );
 
-    const courseIds = enrollments.map((e) => e.course_id);
-    if (courseIds.length) {
-      stage = 'assignments';
-      assignmentsRes = await pool.query(
-        `SELECT a.id, a.title, a.instructions, a.due_at, a.max_score, c.title AS course_title, c.slug AS course_slug,
-                s.content AS sub_content, s.file_url AS sub_file, s.status AS sub_status, s.score, s.feedback, s.submitted_at
-         FROM assignments a
-         JOIN courses c ON c.id=a.course_id
-         LEFT JOIN submissions s ON s.assignment_id=a.id AND s.student_id=$1
-         WHERE a.course_id = ANY($2::int[])
-         ORDER BY a.due_at ASC NULLS LAST, a.id ASC`,
-        [student.id, courseIds]
-      );
-      stage = 'certificates';
-      certsRes = await pool.query(
-        `SELECT cert.code, cert.issued_at, c.title, c.slug
-         FROM certificates cert JOIN courses c ON c.id=cert.course_id
-         WHERE cert.student_id=$1 ORDER BY cert.issued_at DESC`,
-        [student.id]
-      );
-      stage = 'classes';
-      classesRes = await pool.query(
-        `SELECT cs.id, cs.title, cs.starts_at, cs.join_url, cs.recording_url, c.title AS course_title
-         FROM class_sessions cs JOIN courses c ON c.id=cs.course_id
-         WHERE cs.course_id = ANY($2::int[]) AND cs.starts_at >= now()
-         ORDER BY cs.starts_at ASC LIMIT 10`,
-        [student.id, courseIds]
-      );
-      stage = 'progress';
-      for (const e of enrollments) {
-        progressByCourse[e.course_id] = await getCourseProgress(student.id, e.course_id);
-      }
-    }
-  } catch (err) {
-    return (
-      <div className="mx-auto max-w-4xl px-5 py-14">
-        <h1 className="font-display font-extrabold uppercase text-2xl">DIAGNOSTIC</h1>
-        <p className="text-sm font-semibold mt-2">stage: {stage}</p>
-        <pre className="mt-4 rounded-xl bg-card ring-1 ring-line p-4 text-xs whitespace-pre-wrap break-words">{String(err)}</pre>
-      </div>
-    );
+  const courseIds = enrollments.map((e) => e.course_id);
+  const [assignmentsRes, certsRes, classesRes] = courseIds.length
+    ? await Promise.all([
+        pool.query(
+          `SELECT a.id, a.title, a.instructions, a.due_at, a.max_score, c.title AS course_title, c.slug AS course_slug,
+                  s.content AS sub_content, s.file_url AS sub_file, s.status AS sub_status, s.score, s.feedback, s.submitted_at
+           FROM assignments a
+           JOIN courses c ON c.id=a.course_id
+           LEFT JOIN submissions s ON s.assignment_id=a.id AND s.student_id=$1
+           WHERE a.course_id = ANY($2::int[])
+           ORDER BY a.due_at ASC NULLS LAST, a.id ASC`,
+          [student.id, courseIds]
+        ),
+        pool.query(
+          `SELECT cert.code, cert.issued_at, c.title, c.slug
+           FROM certificates cert JOIN courses c ON c.id=cert.course_id
+           WHERE cert.student_id=$1 ORDER BY cert.issued_at DESC`,
+          [student.id]
+        ),
+        pool.query(
+          `SELECT cs.id, cs.title, cs.starts_at, cs.join_url, cs.recording_url, c.title AS course_title
+           FROM class_sessions cs JOIN courses c ON c.id=cs.course_id
+           WHERE cs.course_id = ANY($1::int[]) AND cs.starts_at >= now()
+           ORDER BY cs.starts_at ASC LIMIT 10`,
+          [courseIds]
+        )
+      ])
+    : [
+        { rows: [] as any[] },
+        { rows: [] as any[] },
+        { rows: [] as any[] }
+      ];
+
+  const progressByCourse: Record<number, { done: number; total: number; pct: number }> = {};
+  for (const e of enrollments) {
+    progressByCourse[e.course_id] = await getCourseProgress(student.id, e.course_id);
   }
 
   const pending = assignmentsRes.rows.filter((a) => !a.sub_status || a.sub_status === 'pending');

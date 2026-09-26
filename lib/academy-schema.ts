@@ -17,6 +17,7 @@ ALTER TABLE courses ADD COLUMN IF NOT EXISTS delivery TEXT NOT NULL DEFAULT 'int
 ALTER TABLE courses ADD COLUMN IF NOT EXISTS level TEXT NOT NULL DEFAULT '';
 ALTER TABLE courses ADD COLUMN IF NOT EXISTS duration TEXT NOT NULL DEFAULT '';
 UPDATE courses SET slug = lower(regexp_replace(title, '[^a-zA-Z0-9]+', '-', 'g')) WHERE slug IS NULL OR slug = '';
+UPDATE courses SET slug = slug || '-' || id WHERE slug IN (SELECT slug FROM courses WHERE slug IS NOT NULL AND slug <> '' GROUP BY slug HAVING COUNT(*) > 1);
 CREATE UNIQUE INDEX IF NOT EXISTS courses_slug_key ON courses (slug);
 
 CREATE TABLE IF NOT EXISTS modules (
@@ -133,11 +134,38 @@ CREATE TABLE IF NOT EXISTS certificates (
 
 let ensured = false;
 
+const CRITICAL_TABLES = [
+  'students', 'modules', 'lessons', 'enrollments', 'lesson_progress', 'assignments',
+  'submissions', 'quizzes', 'quiz_questions', 'quiz_attempts', 'class_sessions', 'certificates'
+];
+
+async function schemaReady(): Promise<boolean> {
+  try {
+    const tableChecks = CRITICAL_TABLES.map((t, i) => `to_regclass('public.${t}') IS NOT NULL AS t${i}`).join(', ');
+    const { rows } = await pool.query(`SELECT ${tableChecks}`);
+    if (!Object.values(rows[0]).every(Boolean)) return false;
+    await pool.query(`SELECT slug, status, delivery, level, duration FROM courses LIMIT 0`);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function ensureAcademySchema(): Promise<void> {
   if (ensured) return;
   try {
-    await pool.query(ACADEMY_DDL);
-    ensured = true;
+    const statements = ACADEMY_DDL.split(';')
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .map((s) => `${s};`);
+    for (const stmt of statements) {
+      try {
+        await pool.query(stmt);
+      } catch (e) {
+        console.error('academy ddl statement failed:', (e as Error).message, '->', stmt.slice(0, 80));
+      }
+    }
+    ensured = await schemaReady();
   } catch (e) {
     console.error('academy schema', e);
   }
