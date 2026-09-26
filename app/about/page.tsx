@@ -28,7 +28,7 @@ export default async function AboutPage() {
   const schools = education.filter((e) => e.type !== 'certification');
   const certifications = education.filter((e) => e.type === 'certification');
 
-  const byYear: Map<string, (typeof roles)[number]> = new Map();
+  const byYear: Map<string, (typeof roles)[number][]> = new Map();
   for (const r of [...roles].sort((a, b) => a.order_index - b.order_index)) {
     const key = r.start_date || 'Earlier';
     const bucket = byYear.get(key);
