@@ -6,14 +6,23 @@ export default function ImageUploader({
   name,
   label,
   defaultValue = '',
-  folder = 'general'
+  folder = 'general',
+  value,
+  onChange
 }: {
-  name: string;
+  name?: string;
   label?: string;
   defaultValue?: string;
   folder?: string;
+  value?: string;
+  onChange?: (url: string) => void;
 }) {
-  const [url, setUrl] = useState(defaultValue);
+  const [internal, setInternal] = useState(defaultValue);
+  const url = value !== undefined ? value : internal;
+  const setUrl = (u: string) => {
+    setInternal(u);
+    onChange?.(u);
+  };
   const [busy, setBusy] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -39,7 +48,7 @@ export default function ImageUploader({
   return (
     <div>
       {label && <span className="text-xs font-semibold text-ink-soft">{label}</span>}
-      <input type="hidden" name={name} value={url} />
+      {name && <input type="hidden" name={name} value={url} />}
       <div className="mt-1 flex flex-wrap items-center gap-3">
         {url ? (
           <img src={url} alt="" className="w-20 h-14 rounded-lg object-cover ring-1 ring-line" />

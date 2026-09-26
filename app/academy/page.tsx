@@ -1,14 +1,16 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Reveal from '@/components/site/Reveal';
+import LogoutButton from '@/components/academy/LogoutButton';
 import { SectionHead } from '@/components/site/Cards';
 import { getPublishedCourses, coursePriceNumber } from '@/lib/academy';
+import { getStudent } from '@/lib/student-session';
 
 export const metadata: Metadata = { title: 'Academy' };
 export const dynamic = 'force-dynamic';
 
 export default async function AcademyPage() {
-  const courses = await getPublishedCourses();
+  const [courses, student] = await Promise.all([getPublishedCourses(), getStudent()]);
 
   return (
     <div className="mx-auto max-w-6xl px-5 py-14 md:py-20">
@@ -24,6 +26,23 @@ export default async function AcademyPage() {
           />
         </div>
       </Reveal>
+
+      {student && (
+        <Reveal>
+          <div className="mt-6 flex flex-wrap items-center gap-3 rounded-2xl bg-card ring-1 ring-line shadow-card px-5 py-3.5">
+            <span className="text-sm">
+              <span className="font-semibold">Hi {student.name.split(' ')[0]}</span>
+              <span className="text-muted"> — you are logged in</span>
+            </span>
+            <div className="ml-auto flex items-center gap-2">
+              <Link href="/dashboard" className="bg-gradient-cta text-white text-sm font-semibold px-5 py-2.5 rounded-full hover:-translate-y-0.5 transition-all">
+                My dashboard →
+              </Link>
+              <LogoutButton />
+            </div>
+          </div>
+        </Reveal>
+      )}
 
       {courses.length === 0 ? (
         <Reveal>

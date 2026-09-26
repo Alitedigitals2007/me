@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import ImageUploader from '@/components/admin/ImageUploader';
 
 export default function CourseForm() {
   const [open, setOpen] = useState(false);
@@ -11,6 +12,7 @@ export default function CourseForm() {
   const [level, setLevel] = useState('');
   const [duration, setDuration] = useState('');
   const [description, setDescription] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -22,7 +24,7 @@ export default function CourseForm() {
       const res = await fetch('/api/admin/academy/courses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, price: Number(price) || 0, status, delivery, level, duration, description })
+        body: JSON.stringify({ title, price: Number(price) || 0, status, delivery, level, duration, description, image_url: imageUrl })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Create failed');
@@ -58,6 +60,7 @@ export default function CourseForm() {
         <input value={level} onChange={(e) => setLevel(e.target.value)} placeholder="Level (e.g. Beginner)" className="rounded-xl bg-paper ring-1 ring-line px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-accent" />
         <input value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="Duration (e.g. 6 weeks)" className="rounded-xl bg-paper ring-1 ring-line px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-accent" />
       </div>
+      <ImageUploader label="Course image" folder="courses" value={imageUrl} onChange={setImageUrl} />
       <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="Description" className="w-full rounded-xl bg-paper ring-1 ring-line px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-accent" />
       {error && <p className="text-sm text-danger">{error}</p>}
       <div className="flex gap-2">

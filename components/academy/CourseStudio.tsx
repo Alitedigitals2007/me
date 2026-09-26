@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import ImageUploader from '@/components/admin/ImageUploader';
 
 interface Course {
   id: number; title: string; slug: string; description: string; price: string; status: string;
@@ -123,7 +124,9 @@ export default function CourseStudio({
             {basics.delivery === 'external' && (
               <input className={input} value={basics.link} onChange={(e) => setBasics({ ...basics, link: e.target.value })} placeholder="External course URL" />
             )}
-            <input className={input} value={basics.image_url} onChange={(e) => setBasics({ ...basics, image_url: e.target.value })} placeholder="Image URL" />
+            <div className="sm:col-span-2">
+              <ImageUploader label="Course image" folder="courses" value={basics.image_url} onChange={(url) => setBasics((b) => ({ ...b, image_url: url }))} />
+            </div>
           </div>
           <textarea className={`${input} h-24`} value={basics.description} onChange={(e) => setBasics({ ...basics, description: e.target.value })} placeholder="Description" />
           <button className={btn} disabled={busy}>{busy ? 'Saving…' : 'Save changes'}</button>
