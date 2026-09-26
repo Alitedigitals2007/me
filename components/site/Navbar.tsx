@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { AnimatePresence, motion, useScroll, useSpring } from 'framer-motion';
-import StudentNav from '@/components/site/StudentNav';
+import SessionNav from '@/components/site/SessionNav';
 
 const LINKS = [
   { href: '/', label: 'Home' },
@@ -78,7 +78,7 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-2">
-          <StudentNav />
+          <SessionNav />
           <Link
             href="/contact"
             className="hidden sm:inline-flex bg-gradient-cta text-white text-sm font-semibold px-5 py-2.5 rounded-full shadow-[0_8px_24px_rgba(79,70,229,0.35)] hover:shadow-[0_10px_32px_rgba(79,70,229,0.45)] hover:-translate-y-0.5 transition-all"
