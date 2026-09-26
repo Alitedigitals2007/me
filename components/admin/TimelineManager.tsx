@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import TimelineForm, { type TimelineField } from '@/components/admin/TimelineForm';
 import ActionButton from '@/components/admin/ActionButton';
+import AdminHeader from '@/components/admin/AdminHeader';
 import type { EducationItem, RoleItem, Course } from '@/lib/types';
 
 type Item = EducationItem | RoleItem | Course;
@@ -23,8 +24,7 @@ export default function TimelineManager({
 
   return (
     <div>
-      <div className="flex items-center justify-between">
-        <h1 className="font-display font-extrabold uppercase text-3xl">{title}</h1>
+      <AdminHeader title={title}>
         <button
           onClick={() => {
             setEditing(null);
@@ -34,7 +34,7 @@ export default function TimelineManager({
         >
           {showForm ? 'Close' : '+ Add'}
         </button>
-      </div>
+      </AdminHeader>
 
       {showForm && (
         <div className="mt-6">
@@ -49,7 +49,7 @@ export default function TimelineManager({
             const heading = String(d.title || d.institution || '');
             const sub = String(d.org || d.program || '');
             return (
-              <div key={String(d.id)} className="flex items-center justify-between gap-4 rounded-xl bg-card ring-1 ring-line px-4 py-3">
+              <div key={String(d.id)} className="flex items-center justify-between gap-4 rounded-xl bg-card ring-1 ring-line hover:ring-accent/40 px-4 py-3 transition-all">
                 <div className="min-w-0">
                   <p className="font-semibold text-sm truncate">{heading}</p>
                   <p className="text-xs text-muted truncate">
