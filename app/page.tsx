@@ -61,16 +61,18 @@ export default async function HomePage() {
       )}
 
       {listings.length > 0 && (
-        <section className="mx-auto max-w-6xl px-5 py-16 md:py-20">
-          <Reveal>
-            <SectionHead title="Marketplace" sub="Products, services and curated listings." link="/marketplace" />
-          </Reveal>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {listings.slice(0, 3).map((l, i) => (
-              <Reveal key={l.id} delay={i * 0.08}>
-                <ListingCard l={l} />
-              </Reveal>
-            ))}
+        <section className="bg-ink text-white py-16 md:py-20">
+          <div className="mx-auto max-w-6xl px-5">
+            <Reveal>
+              <SectionHead dark title="Marketplace" sub="Products, services and curated listings." link="/marketplace" />
+            </Reveal>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {listings.slice(0, 3).map((l, i) => (
+                <Reveal key={l.id} delay={i * 0.08}>
+                  <ListingCard l={l} />
+                </Reveal>
+              ))}
+            </div>
           </div>
         </section>
       )}

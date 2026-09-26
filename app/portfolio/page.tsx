@@ -15,7 +15,7 @@ export default async function PortfolioPage() {
   return (
     <div className="mx-auto max-w-6xl px-5 py-14 md:py-20">
       <Reveal>
-        <SectionHead title="Selected work" sub="Every project is an exercise in engineering — designed to work in the real world." />
+        <SectionHead asPage title="Selected work" sub="Every project is an exercise in engineering — designed to work in the real world." />
       </Reveal>
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {projects.map((p, i) => (

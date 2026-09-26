@@ -3,17 +3,42 @@ import type { BlogPost, Listing, Project } from '@/lib/types';
 import { formatDate, formatMoney } from '@/lib/utils';
 import { BuyNow } from './BuyNow';
 
-export function SectionHead({ title, sub, link, linkLabel }: { title: string; sub?: string; link?: string; linkLabel?: string }) {
+export function SectionHead({
+  title,
+  sub,
+  link,
+  linkLabel,
+  dark,
+  asPage
+}: {
+  title: string;
+  sub?: string;
+  link?: string;
+  linkLabel?: string;
+  dark?: boolean;
+  asPage?: boolean;
+}) {
+  const Heading = asPage ? 'h1' : 'h2';
   return (
     <div className="flex flex-wrap items-end justify-between gap-3 mb-8">
       <div>
-        <h2 className="font-display font-bold uppercase tracking-tight text-3xl md:text-4xl">
-          <span className="text-gradient">{title.split(' ')[0]}</span> {title.split(' ').slice(1).join(' ')}
-        </h2>
-        {sub && <p className="text-muted mt-2 max-w-lg">{sub}</p>}
+        <Heading
+          className={`font-display font-bold uppercase tracking-tight leading-[1.02] ${
+            asPage ? 'text-4xl md:text-[2.75rem]' : 'text-3xl md:text-4xl'
+          } ${dark ? 'text-white' : ''}`}
+        >
+          <span className={dark ? 'text-cyan-accent' : 'text-gradient'}>{title.split(' ')[0]}</span>{' '}
+          {title.split(' ').slice(1).join(' ')}
+        </Heading>
+        {sub && <p className={`mt-2 max-w-lg ${dark ? 'text-white/60' : 'text-muted'}`}>{sub}</p>}
       </div>
       {link && (
-        <Link href={link} className="group inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:text-accent-2 transition-colors">
+        <Link
+          href={link}
+          className={`group inline-flex items-center gap-1.5 text-sm font-semibold transition-colors ${
+            dark ? 'text-white/75 hover:text-white' : 'text-accent hover:text-accent-2'
+          }`}
+        >
           {linkLabel || 'View all'}
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="transition-transform group-hover:translate-x-1">
             <path d="M5 12h14M13 6l6 6-6 6" />
@@ -28,7 +53,7 @@ export function ProjectCard({ p }: { p: Project }) {
   return (
     <Link
       href={`/portfolio/${p.slug}`}
-      className="group flex flex-col overflow-hidden rounded-2xl bg-card ring-1 ring-line shadow-card hover:shadow-lift hover:-translate-y-1.5 transition-all duration-300"
+      className="group flex flex-col overflow-hidden rounded-2xl bg-card ring-1 ring-line hover:ring-accent/40 shadow-card hover:shadow-lift hover:-translate-y-1.5 transition-all duration-300"
     >
       <div className="relative overflow-hidden aspect-[16/10] bg-paper">
         {p.image_url ? (
@@ -55,7 +80,7 @@ export function BlogCard({ p }: { p: BlogPost & { comment_count?: number } }) {
   return (
     <Link
       href={`/blog/${p.slug}`}
-      className="group flex flex-col overflow-hidden rounded-2xl bg-card ring-1 ring-line shadow-card hover:shadow-lift hover:-translate-y-1.5 transition-all duration-300"
+      className="group flex flex-col overflow-hidden rounded-2xl bg-card ring-1 ring-line hover:ring-accent/40 shadow-card hover:shadow-lift hover:-translate-y-1.5 transition-all duration-300"
     >
       <div className="relative overflow-hidden aspect-[16/9] bg-paper">
         {p.cover_image ? (
@@ -96,7 +121,7 @@ export function BlogCard({ p }: { p: BlogPost & { comment_count?: number } }) {
 
 export function ListingCard({ l }: { l: Listing }) {
   return (
-    <div className="group flex flex-col overflow-hidden rounded-2xl bg-card ring-1 ring-line shadow-card hover:shadow-lift hover:-translate-y-1.5 transition-all duration-300">
+    <div className="group flex flex-col overflow-hidden rounded-2xl bg-card ring-1 ring-line hover:ring-accent/40 shadow-card hover:shadow-lift hover:-translate-y-1.5 transition-all duration-300">
       <div className="relative overflow-hidden aspect-[16/10] bg-paper">
         {l.image_url ? (
           <img src={l.image_url} alt={l.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />

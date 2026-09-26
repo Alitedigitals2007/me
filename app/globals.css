@@ -25,28 +25,40 @@
   --animate-blob-2: blob2 22s ease-in-out infinite;
   --animate-gradient-x: gradient-x 6s ease infinite;
 
+  --animate-intro-beam: intro-beam 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+  --animate-intro-beam-hot: intro-fade 0.3s ease-out 2.3s both;
   --animate-intro-rise: intro-rise 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
-  --animate-intro-fadeup: intro-fadeup 0.5s cubic-bezier(0.16, 1, 0.3, 1) 1.15s both;
-  --animate-intro-blink: intro-blink 0.5s ease-out 1.2s both;
-  --animate-intro-seam: intro-seam 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.25s both;
-  --animate-intro-glow: intro-glow 0.35s ease-out 1.95s both;
-  --animate-intro-out: intro-card-out 0.3s ease-in 2.25s both;
-  --animate-intro-door-t: intro-door-top 0.7s cubic-bezier(0.16, 1, 0.3, 1) 2.45s both;
-  --animate-intro-door-b: intro-door-bottom 0.7s cubic-bezier(0.16, 1, 0.3, 1) 2.45s both;
-  --animate-intro-hint: intro-fade 0.4s ease-out 1.1s both;
-  --animate-intro-done: intro-done 0.01s linear 3.16s forwards;
+  --animate-intro-settle: intro-settle 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.55s both;
+  --animate-intro-shine: intro-shine 0.75s cubic-bezier(0.4, 0, 0.2, 1) 1.4s both;
+  --animate-intro-blink: intro-blink 0.5s ease-out 1.35s both;
+  --animate-intro-tag: intro-tag 0.55s cubic-bezier(0.16, 1, 0.3, 1) 1.55s both;
+  --animate-intro-out: intro-card-out 0.3s ease-in 2.45s both;
+  --animate-intro-bloom: intro-bloom 1.1s ease-out 2.3s both;
+  --animate-intro-door-t: intro-door-top 0.8s cubic-bezier(0.16, 1, 0.3, 1) 2.65s both;
+  --animate-intro-door-b: intro-door-bottom 0.8s cubic-bezier(0.16, 1, 0.3, 1) 2.65s both;
+  --animate-intro-edge: intro-fade 0.25s ease-out 2.6s both;
+  --animate-intro-hint: intro-fade 0.4s ease-out 1.6s both;
+  --animate-intro-done: intro-done 0.01s linear 3.56s forwards;
 
   @keyframes marquee {
     from { transform: translateX(0); }
     to { transform: translateX(-50%); }
   }
+  @keyframes intro-beam {
+    from { opacity: 0; transform: scaleX(0); }
+    to { opacity: 1; transform: scaleX(1); }
+  }
   @keyframes intro-rise {
     from { transform: translateY(120%); }
     to { transform: translateY(0); }
   }
-  @keyframes intro-fadeup {
-    from { opacity: 0; transform: translateY(14px); }
-    to { opacity: 1; transform: translateY(0); }
+  @keyframes intro-settle {
+    from { transform: scale(1.06); }
+    to { transform: scale(1); }
+  }
+  @keyframes intro-shine {
+    from { transform: translateX(-170%) skewX(-16deg); }
+    to { transform: translateX(560%) skewX(-16deg); }
   }
   @keyframes intro-blink {
     0% { opacity: 0; }
@@ -55,17 +67,19 @@
     70% { opacity: 1; }
     100% { opacity: 1; }
   }
-  @keyframes intro-seam {
-    from { opacity: 0; transform: scaleX(0); }
-    to { opacity: 1; transform: scaleX(1); }
-  }
-  @keyframes intro-glow {
-    from { opacity: 0; }
-    to { opacity: 1; }
+  @keyframes intro-tag {
+    from { opacity: 0; letter-spacing: 0.6em; }
+    to { opacity: 1; letter-spacing: 0.35em; }
   }
   @keyframes intro-card-out {
-    from { opacity: 1; }
-    to { opacity: 0; }
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0; transform: scale(1.05); }
+  }
+  @keyframes intro-bloom {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+    36% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
+    70% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.3); }
   }
   @keyframes intro-door-top {
     from { transform: translateY(0); }
@@ -110,6 +124,19 @@ body {
 }
 html.intro-armed .intro { visibility: visible; }
 html.intro-armed { overflow: hidden; }
+
+/* About orbit: chips ride a circle while staying upright (compound transform) */
+@keyframes orbit-item {
+  from {
+    transform: rotate(var(--start)) translateX(var(--r)) rotate(calc(var(--start) * -1));
+  }
+  to {
+    transform: rotate(calc(var(--start) + 360deg)) translateX(var(--r)) rotate(calc((var(--start) + 360deg) * -1));
+  }
+}
+@keyframes orbit-spin {
+  to { transform: rotate(360deg); }
+}
 
 .text-gradient {
   @apply bg-clip-text text-transparent;

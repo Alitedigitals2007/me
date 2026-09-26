@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Reveal from '@/components/site/Reveal';
 import AdSlot from '@/components/site/AdSlot';
+import OrbitSystem from '@/components/site/OrbitSystem';
 import { getEducation, getRoles } from '@/lib/data';
 import { loadAds } from '@/lib/ads';
 import { getSettings } from '@/lib/settings';
@@ -29,19 +30,25 @@ export default async function AboutPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-5 py-14 md:py-20">
-      <Reveal>
-        <p className="text-xs font-bold uppercase tracking-[0.3em] text-accent">Who is Alite</p>
-        <h1 className="mt-3 font-display font-extrabold uppercase tracking-tight text-[clamp(2.2rem,5.5vw,3.8rem)] leading-[0.95]">
-          Atilola Israel<br />
-          <span className="text-gradient">Ayomide</span>
-        </h1>
-        <div className="mt-6 max-w-3xl border-l-4 border-accent pl-6">
-          <p className="text-lg md:text-xl text-ink-soft italic font-medium leading-relaxed">
-            “I build smart systems that help people manage, grow, and succeed through technology and structured thinking.”
-          </p>
-        </div>
-        <p className="mt-6 max-w-3xl text-ink-soft leading-relaxed">{settings.about_bio}</p>
-      </Reveal>
+      <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-12 lg:gap-14 items-center">
+        <Reveal>
+          <p className="text-xs font-bold uppercase tracking-[0.3em] text-accent">Who is Alite</p>
+          <h1 className="mt-3 font-display font-extrabold uppercase tracking-tight text-[clamp(2.2rem,5.5vw,4.2rem)] leading-[0.95]">
+            Atilola Israel<br />
+            <span className="text-gradient">Ayomide</span>
+          </h1>
+          <div className="mt-6 max-w-2xl border-l-4 border-accent pl-6">
+            <p className="text-lg md:text-xl text-ink-soft italic font-medium leading-relaxed">
+              “I build smart systems that help people manage, grow, and succeed through technology and structured thinking.”
+            </p>
+          </div>
+          <p className="mt-6 max-w-2xl text-ink-soft leading-relaxed">{settings.about_bio}</p>
+        </Reveal>
+
+        <Reveal delay={0.15}>
+          <OrbitSystem photo={settings.hero_photo || '/img/me.jpg'} name={settings.hero_name} />
+        </Reveal>
+      </div>
 
       <div className="mt-16 grid lg:grid-cols-2 gap-10">
         <div>

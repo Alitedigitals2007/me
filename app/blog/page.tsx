@@ -23,7 +23,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
   return (
     <div className="mx-auto max-w-6xl px-5 py-14 md:py-20">
       <Reveal>
-        <SectionHead title="The blog" sub="Writing on technology, student leadership and building in public." />
+        <SectionHead asPage title="The blog" sub="Writing on technology, student leadership and building in public." />
       </Reveal>
 
       {allTags.length > 0 && (

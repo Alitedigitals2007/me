@@ -40,7 +40,7 @@ export default function Hero({ settings }: { settings: Settings }) {
     }
     const start = () => setGate(false);
     window.addEventListener('alite:intro-reveal', start);
-    const fallback = setTimeout(start, Math.max(0, 2450 - performance.now()));
+    const fallback = setTimeout(start, Math.max(0, 2600 - performance.now()));
     return () => {
       window.removeEventListener('alite:intro-reveal', start);
       clearTimeout(fallback);
@@ -71,7 +71,7 @@ export default function Hero({ settings }: { settings: Settings }) {
 
             <motion.h1
               variants={item}
-              className="mt-6 font-display font-extrabold uppercase leading-[0.95] tracking-tight text-[clamp(2.6rem,7vw,4.6rem)]"
+              className="mt-6 font-display font-extrabold uppercase leading-[0.95] tracking-tight text-[clamp(2.8rem,7.5vw,5.2rem)]"
             >
               Building smart
               <br />
@@ -144,11 +144,11 @@ export default function Hero({ settings }: { settings: Settings }) {
       </div>
 
       {/* skills marquee */}
-      <div className="relative border-y border-line bg-card py-4 overflow-hidden">
+      <div className="relative border-y border-ink/10 bg-ink py-4 overflow-hidden">
         <div className="flex whitespace-nowrap animate-marquee gap-0" style={{ width: 'max-content' }}>
           {[...SKILLS, ...SKILLS].map((s, i) => (
-            <span key={i} className="mx-6 inline-flex items-center gap-2 text-sm font-semibold text-ink-soft uppercase tracking-wider">
-              <span className="text-gradient">◆</span> {s}
+            <span key={i} className="mx-6 inline-flex items-center gap-2 text-sm font-semibold text-white/75 uppercase tracking-wider">
+              <span className="text-cyan-accent">◆</span> {s}
             </span>
           ))}
         </div>

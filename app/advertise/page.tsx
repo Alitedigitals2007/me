@@ -15,6 +15,7 @@ export default async function AdvertisePage() {
     <div className="mx-auto max-w-6xl px-5 py-14 md:py-20">
       <Reveal>
         <SectionHead
+          asPage
           title="Advertise with me"
           sub="Reach my audience — students, founders and businesses across Nigeria. Pay per day, cancel anytime."
         />

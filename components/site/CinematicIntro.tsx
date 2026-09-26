@@ -17,7 +17,7 @@ export default function CinematicIntro({ siteName, tagline }: { siteName: string
       setShow(false);
       return;
     }
-    const timer = setTimeout(finish, 3400);
+    const timer = setTimeout(finish, 3700);
     window.addEventListener('pointerdown', finish);
     window.addEventListener('keydown', finish);
     return () => {
@@ -40,41 +40,60 @@ export default function CinematicIntro({ siteName, tagline }: { siteName: string
           exit={{ opacity: 0, transition: { duration: 0.18 } }}
           onClick={finish}
         >
-          <div className="absolute inset-x-0 top-0 h-1/2 bg-ink animate-intro-door-t" aria-hidden />
-          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-ink animate-intro-door-b" aria-hidden />
+          {/* doors */}
+          <div className="absolute inset-x-0 top-0 h-1/2 bg-ink animate-intro-door-t">
+            <div className="absolute inset-x-0 bottom-0 h-[2px] bg-gradient-to-r from-transparent via-white/70 to-transparent animate-intro-edge" />
+          </div>
+          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-ink animate-intro-door-b">
+            <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-white/70 to-transparent animate-intro-edge" />
+          </div>
 
+          {/* light bloom — lives in the opening gap */}
+          <div
+            className="absolute left-1/2 top-1/2 h-[45vh] w-[85vw] rounded-full bg-accent/35 blur-[80px] animate-intro-bloom"
+            aria-hidden
+          />
+
+          {/* title card */}
           <div className="absolute inset-0 animate-intro-out">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_38%,rgba(2,4,10,0.55))]" aria-hidden />
+
             <div className="absolute inset-0 grid grid-rows-[1fr_auto_1fr]">
-              <div className="flex items-end justify-center pb-5">
-                <h1 className="font-display font-extrabold uppercase text-white leading-none tracking-[-0.03em] text-[clamp(2.8rem,9vw,6rem)] flex">
-                  {letters.map((ch, i) => (
-                    <span key={i} className="inline-block overflow-hidden">
-                      <span
-                        className="inline-block animate-intro-rise"
-                        style={{ animationDelay: `${0.45 + i * step}s` }}
-                      >
-                        {ch === ' ' ? '\u00A0' : ch}
+              <div className="flex items-end justify-center pb-5 px-4">
+                <div className="relative animate-intro-settle">
+                  <h1 className="font-display font-extrabold uppercase text-white leading-none tracking-[-0.03em] text-[clamp(2.8rem,9vw,6rem)] flex">
+                    {letters.map((ch, i) => (
+                      <span key={i} className="inline-block overflow-hidden">
+                        <span
+                          className="inline-block animate-intro-rise"
+                          style={{ animationDelay: `${0.6 + i * step}s` }}
+                        >
+                          {ch === ' ' ? '\u00A0' : ch}
+                        </span>
                       </span>
-                    </span>
-                  ))}
-                  <span className="inline-block animate-intro-blink text-gradient">_</span>
-                </h1>
+                    ))}
+                    <span className="inline-block animate-intro-blink text-gradient">_</span>
+                  </h1>
+                  <span className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
+                    <span className="absolute inset-y-0 left-0 w-[30%] bg-gradient-to-r from-transparent via-white/55 to-transparent animate-intro-shine" />
+                  </span>
+                </div>
               </div>
 
               <div className="relative flex justify-center">
                 <span
-                  className="relative z-10 block h-px w-[62vw] max-w-md bg-gradient-to-r from-transparent via-white to-transparent animate-intro-seam"
+                  className="block h-px w-[74vw] max-w-xl bg-gradient-to-r from-transparent via-white to-transparent animate-intro-beam"
                   aria-hidden
                 />
                 <span
-                  className="absolute -inset-x-10 -inset-y-5 rounded-full bg-accent/40 blur-2xl animate-intro-glow"
+                  className="absolute left-1/2 top-1/2 h-[3px] w-[74vw] max-w-xl -translate-x-1/2 -translate-y-1/2 bg-white blur-[3px] animate-intro-beam-hot"
                   aria-hidden
                 />
               </div>
 
               <div className="flex justify-center pt-5 px-6">
                 {tagline && (
-                  <p className="animate-intro-fadeup text-white/70 text-[11px] sm:text-xs uppercase tracking-[0.35em] text-center pl-[0.35em]">
+                  <p className="animate-intro-tag text-white/70 text-[11px] sm:text-xs uppercase text-center pl-[0.35em]">
                     {tagline}
                   </p>
                 )}

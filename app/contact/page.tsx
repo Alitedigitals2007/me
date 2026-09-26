@@ -17,7 +17,7 @@ export default async function ContactPage() {
   return (
     <div className="mx-auto max-w-6xl px-5 py-14 md:py-20">
       <Reveal>
-        <SectionHead title="Let's talk" sub="Project, collaboration, or just to say hi — my inbox is open." />
+        <SectionHead asPage title="Let's talk" sub="Project, collaboration, or just to say hi — my inbox is open." />
       </Reveal>
 
       <div className="grid md:grid-cols-2 gap-10 items-start">

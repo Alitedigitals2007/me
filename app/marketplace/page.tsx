@@ -14,6 +14,7 @@ export default async function MarketplacePage() {
     <div className="mx-auto max-w-6xl px-5 py-14 md:py-20">
       <Reveal>
         <SectionHead
+          asPage
           title="Marketplace"
           sub="Things I have built, sell, or recommend — courses, tools, and services."
         />
