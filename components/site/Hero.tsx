@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import type { Settings } from '@/lib/types';
@@ -28,6 +29,24 @@ const item = {
 };
 
 export default function Hero({ settings }: { settings: Settings }) {
+  // Hold the entrance while the cinematic intro is playing, so the hero
+  // reveals together with the opening doors. Starts immediately otherwise.
+  const [gate, setGate] = useState(true);
+
+  useEffect(() => {
+    if (!document.documentElement.classList.contains('intro-armed')) {
+      setGate(false);
+      return;
+    }
+    const start = () => setGate(false);
+    window.addEventListener('alite:intro-reveal', start);
+    const fallback = setTimeout(start, Math.max(0, 2450 - performance.now()));
+    return () => {
+      window.removeEventListener('alite:intro-reveal', start);
+      clearTimeout(fallback);
+    };
+  }, []);
+
   return (
     <section className="relative overflow-hidden">
       {/* ambient blobs */}
@@ -39,7 +58,7 @@ export default function Hero({ settings }: { settings: Settings }) {
 
       <div className="relative mx-auto max-w-6xl px-5 pt-16 pb-14 lg:pt-24 lg:pb-20">
         <div className="grid lg:grid-cols-[1.35fr_1fr] gap-12 lg:gap-16 items-center">
-          <motion.div variants={container} initial="hidden" animate="show">
+          <motion.div variants={container} initial="hidden" animate={gate ? 'hidden' : 'show'}>
             <motion.div variants={item}>
               <span className="inline-flex items-center gap-2 rounded-full bg-white ring-1 ring-line px-4 py-1.5 text-xs font-semibold text-ink-soft shadow-sm">
                 <span className="relative flex h-2 w-2">
@@ -99,7 +118,7 @@ export default function Hero({ settings }: { settings: Settings }) {
 
           <motion.div
             initial={{ opacity: 0, scale: 0.92, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
+            animate={gate ? { opacity: 0, scale: 0.92, y: 20 } : { opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.9, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
             className="relative mx-auto w-full max-w-sm"
           >
@@ -113,7 +132,7 @@ export default function Hero({ settings }: { settings: Settings }) {
             </div>
             <motion.div
               initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
+              animate={gate ? { opacity: 0, y: 14 } : { opacity: 1, y: 0 }}
               transition={{ delay: 0.8, duration: 0.6 }}
               className="absolute -bottom-5 -left-6 glass rounded-2xl ring-1 ring-line px-4 py-3 shadow-card"
             >

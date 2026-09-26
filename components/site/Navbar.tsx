@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useScroll, useSpring } from 'framer-motion';
 
 const LINKS = [
   { href: '/', label: 'Home' },
@@ -19,6 +19,8 @@ export default function Navbar() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const { scrollYProgress } = useScroll();
+  const progress = useSpring(scrollYProgress, { stiffness: 140, damping: 30, mass: 0.3 });
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -117,6 +119,12 @@ export default function Navbar() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <motion.div
+        aria-hidden
+        className="absolute inset-x-0 bottom-0 h-0.5 origin-left bg-gradient-to-r from-accent via-accent-2 to-cyan-accent"
+        style={{ scaleX: progress }}
+      />
     </header>
   );
 }
