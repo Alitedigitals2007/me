@@ -61,10 +61,10 @@ export default async function HomePage() {
       )}
 
       {listings.length > 0 && (
-        <section className="bg-ink text-white py-16 md:py-20">
+        <section className="bg-gradient-to-b from-accent/5 to-cyan-accent/5 py-16 md:py-20">
           <div className="mx-auto max-w-6xl px-5">
             <Reveal>
-              <SectionHead dark title="Marketplace" sub="Products, services and curated listings." link="/marketplace" />
+              <SectionHead title="Marketplace" sub="Products, services and curated listings." link="/marketplace" />
             </Reveal>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {listings.slice(0, 3).map((l, i) => (

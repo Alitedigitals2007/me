@@ -2,6 +2,7 @@ import Link from 'next/link';
 import ActionButton from '@/components/admin/ActionButton';
 import SlotForm from '@/components/admin/SlotForm';
 import PackageForm from '@/components/admin/PackageForm';
+import AdminHeader from '@/components/admin/AdminHeader';
 import pool from '@/lib/db';
 import { formatDate, formatMoney } from '@/lib/utils';
 
@@ -29,7 +30,7 @@ export default async function AdsPage({ searchParams }: { searchParams: Promise<
 
   return (
     <div>
-      <h1 className="font-display font-extrabold uppercase text-3xl">Ads</h1>
+      <AdminHeader title="Ads" sub="Submissions, slots and packages." />
 
       <div className="flex flex-wrap gap-2 mt-6">
         {FILTERS.map((f) => (

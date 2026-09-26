@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import AdminHeader from '@/components/admin/AdminHeader';
 import pool from '@/lib/db';
 import { formatDateTime } from '@/lib/utils';
 
@@ -28,18 +29,25 @@ export default async function AdminDashboard() {
 
   return (
     <div>
-      <h1 className="font-display font-extrabold uppercase text-3xl">Dashboard</h1>
-      <p className="text-sm text-muted mt-1">Everything running on one screen.</p>
+      <AdminHeader title="Dashboard" sub="Everything running on one screen." />
 
       <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
         {stats.map((s) => (
           <Link
             key={s.label}
             href={s.href}
-            className="rounded-2xl bg-card ring-1 ring-line shadow-card p-5 hover:-translate-y-0.5 transition-transform"
+            className={`relative overflow-hidden rounded-2xl bg-card ring-1 shadow-card p-5 hover:-translate-y-0.5 hover:shadow-lift transition-all ${
+              s.alert ? 'ring-danger/40' : 'ring-line hover:ring-accent/40'
+            }`}
           >
+            <span
+              className={`absolute inset-x-0 top-0 h-1 ${
+                s.alert ? 'bg-danger' : 'bg-gradient-to-r from-accent via-accent-2 to-cyan-accent'
+              }`}
+              aria-hidden
+            />
             <p className="text-xs font-semibold uppercase tracking-wider text-muted">{s.label}</p>
-            <p className={`font-display font-extrabold text-3xl mt-2 ${s.alert ? 'text-danger' : 'text-ink'}`}>
+            <p className={`font-display font-extrabold text-3xl mt-2 ${s.alert ? 'text-danger' : 'text-accent'}`}>
               {s.value}
             </p>
             {s.alert && <p className="text-[11px] font-bold text-danger mt-1">Needs attention</p>}

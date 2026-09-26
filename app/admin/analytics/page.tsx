@@ -1,3 +1,4 @@
+import AdminHeader from '@/components/admin/AdminHeader';
 import pool from '@/lib/db';
 
 export const metadata = { title: 'Analytics' };
@@ -17,7 +18,7 @@ export default async function AnalyticsPage() {
 
   return (
     <div>
-      <h1 className="font-display font-extrabold uppercase text-3xl">Analytics</h1>
+      <AdminHeader title="Analytics" sub="Traffic, top pages and ad clicks." />
 
       <h2 className="font-display font-bold uppercase text-xl mt-10 mb-4">Views — last 14 days</h2>
       <div className="rounded-2xl bg-card ring-1 ring-line p-5">

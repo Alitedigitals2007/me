@@ -1,4 +1,5 @@
 import ActionButton from '@/components/admin/ActionButton';
+import AdminHeader from '@/components/admin/AdminHeader';
 import ListingForm from '@/components/admin/ListingForm';
 import pool from '@/lib/db';
 import { formatMoney } from '@/lib/utils';
@@ -9,7 +10,7 @@ export default async function MarketplacePage() {
   const { rows } = await pool.query('SELECT * FROM marketplace_listings ORDER BY created_at DESC');
   return (
     <div>
-      <h1 className="font-display font-extrabold uppercase text-3xl">Marketplace</h1>
+      <AdminHeader title="Marketplace" sub="Listings awaiting review and live orders." />
       <div className="mt-6 grid md:grid-cols-[1fr_1.6fr] gap-6 items-start">
         <ListingForm />
         <div className="space-y-2">

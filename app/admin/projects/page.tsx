@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import ActionButton from '@/components/admin/ActionButton';
+import AdminHeader from '@/components/admin/AdminHeader';
 import ProjectForm from '@/components/admin/ProjectForm';
 import pool from '@/lib/db';
 import { parseGallery } from '@/lib/utils';
@@ -16,12 +17,11 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
 
   return (
     <div>
-      <div className="flex items-center justify-between">
-        <h1 className="font-display font-extrabold uppercase text-3xl">Projects</h1>
+      <AdminHeader title="Projects" sub="Portfolio entries shown on the public site.">
         <Link href="/admin/projects?new=1" className="px-5 py-2.5 rounded-full text-sm font-semibold bg-gradient-cta text-white">
           + New project
         </Link>
-      </div>
+      </AdminHeader>
 
       {(sp.new || editing) && (
         <div className="mt-6">
@@ -31,7 +31,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
 
       <div className="mt-6 space-y-2">
         {rows.map((p) => (
-          <div key={p.id} className="flex items-center justify-between gap-4 rounded-xl bg-card ring-1 ring-line px-4 py-3">
+          <div key={p.id} className="flex items-center justify-between gap-4 rounded-xl bg-card ring-1 ring-line hover:ring-accent/40 px-4 py-3 transition-all">
             <div className="min-w-0 flex items-center gap-3">
               {p.image_url && <img src={p.image_url} alt="" className="w-12 h-10 rounded-lg object-cover ring-1 ring-line" />}
               <div className="min-w-0">

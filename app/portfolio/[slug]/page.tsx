@@ -26,15 +26,21 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-14 md:py-20">
-      <Link href="/portfolio" className="text-sm font-semibold text-accent hover:text-accent-2 transition-colors inline-flex items-center gap-1.5">
-        ← Back to portfolio
-      </Link>
-      <h1 className="mt-4 font-display font-extrabold uppercase tracking-tight text-[clamp(2rem,5vw,3.4rem)] leading-none">
-        {project.title}
-      </h1>
-      {project.stack && (
-        <p className="mt-3 text-sm font-bold uppercase tracking-widest text-cyan-accent">{project.stack}</p>
-      )}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-accent/[0.08] via-card to-cyan-accent/[0.06] ring-1 ring-line p-7 md:p-9">
+        <span className="absolute -top-20 -right-16 h-48 w-48 rounded-full bg-accent/15 blur-3xl" aria-hidden />
+        <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-accent via-accent-2 to-cyan-accent" aria-hidden />
+        <div className="relative">
+          <Link href="/portfolio" className="text-sm font-semibold text-accent hover:text-accent-2 transition-colors inline-flex items-center gap-1.5">
+            ← Back to portfolio
+          </Link>
+          <h1 className="mt-4 font-display font-extrabold uppercase tracking-tight text-[clamp(2rem,5vw,3.4rem)] leading-none">
+            {project.title}
+          </h1>
+          {project.stack && (
+            <p className="mt-3 text-sm font-bold uppercase tracking-widest text-cyan-accent">{project.stack}</p>
+          )}
+        </div>
+      </div>
 
       <ProjectGallery images={images} alt={project.title} />
 

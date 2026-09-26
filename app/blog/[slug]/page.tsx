@@ -34,23 +34,29 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-14 md:py-20">
-      <Link href="/blog" className="text-sm font-semibold text-accent hover:text-accent-2 transition-colors inline-flex items-center gap-1.5">
-        ← Back to blog
-      </Link>
-      <h1 className="mt-4 font-display font-extrabold uppercase tracking-tight text-[clamp(1.9rem,5vw,3rem)] leading-[1.05]">
-        {post.title}
-      </h1>
-      <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-muted">
-        <span>{formatDate(post.publish_at)}</span>
-        {post.tags && (
-          <span className="flex gap-1.5">
-            {post.tags.split(',').map((t) => t.trim()).filter(Boolean).map((t) => (
-              <Link key={t} href={`/blog?tag=${encodeURIComponent(t)}`} className="bg-accent/8 text-accent px-2.5 py-0.5 rounded-full text-xs font-semibold hover:bg-accent/15 transition-colors">
-                #{t}
-              </Link>
-            ))}
-          </span>
-        )}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-accent/[0.08] via-card to-cyan-accent/[0.06] ring-1 ring-line p-7 md:p-9">
+        <span className="absolute -top-20 -right-16 h-48 w-48 rounded-full bg-cyan-accent/15 blur-3xl" aria-hidden />
+        <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-accent via-accent-2 to-cyan-accent" aria-hidden />
+        <div className="relative">
+          <Link href="/blog" className="text-sm font-semibold text-accent hover:text-accent-2 transition-colors inline-flex items-center gap-1.5">
+            ← Back to blog
+          </Link>
+          <h1 className="mt-4 font-display font-extrabold uppercase tracking-tight text-[clamp(1.9rem,5vw,3rem)] leading-[1.05]">
+            {post.title}
+          </h1>
+          <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-muted">
+            <span>{formatDate(post.publish_at)}</span>
+            {post.tags && (
+              <span className="flex gap-1.5">
+                {post.tags.split(',').map((t) => t.trim()).filter(Boolean).map((t) => (
+                  <Link key={t} href={`/blog?tag=${encodeURIComponent(t)}`} className="bg-accent/8 text-accent px-2.5 py-0.5 rounded-full text-xs font-semibold hover:bg-accent/15 transition-colors">
+                    #{t}
+                  </Link>
+                ))}
+              </span>
+            )}
+          </div>
+        </div>
       </div>
 
       {post.cover_image && (

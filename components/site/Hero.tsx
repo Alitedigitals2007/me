@@ -144,11 +144,11 @@ export default function Hero({ settings }: { settings: Settings }) {
       </div>
 
       {/* skills marquee */}
-      <div className="relative border-y border-ink/10 bg-ink py-4 overflow-hidden">
+      <div className="relative border-y border-line bg-card py-4 overflow-hidden">
         <div className="flex whitespace-nowrap animate-marquee gap-0" style={{ width: 'max-content' }}>
           {[...SKILLS, ...SKILLS].map((s, i) => (
-            <span key={i} className="mx-6 inline-flex items-center gap-2 text-sm font-semibold text-white/75 uppercase tracking-wider">
-              <span className="text-cyan-accent">◆</span> {s}
+            <span key={i} className="mx-6 inline-flex items-center gap-2 text-sm font-semibold text-ink-soft uppercase tracking-wider">
+              <span className="text-gradient">◆</span> {s}
             </span>
           ))}
         </div>

@@ -1,4 +1,5 @@
 import ActionButton from '@/components/admin/ActionButton';
+import AdminHeader from '@/components/admin/AdminHeader';
 import pool from '@/lib/db';
 import { formatDateTime } from '@/lib/utils';
 
@@ -8,7 +9,7 @@ export default async function MessagesPage() {
   const { rows } = await pool.query('SELECT * FROM contact_messages ORDER BY created_at DESC');
   return (
     <div>
-      <h1 className="font-display font-extrabold uppercase text-3xl">Messages</h1>
+      <AdminHeader title="Messages" sub="Contact form submissions." />
       <div className="mt-8 space-y-3">
         {rows.length ? (
           rows.map((m) => (

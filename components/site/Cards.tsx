@@ -8,36 +8,34 @@ export function SectionHead({
   sub,
   link,
   linkLabel,
-  dark,
-  asPage
+  asPage,
+  className = ''
 }: {
   title: string;
   sub?: string;
   link?: string;
   linkLabel?: string;
-  dark?: boolean;
   asPage?: boolean;
+  className?: string;
 }) {
   const Heading = asPage ? 'h1' : 'h2';
   return (
-    <div className="flex flex-wrap items-end justify-between gap-3 mb-8">
+    <div className={`flex flex-wrap items-end justify-between gap-3 mb-8 ${className}`}>
       <div>
         <Heading
           className={`font-display font-bold uppercase tracking-tight leading-[1.02] ${
             asPage ? 'text-4xl md:text-[2.75rem]' : 'text-3xl md:text-4xl'
-          } ${dark ? 'text-white' : ''}`}
+          }`}
         >
-          <span className={dark ? 'text-cyan-accent' : 'text-gradient'}>{title.split(' ')[0]}</span>{' '}
+          <span className="text-gradient">{title.split(' ')[0]}</span>{' '}
           {title.split(' ').slice(1).join(' ')}
         </Heading>
-        {sub && <p className={`mt-2 max-w-lg ${dark ? 'text-white/60' : 'text-muted'}`}>{sub}</p>}
+        {sub && <p className="text-muted mt-2 max-w-lg">{sub}</p>}
       </div>
       {link && (
         <Link
           href={link}
-          className={`group inline-flex items-center gap-1.5 text-sm font-semibold transition-colors ${
-            dark ? 'text-white/75 hover:text-white' : 'text-accent hover:text-accent-2'
-          }`}
+          className="group inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:text-accent-2 transition-colors"
         >
           {linkLabel || 'View all'}
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="transition-transform group-hover:translate-x-1">

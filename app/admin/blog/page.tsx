@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import ActionButton from '@/components/admin/ActionButton';
+import AdminHeader from '@/components/admin/AdminHeader';
 import PostForm from '@/components/admin/PostForm';
 import pool from '@/lib/db';
 import { formatDateTime } from '@/lib/utils';
@@ -19,12 +20,11 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
 
   return (
     <div>
-      <div className="flex items-center justify-between">
-        <h1 className="font-display font-extrabold uppercase text-3xl">Blog</h1>
+      <AdminHeader title="Blog">
         <Link href="/admin/blog?new=1" className="px-5 py-2.5 rounded-full text-sm font-semibold bg-gradient-cta text-white">
           + New post
         </Link>
-      </div>
+      </AdminHeader>
 
       {(sp.new || editing) && (
         <div className="mt-6">

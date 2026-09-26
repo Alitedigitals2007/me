@@ -28,6 +28,16 @@ export default async function AboutPage() {
   const schools = education.filter((e) => e.type !== 'certification');
   const certifications = education.filter((e) => e.type === 'certification');
 
+  const byYear: Map<string, (typeof roles)[number]> = new Map();
+  for (const r of [...roles].sort((a, b) => a.order_index - b.order_index)) {
+    const key = r.start_date || 'Earlier';
+    const bucket = byYear.get(key);
+    if (bucket) bucket.push(r);
+    else byYear.set(key, [r]);
+  }
+  const years = [...byYear.keys()].sort((a, b) => b.localeCompare(a));
+  const isNow = (end?: string | null) => (end || '').trim().toLowerCase() === 'present';
+
   return (
     <div className="mx-auto max-w-6xl px-5 py-14 md:py-20">
       <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-12 lg:gap-14 items-center">
@@ -89,21 +99,64 @@ export default async function AboutPage() {
 
         <div>
           <Reveal>
-            <h2 className="font-display font-bold uppercase text-2xl mb-6">Leadership & roles</h2>
+            <h2 className="font-display font-bold uppercase text-2xl mb-6">Leadership &amp; roles</h2>
           </Reveal>
-          <div className="space-y-4">
-            {roles.map((r, i) => (
-              <Reveal key={r.id} delay={i * 0.05}>
-                <div className="group rounded-2xl bg-card ring-1 ring-line shadow-card p-6 hover:shadow-lift hover:-translate-y-0.5 transition-all">
-                  <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <h3 className="font-display font-bold text-lg group-hover:text-accent transition-colors">{r.title}</h3>
-                    <p className="text-xs font-semibold text-muted">{r.start_date}{r.end_date ? ` — ${r.end_date}` : ''}</p>
-                  </div>
-                  <p className="text-sm font-semibold text-accent mt-0.5">{r.org}</p>
-                  {r.description && <p className="text-sm text-muted mt-2">{r.description}</p>}
-                </div>
-              </Reveal>
-            ))}
+          <div className="relative">
+            <span
+              className="absolute left-[15px] top-4 bottom-4 w-px bg-gradient-to-b from-accent/60 via-accent-2/40 to-transparent"
+              aria-hidden
+            />
+            <div className="space-y-7">
+              {years.map((year, gi) => {
+                const items = byYear.get(year)!;
+                const active = items.some((r) => isNow(r.end_date));
+                return (
+                  <Reveal key={year} delay={Math.min(gi * 0.06, 0.3)}>
+                    <div className="relative pl-10">
+                      <span
+                        className={`absolute left-[15px] top-1.5 h-3 w-3 -translate-x-1/2 rounded-full ring-4 ${
+                          active ? 'bg-cyan-accent ring-cyan-accent/20' : 'bg-accent ring-accent/15'
+                        }`}
+                        aria-hidden
+                      />
+                      <div className="flex items-center gap-3 mb-3">
+                        <h3 className={`font-display font-extrabold text-xl ${active ? 'text-gradient' : 'text-ink'}`}>
+                          {year}
+                        </h3>
+                        {active && (
+                          <span className="rounded-full bg-cyan-accent/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-cyan-accent ring-1 ring-cyan-accent/30">
+                            Now
+                          </span>
+                        )}
+                        <span className="h-px flex-1 bg-line" aria-hidden />
+                        <span className="text-[11px] font-semibold text-muted">{items.length} roles</span>
+                      </div>
+                      <div className="space-y-1.5">
+                        {items.map((r) => (
+                          <div
+                            key={r.id}
+                            className="group/role rounded-xl px-4 py-2.5 ring-1 ring-transparent hover:ring-accent/30 hover:bg-card transition-all"
+                          >
+                            <div className="flex flex-wrap items-baseline gap-x-2">
+                              <p className="text-sm font-semibold text-ink group-hover/role:text-accent transition-colors">
+                                {r.title}
+                              </p>
+                              <p className="text-xs font-semibold text-accent">{r.org}</p>
+                              {isNow(r.end_date) && (
+                                <span className="rounded-full bg-cyan-accent/10 px-2 py-px text-[9px] font-bold uppercase tracking-wider text-cyan-accent ring-1 ring-cyan-accent/30">
+                                  Now
+                                </span>
+                              )}
+                            </div>
+                            {r.description && <p className="text-[11px] text-muted mt-0.5 line-clamp-1">{r.description}</p>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </Reveal>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
