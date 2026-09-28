@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { BlogPost, Listing, Project } from '@/lib/types';
-import { formatDate, formatMoney } from '@/lib/utils';
+import { excerpt, formatDate, formatMoney, parseTags } from '@/lib/utils';
 import { BuyNow } from './BuyNow';
 
 export function SectionHead({
@@ -48,6 +48,7 @@ export function SectionHead({
 }
 
 export function ProjectCard({ p }: { p: Project }) {
+  const tags = parseTags(p.stack, 3);
   return (
     <Link
       href={`/portfolio/${p.slug}`}
@@ -55,20 +56,27 @@ export function ProjectCard({ p }: { p: Project }) {
     >
       <div className="relative overflow-hidden aspect-[16/10] bg-paper">
         {p.image_url ? (
-          <img src={p.image_url} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+          <img src={p.image_url} alt={p.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
         ) : (
           <div className="w-full h-full grid place-items-center font-display font-bold text-4xl text-line">◆</div>
         )}
+        <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-ink/55 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
         {p.featured && (
           <span className="absolute top-3 left-3 bg-gradient-cta text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full">
             Featured
           </span>
         )}
       </div>
-      <div className="p-5 flex flex-col gap-2 flex-1">
-        <h3 className="font-display font-bold text-lg group-hover:text-accent transition-colors">{p.title}</h3>
-        {p.stack && <p className="text-xs font-semibold uppercase tracking-wider text-cyan-accent">{p.stack}</p>}
-        <p className="text-sm text-muted line-clamp-2 flex-1">{p.description.replace(/<[^>]+>/g, '').slice(0, 120)}</p>
+      <div className="p-5 flex flex-col gap-3 flex-1">
+        <h3 className="font-display font-bold text-lg leading-snug group-hover:text-accent transition-colors">{p.title}</h3>
+        <p className="text-sm text-muted line-clamp-2 flex-1">{excerpt(p.description, 120)}</p>
+        <div className="flex flex-wrap gap-1.5">
+          {tags.map((t) => (
+            <span key={t} className="bg-accent/8 text-accent px-2.5 py-0.5 rounded-full text-[11px] font-semibold">
+              {t}
+            </span>
+          ))}
+        </div>
       </div>
     </Link>
   );

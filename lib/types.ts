@@ -35,6 +35,22 @@ export interface Project {
   created_at: string;
 }
 
+/** Lean, serialisable project payload used by the portfolio explorer. */
+export interface ProjectSummary {
+  id: number;
+  title: string;
+  slug: string;
+  summary: string;
+  tags: string[];
+  imageUrl: string;
+  liveUrl: string;
+  repoUrl: string;
+  featured: boolean;
+  orderIndex: number;
+  createdAt: string;
+  imageCount: number;
+}
+
 export interface EducationItem {
   id: number;
   institution: string;
