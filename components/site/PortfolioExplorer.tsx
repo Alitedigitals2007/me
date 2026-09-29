@@ -50,7 +50,7 @@ const SORTS: Array<{ id: Sort; label: string }> = [
 ];
 
 export default function PortfolioExplorer({ projects }: { projects: ProjectSummary[] }) {
-  const [view, setView] = useState<View>('globe');
+  const [view, setView] = useState<View>('grid');
   const [sort, setSort] = useState<Sort>('featured');
   const [tag, setTag] = useState<string | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
@@ -207,7 +207,7 @@ export default function PortfolioExplorer({ projects }: { projects: ProjectSumma
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: Math.min(i, 8) * 0.05, ease: [0.16, 1, 0.3, 1] }}
                   >
-                    <ProjectTile p={p} />
+                    <ProjectTile p={p} index={i} eager={i < 3} />
                   </motion.div>
                 ))}
               </div>
