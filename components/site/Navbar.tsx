@@ -12,6 +12,7 @@ const LINKS = [
   { href: '/portfolio', label: 'Portfolio' },
   { href: '/academy', label: 'Academy' },
   { href: '/blog', label: 'Blog' },
+  { href: '/stories', label: 'Stories' },
   { href: '/marketplace', label: 'Marketplace' },
   { href: '/advertise', label: 'Advertise' },
   { href: '/contact', label: 'Contact' }

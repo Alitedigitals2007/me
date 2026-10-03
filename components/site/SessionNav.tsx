@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
-type Session = { kind: 'student' | 'admin'; name: string } | null;
+type Session = { kind: 'student' | 'admin' | 'writer'; name: string } | null;
 
 export default function SessionNav() {
   const [session, setSession] = useState<Session>(null);
@@ -13,13 +13,15 @@ export default function SessionNav() {
     let alive = true;
     (async () => {
       try {
-        const [s, a] = await Promise.all([
+        const [s, a, w] = await Promise.all([
           fetch('/api/student/me').then((r) => r.json()),
-          fetch('/api/admin/me').then((r) => r.json())
+          fetch('/api/admin/me').then((r) => r.json()),
+          fetch('/api/writer/me').then((r) => r.json())
         ]);
         if (!alive) return;
         if (s?.student) setSession({ kind: 'student', name: s.student.name });
         else if (a?.admin) setSession({ kind: 'admin', name: a.admin.username });
+        else if (w?.writer) setSession({ kind: 'writer', name: w.writer.name });
         else setSession(null);
       } catch {
         if (alive) setSession(null);
@@ -34,7 +36,9 @@ export default function SessionNav() {
     if (busy || !session) return;
     setBusy(true);
     try {
-      await fetch(session.kind === 'admin' ? '/api/admin/logout' : '/api/student/logout', { method: 'POST' });
+      if (session.kind === 'admin') await fetch('/api/admin/logout', { method: 'POST' });
+      else if (session.kind === 'student') await fetch('/api/student/logout', { method: 'POST' });
+      else if (session.kind === 'writer') await fetch('/api/writer/logout', { method: 'POST' });
     } catch {
       // ignore
     }
@@ -45,26 +49,44 @@ export default function SessionNav() {
 
   if (session === null) {
     return (
-      <Link
-        href="/login"
-        className="inline-flex items-center rounded-full ring-1 ring-line px-4 py-2 text-sm font-semibold text-ink-soft hover:text-ink hover:ring-accent/50 transition-all"
-      >
-        Login
-      </Link>
+      <div className="flex items-center gap-2">
+        <Link
+          href="/writer/login"
+          className="inline-flex items-center rounded-full ring-1 ring-line px-4 py-2 text-sm font-semibold text-ink-soft hover:text-ink hover:ring-accent/50 transition-all"
+        >
+          Writer Login
+        </Link>
+        <Link
+          href="/writer/signup"
+          className="inline-flex items-center rounded-full bg-gradient-cta text-white text-sm font-semibold px-4 py-2"
+        >
+          Join as Writer
+        </Link>
+        <Link
+          href="/login"
+          className="inline-flex items-center rounded-full ring-1 ring-line px-4 py-2 text-sm font-semibold text-ink-soft hover:text-ink hover:ring-accent/50 transition-all"
+        >
+          Admin Login
+        </Link>
+      </div>
     );
   }
 
-  const href = session.kind === 'admin' ? '/admin' : '/dashboard';
-  const label = session.kind === 'admin' ? 'Admin' : 'Dashboard';
+  const routes = {
+    admin: { href: '/admin', label: 'Admin', icon: '⚙️' },
+    student: { href: '/dashboard', label: 'Dashboard', icon: '🎓' },
+    writer: { href: '/writer/dashboard', label: 'Writer', icon: '✍️' }
+  };
+  const route = routes[session.kind];
   return (
     <div className="flex items-center gap-2">
       <Link
-        href={href}
-        title={`${session.name} — ${label.toLowerCase()}`}
+        href={route.href}
+        title={`${session.name} — ${route.label.toLowerCase()}`}
         className="inline-flex items-center gap-1.5 rounded-full bg-accent/10 text-accent px-3.5 py-2 text-sm font-semibold ring-1 ring-accent/30 hover:bg-accent/15 transition-all"
       >
-        <span aria-hidden>{session.kind === 'admin' ? '⚙️' : '🎓'}</span>
-        <span className="hidden sm:inline">{label}</span>
+        <span aria-hidden>{route.icon}</span>
+        <span className="hidden sm:inline">{route.label}</span>
       </Link>
       <button
         onClick={logout}

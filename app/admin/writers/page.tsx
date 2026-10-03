@@ -46,8 +46,8 @@ export default async function WritersPage({ searchParams }: { searchParams: Prom
       </div>
 
       <div className="mt-6 space-y-3">
-        {writers.rows.length ? (
-          writers.rows.map((w) => (
+        {writers.length ? (
+          writers.map((w) => (
             <div key={w.id} className="rounded-2xl bg-card ring-1 ring-line p-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-4">

@@ -58,8 +58,8 @@ export default async function StoriesPage({ searchParams }: { searchParams: Prom
       </div>
 
       <div className="mt-6 space-y-3">
-        {stories.rows.length ? (
-          stories.rows.map((s) => (
+        {stories.length ? (
+          stories.map((s) => (
             <div key={s.id} className="rounded-2xl bg-card ring-1 ring-line p-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-4 min-w-0">
@@ -99,8 +99,8 @@ export default async function StoriesPage({ searchParams }: { searchParams: Prom
       <div className="mt-12">
         <h2 className="font-display font-bold uppercase text-xl mb-4">Activity Log</h2>
         <div className="rounded-2xl bg-card ring-1 ring-line overflow-hidden">
-          {activity.rows.length ? (
-            activity.rows.map((a) => (
+          {activity.length ? (
+            activity.map((a) => (
               <div key={a.id} className="px-5 py-4 border-b border-line last:border-0">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
