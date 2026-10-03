@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import { getAdmin } from '@/lib/admin-auth';
 import { sendTelegram, siteUrl } from '@/lib/telegram';
 
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'File upload is required for file delivery type' }, { status: 400 });
     }
     
-    const { rows } = await pool.query(
+    const { rows } = await getPool().query(
       `INSERT INTO marketplace_listings (title, description, price, image_url, category, link, delivery_type, file_id, is_own, owner_name, owner_contact, listing_fee, fee_paid, status)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,true,$9,$10,0,true,'active') RETURNING id, title`,
       [title, description, price, imageUrl, category, link, deliveryType, fileId || null, ownerName, ownerContact]

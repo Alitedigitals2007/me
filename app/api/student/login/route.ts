@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import { ensureAcademySchema } from '@/lib/academy-schema';
 import { createStudentSession } from '@/lib/student-session';
 import { rateLimit, clientIp } from '@/lib/rate-limit';
@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     if (!email || !password) return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
 
     await ensureAcademySchema();
-    const { rows } = await pool.query('SELECT * FROM students WHERE email=$1', [String(email).trim().toLowerCase()]);
+    const { rows } = await getPool().query('SELECT * FROM students WHERE email=$1', [String(email).trim().toLowerCase()]);
     const student = rows[0];
     if (!student || !(await bcrypt.compare(String(password), student.password_hash))) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });

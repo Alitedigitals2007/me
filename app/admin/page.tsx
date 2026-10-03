@@ -1,45 +1,54 @@
 import Link from 'next/link';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import { formatDateTime } from '@/lib/utils';
 import { getAdmin } from '@/lib/admin-auth';
 import { ensureAcademySchema } from '@/lib/academy-schema';
 
 export const metadata = { title: 'Admin' };
 
+async function safeQuery(query: string, params?: any[]) {
+  try {
+    const { rows } = await getPool().query(query, params);
+    return rows;
+  } catch {
+    return [];
+  }
+}
+
 export default async function AdminDashboard() {
   const admin = await getAdmin();
   const [ads, listings, messages, scheduled, viewsToday, viewsWeek, clicksWeek, recentMsgs] = await Promise.all([
-    pool.query("SELECT COUNT(*)::int AS c FROM ad_submissions WHERE status='paid'"),
-    pool.query("SELECT COUNT(*)::int AS c FROM marketplace_listings WHERE status='pending'"),
-    pool.query("SELECT COUNT(*)::int AS c FROM contact_messages WHERE is_read=false"),
-    pool.query("SELECT COUNT(*)::int AS c FROM blog_posts WHERE status='scheduled'"),
-    pool.query("SELECT COUNT(*)::int AS c FROM page_views WHERE viewed_at > now() - interval '1 day'"),
-    pool.query("SELECT COUNT(*)::int AS c FROM page_views WHERE viewed_at > now() - interval '7 days'"),
-    pool.query("SELECT COUNT(*)::int AS c FROM ad_clicks WHERE clicked_at > now() - interval '7 days'"),
-    pool.query('SELECT * FROM contact_messages ORDER BY created_at DESC LIMIT 5')
+    safeQuery("SELECT COUNT(*)::int AS c FROM ad_submissions WHERE status='paid'"),
+    safeQuery("SELECT COUNT(*)::int AS c FROM marketplace_listings WHERE status='pending'"),
+    safeQuery("SELECT COUNT(*)::int AS c FROM contact_messages WHERE is_read=false"),
+    safeQuery("SELECT COUNT(*)::int AS c FROM blog_posts WHERE status='scheduled'"),
+    safeQuery("SELECT COUNT(*)::int AS c FROM page_views WHERE viewed_at > now() - interval '1 day'"),
+    safeQuery("SELECT COUNT(*)::int AS c FROM page_views WHERE viewed_at > now() - interval '7 days'"),
+    safeQuery("SELECT COUNT(*)::int AS c FROM ad_clicks WHERE clicked_at > now() - interval '7 days'"),
+    safeQuery('SELECT * FROM contact_messages ORDER BY created_at DESC LIMIT 5')
   ]);
 
   let academy = { students: 0, pending: 0, enrolled: 0 };
   try {
     await ensureAcademySchema();
     const [st, ps, en] = await Promise.all([
-      pool.query('SELECT COUNT(*)::int AS c FROM students'),
-      pool.query(`SELECT COUNT(*)::int AS c FROM submissions WHERE status='pending'`),
-      pool.query(`SELECT COUNT(*)::int AS c FROM enrollments WHERE status IN ('active','completed')`)
+      safeQuery('SELECT COUNT(*)::int AS c FROM students'),
+      safeQuery(`SELECT COUNT(*)::int AS c FROM submissions WHERE status='pending'`),
+      safeQuery(`SELECT COUNT(*)::int AS c FROM enrollments WHERE status IN ('active','completed')`)
     ]);
-    academy = { students: st.rows[0].c, pending: ps.rows[0].c, enrolled: en.rows[0].c };
+    academy = { students: st[0]?.c ?? 0, pending: ps[0]?.c ?? 0, enrolled: en[0]?.c ?? 0 };
   } catch {
     // academy schema not ready — stats show as 0
   }
 
   const stats = [
-    { label: 'Views today', value: viewsToday.rows[0].c, href: '/admin/analytics' },
-    { label: 'Views 7 days', value: viewsWeek.rows[0].c, href: '/admin/analytics' },
-    { label: 'Ad clicks 7 days', value: clicksWeek.rows[0].c, href: '/admin/ads' },
-    { label: 'Paid ads to review', value: ads.rows[0].c, href: '/admin/ads', alert: ads.rows[0].c > 0 },
-    { label: 'Pending listings', value: listings.rows[0].c, href: '/admin/marketplace', alert: listings.rows[0].c > 0 },
-    { label: 'Unread messages', value: messages.rows[0].c, href: '/admin/messages', alert: messages.rows[0].c > 0 },
-    { label: 'Scheduled posts', value: scheduled.rows[0].c, href: '/admin/blog' },
+    { label: 'Views today', value: viewsToday[0]?.c ?? 0, href: '/admin/analytics' },
+    { label: 'Views 7 days', value: viewsWeek[0]?.c ?? 0, href: '/admin/analytics' },
+    { label: 'Ad clicks 7 days', value: clicksWeek[0]?.c ?? 0, href: '/admin/ads' },
+    { label: 'Paid ads to review', value: ads[0]?.c ?? 0, href: '/admin/ads', alert: (ads[0]?.c ?? 0) > 0 },
+    { label: 'Pending listings', value: listings[0]?.c ?? 0, href: '/admin/marketplace', alert: (listings[0]?.c ?? 0) > 0 },
+    { label: 'Unread messages', value: messages[0]?.c ?? 0, href: '/admin/messages', alert: (messages[0]?.c ?? 0) > 0 },
+    { label: 'Scheduled posts', value: scheduled[0]?.c ?? 0, href: '/admin/blog' },
     { label: 'Academy students', value: academy.students, href: '/admin/students' },
     { label: 'Submissions to grade', value: academy.pending, href: '/admin/submissions', alert: academy.pending > 0 },
     { label: 'Active enrollments', value: academy.enrolled, href: '/admin/academy' }
@@ -81,7 +90,7 @@ export default async function AdminDashboard() {
       <div className="mt-8 flex flex-wrap gap-2 text-xs font-semibold">
         <a href="#overview" className="rounded-full bg-accent/10 text-accent px-4 py-2.5">Overview</a>
         <a href="#academy" className="rounded-full bg-card ring-1 ring-line px-4 py-2.5">Academy ({academy.pending > 0 ? `${academy.pending} to grade` : 'ok'})</a>
-        <a href="#messages" className="rounded-full bg-card ring-1 ring-line px-4 py-2.5">Messages ({messages.rows[0].c})</a>
+        <a href="#messages" className="rounded-full bg-card ring-1 ring-line px-4 py-2.5">Messages ({messages[0]?.c ?? 0})</a>
       </div>
 
       <section id="overview" className="mt-8">
@@ -136,8 +145,8 @@ export default async function AdminDashboard() {
           <Link href="/admin/messages" className="text-xs font-semibold text-accent">View all →</Link>
         </div>
         <div className="rounded-2xl bg-card ring-1 ring-line overflow-hidden">
-          {recentMsgs.rows.length ? (
-            recentMsgs.rows.map((m) => (
+          {recentMsgs.length ? (
+            recentMsgs.map((m) => (
               <div key={m.id} className="px-5 py-4 border-b border-line last:border-0">
                 <div className="flex items-center justify-between gap-4">
                   <p className="font-semibold text-sm">

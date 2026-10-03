@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import { getAdmin } from '@/lib/admin-auth';
 
 export const runtime = 'nodejs';
@@ -16,7 +16,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ ac
   const sql = ACTIONS[action];
   if (!sql) return NextResponse.json({ error: 'unknown action' }, { status: 400 });
   try {
-    await pool.query(sql, [id]);
+    await getPool().query(sql, [id]);
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: 'failed' }, { status: 500 });

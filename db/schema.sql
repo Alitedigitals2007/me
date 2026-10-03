@@ -277,3 +277,46 @@ CREATE TABLE IF NOT EXISTS uploaded_images (
 );
 
 CREATE INDEX IF NOT EXISTS uploaded_images_folder_idx ON uploaded_images (folder);
+
+-- Writer/Story Platform
+CREATE TABLE IF NOT EXISTS writer_users (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  bio TEXT NOT NULL DEFAULT '',
+  avatar_url TEXT NOT NULL DEFAULT '',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  approved_at TIMESTAMPTZ,
+  approved_by INT REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS stories (
+  id SERIAL PRIMARY KEY,
+  writer_id INT NOT NULL REFERENCES writer_users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  slug TEXT UNIQUE NOT NULL,
+  excerpt TEXT NOT NULL DEFAULT '',
+  content TEXT NOT NULL DEFAULT '',
+  cover_image TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'draft',
+  published_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS story_activity (
+  id SERIAL PRIMARY KEY,
+  story_id INT NOT NULL REFERENCES stories(id) ON DELETE CASCADE,
+  writer_id INT NOT NULL REFERENCES writer_users(id) ON DELETE CASCADE,
+  action TEXT NOT NULL,
+  meta JSONB NOT NULL DEFAULT '{}',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS stories_writer_idx ON stories (writer_id);
+CREATE INDEX IF NOT EXISTS stories_status_idx ON stories (status);
+CREATE INDEX IF NOT EXISTS stories_slug_key ON stories (slug);
+CREATE INDEX IF NOT EXISTS story_activity_story_idx ON story_activity (story_id);
+CREATE INDEX IF NOT EXISTS story_activity_writer_idx ON story_activity (writer_id);

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import Reveal from '@/components/site/Reveal';
 import EnrollButton from '@/components/academy/EnrollButton';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import { getStudent } from '@/lib/student-session';
 import {
   getCourseBySlug,
@@ -38,9 +38,9 @@ export default async function CoursePage({ params }: { params: Promise<{ slug: s
   const external = course.delivery === 'external';
 
   const [{ rows: assignments }, { rows: quizzes }, { rows: sessions }] = await Promise.all([
-    pool.query('SELECT id, title, due_at, max_score FROM assignments WHERE course_id=$1 ORDER BY id ASC', [course.id]),
-    pool.query('SELECT id, title, pass_pct FROM quizzes WHERE course_id=$1 ORDER BY id ASC', [course.id]),
-    pool.query('SELECT id, title, starts_at FROM class_sessions WHERE course_id=$1 AND starts_at >= now() ORDER BY starts_at ASC LIMIT 5', [course.id])
+    getPool().query('SELECT id, title, due_at, max_score FROM assignments WHERE course_id=$1 ORDER BY id ASC', [course.id]),
+    getPool().query('SELECT id, title, pass_pct FROM quizzes WHERE course_id=$1 ORDER BY id ASC', [course.id]),
+    getPool().query('SELECT id, title, starts_at FROM class_sessions WHERE course_id=$1 AND starts_at >= now() ORDER BY starts_at ASC LIMIT 5', [course.id])
   ]);
 
   const lessonCount = curriculum.reduce((n, m) => n + m.lessons.length, 0);

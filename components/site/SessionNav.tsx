@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 type Session = { kind: 'student' | 'admin'; name: string } | null;
 
 export default function SessionNav() {
-  const [session, setSession] = useState<Session | undefined>(undefined);
+  const [session, setSession] = useState<Session>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -42,8 +42,6 @@ export default function SessionNav() {
     setBusy(false);
     window.location.href = '/';
   }
-
-  if (session === undefined) return <span className="w-16" aria-hidden />;
 
   if (session === null) {
     return (

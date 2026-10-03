@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import { getAdmin } from '@/lib/admin-auth';
 
 export const runtime = 'nodejs';
@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     const maxActive = parseInt(String(fd.get('max_active') || '1'), 10) || 1;
     const description = String(fd.get('description') || '').trim();
     if (!name || !position) return NextResponse.json({ error: 'Name and position are required' }, { status: 400 });
-    await pool.query(
+    await getPool().query(
       `INSERT INTO ad_slots (name, position, price_per_day, max_active, description)
        VALUES ($1,$2,$3,$4,$5) ON CONFLICT (position) DO UPDATE
        SET name=$1, price_per_day=$3, max_active=$4, description=$5`,

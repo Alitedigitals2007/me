@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import pool from './db';
+import getPool from './db';
 import { sendTelegram, siteUrl } from './telegram';
 
 const SECRET = process.env.PAYSTACK_SECRET_KEY || '';
@@ -60,7 +60,7 @@ export async function finalizePayment(reference: string): Promise<{ success: boo
   const meta = txn.metadata || {};
   const amountNaira = (txn.amount || 0) / 100;
   if (meta.type === 'ad') {
-    const { rowCount, rows } = await pool.query(
+    const { rowCount, rows } = await getPool().query(
       `UPDATE ad_submissions SET status='paid', amount_paid=$2, paystack_ref=$3
        WHERE id=$1 AND status='pending_payment' RETURNING id, advertiser_name`,
       [meta.id, amountNaira, reference]
@@ -71,7 +71,7 @@ export async function finalizePayment(reference: string): Promise<{ success: boo
     return { success: !!rowCount, message: rowCount ? 'Your ad is now in the review queue — it goes live after approval.' : 'This payment was already processed.', type: 'ad' };
   }
   if (meta.type === 'listing') {
-    const { rowCount, rows } = await pool.query(
+    const { rowCount, rows } = await getPool().query(
       `UPDATE marketplace_purchases SET status='completed'
        WHERE paystack_ref=$1 AND status='pending' RETURNING listing_id`,
       [reference]
@@ -79,7 +79,7 @@ export async function finalizePayment(reference: string): Promise<{ success: boo
     let delivery: { type: 'file' | 'link'; file_id?: string; link?: string; title?: string } | undefined;
     if (rowCount) {
       const listingId = rows[0].listing_id;
-      const { rows: listingRows } = await pool.query(
+      const { rows: listingRows } = await getPool().query(
         `SELECT title, delivery_type, file_id, link FROM marketplace_listings WHERE id=$1`,
         [listingId]
       );
@@ -105,18 +105,18 @@ export async function finalizePayment(reference: string): Promise<{ success: boo
   if (meta.type === 'course') {
     const courseId = Number(meta.course_id);
     const studentId = Number(meta.student_id);
-    const { rowCount, rows } = await pool.query(
+    const { rowCount, rows } = await getPool().query(
       `UPDATE enrollments SET status='active', amount_paid=$3, payment_ref=$4
        WHERE course_id=$1 AND student_id=$2 AND status='pending'
        RETURNING id`,
       [courseId, studentId, amountNaira, reference]
     );
     if (rowCount) {
-      const { rows: cRows } = await pool.query('SELECT title FROM courses WHERE id=$1', [courseId]);
+      const { rows: cRows } = await getPool().query('SELECT title FROM courses WHERE id=$1', [courseId]);
       sendTelegram(`🎓 <b>Paid course enrollment</b>\nCourse: ${cRows[0]?.title || courseId} — ₦${amountNaira.toLocaleString()}\nRef: ${reference}\n🔗 ${siteUrl()}/admin/academy`);
       return { success: true, message: 'Enrollment confirmed — start learning!', type: 'course', delivery: { type: 'link' as const, link: '/dashboard', title: 'Your Academy dashboard' } };
     }
-    const active = await pool.query(`SELECT id FROM enrollments WHERE course_id=$1 AND student_id=$2 AND status IN ('active','completed')`, [courseId, studentId]);
+    const active = await getPool().query(`SELECT id FROM enrollments WHERE course_id=$1 AND student_id=$2 AND status IN ('active','completed')`, [courseId, studentId]);
     if (active.rows.length) {
       return { success: true, message: 'You are already enrolled in this course.', type: 'course', delivery: { type: 'link' as const, link: '/dashboard', title: 'Your Academy dashboard' } };
     }

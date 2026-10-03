@@ -187,3 +187,39 @@ export interface AdPackage {
   description: string;
   is_active: boolean;
 }
+
+export interface WriterUser {
+  id: number;
+  name: string;
+  email: string;
+  password_hash: string;
+  status: 'pending' | 'approved' | 'rejected';
+  bio: string;
+  avatar_url: string;
+  created_at: string;
+  approved_at: string | null;
+  approved_by: number | null;
+}
+
+export interface Story {
+  id: number;
+  writer_id: number;
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  cover_image: string;
+  status: 'draft' | 'published';
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StoryActivity {
+  id: number;
+  story_id: number;
+  writer_id: number;
+  action: 'created' | 'updated' | 'published' | 'deleted' | 'approved' | 'rejected';
+  meta: Record<string, unknown>;
+  created_at: string;
+}

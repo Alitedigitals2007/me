@@ -2,7 +2,7 @@ import Link from 'next/link';
 import AdminHeader from '@/components/admin/AdminHeader';
 import AdminApiButton from '@/components/academy/AdminApiButton';
 import CourseForm from '@/components/academy/CourseForm';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import { ensureAcademySchema } from '@/lib/academy-schema';
 import { coursePriceNumber } from '@/lib/academy';
 import { formatDateTime } from '@/lib/utils';
@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic';
 export default async function AdminAcademyPage() {
   await ensureAcademySchema();
   const [{ rows: courses }, { rows: stats }] = await Promise.all([
-    pool.query(
+    getPool().query(
       `SELECT c.*, COALESCE(e.n, 0)::int AS students,
               COALESCE(p.pending, 0)::int AS pending
        FROM courses c
@@ -21,7 +21,7 @@ export default async function AdminAcademyPage() {
        LEFT JOIN (SELECT a.course_id, COUNT(*) AS pending FROM submissions s JOIN assignments a ON a.id=s.assignment_id WHERE s.status='pending' GROUP BY a.course_id) p ON p.course_id = c.id
        ORDER BY c.order_index ASC, c.id ASC`
     ),
-    pool.query(
+    getPool().query(
       `SELECT
         (SELECT COUNT(*)::int FROM students) AS students,
         (SELECT COUNT(*)::int FROM enrollments WHERE status IN ('active','completed')) AS enrollments,

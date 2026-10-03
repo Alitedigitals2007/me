@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import { getAdmin } from '@/lib/admin-auth';
 
 export const runtime = 'nodejs';
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tab
   if (!fields) return NextResponse.json({ error: 'unknown table' }, { status: 400 });
   try {
     if (action === 'delete') {
-      await pool.query(`DELETE FROM ${table} WHERE id=$1`, [id]);
+      await getPool().query(`DELETE FROM ${table} WHERE id=$1`, [id]);
       return NextResponse.json({ ok: true });
     }
     if (action === 'edit') {
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tab
       );
       values.push(parseInt(String(fd.get('order_index') || '0'), 10) || 0, id);
       const sets = fields.map((f, i) => `${f}=$${i + 1}`).join(',');
-      await pool.query(`UPDATE ${table} SET ${sets}, order_index=$${fields.length + 1} WHERE id=$${fields.length + 2}`, values);
+      await getPool().query(`UPDATE ${table} SET ${sets}, order_index=$${fields.length + 1} WHERE id=$${fields.length + 2}`, values);
       return NextResponse.json({ ok: true });
     }
     return NextResponse.json({ error: 'unknown action' }, { status: 400 });

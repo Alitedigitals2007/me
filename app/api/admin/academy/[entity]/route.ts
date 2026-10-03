@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import { getAdmin } from '@/lib/admin-auth';
 import { ensureAcademySchema } from '@/lib/academy-schema';
 
@@ -54,9 +54,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ ent
     if (entity === 'courses') {
       if (!data.slug) data.slug = slugify(String(data.title));
       let slug = String(data.slug);
-      const { rows } = await pool.query('SELECT id FROM courses WHERE slug=$1', [slug]);
+      const { rows } = await getPool().query('SELECT id FROM courses WHERE slug=$1', [slug]);
       if (rows.length) {
-        const { rows: r2 } = await pool.query('SELECT COUNT(*)::int AS n FROM courses');
+        const { rows: r2 } = await getPool().query('SELECT COUNT(*)::int AS n FROM courses');
         slug = `${slug}-${r2[0].n + 1}`;
         data.slug = slug;
       }
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ ent
 
     if (entity === 'certificates') {
       const code = String(data.code || '') || `ALITE-${Math.random().toString(36).slice(2, 6).toUpperCase()}${Date.now().toString(36).toUpperCase().slice(-4)}`;
-      const { rows } = await pool.query(
+      const { rows } = await getPool().query(
         `INSERT INTO certificates (student_id, course_id, code) VALUES ($1, $2, $3)
          ON CONFLICT (student_id, course_id) DO NOTHING RETURNING id, code`,
         [data.student_id, data.course_id, code]
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ ent
     const keys = Object.keys(data);
     const cols = keys.join(', ');
     const placeholders = keys.map((_, i) => `$${i + 1}`).join(', ');
-    const { rows } = await pool.query(
+    const { rows } = await getPool().query(
       `INSERT INTO ${entity} (${cols}) VALUES (${placeholders}) RETURNING *`,
       keys.map((k) => data[k])
     );

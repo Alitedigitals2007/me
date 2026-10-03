@@ -1,4 +1,4 @@
-import pool from './db';
+import getPool from './db';
 import { sendTelegram, siteUrl } from './telegram';
 import { getSettings } from './settings';
 
@@ -7,7 +7,7 @@ let running = false;
 async function dailyReport() {
   const settings = await getSettings();
   if (settings.telegram_daily_report !== 'true') return;
-  const { rows } = await pool.query(
+  const { rows } = await getPool().query(
     `SELECT
        (SELECT COUNT(*) FROM page_views WHERE viewed_at::date = CURRENT_DATE - 1) AS views,
        (SELECT COUNT(*) FROM ad_clicks WHERE clicked_at::date = CURRENT_DATE - 1) AS clicks,
@@ -15,7 +15,7 @@ async function dailyReport() {
        (SELECT COUNT(*) FROM ad_submissions WHERE status='approved' AND end_date < CURRENT_DATE) AS expired
     `
   );
-  const top = await pool.query(
+  const top = await getPool().query(
     `SELECT path, COUNT(*) AS v FROM page_views
       WHERE viewed_at >= CURRENT_DATE - 1
       GROUP BY path ORDER BY v DESC LIMIT 5`
@@ -38,18 +38,18 @@ async function weeklyDigest() {
   if (settings.telegram_weekly_digest !== 'true') return;
   const isMonday = new Date().getDay() === 1;
   if (!isMonday) return;
-  const total = await pool.query(
+  const total = await getPool().query(
     `SELECT
        (SELECT COUNT(*) FROM page_views WHERE viewed_at >= CURRENT_DATE - 7) AS views,
        (SELECT COUNT(*) FROM ad_clicks WHERE clicked_at >= CURRENT_DATE - 7) AS clicks
     `
   );
-  const topPosts = await pool.query(
+  const topPosts = await getPool().query(
     `SELECT path, COUNT(*) AS v FROM page_views
       WHERE viewed_at >= CURRENT_DATE - 7 AND path LIKE '/blog/%'
       GROUP BY path ORDER BY v DESC LIMIT 5`
   );
-  const topAds = await pool.query(
+  const topAds = await getPool().query(
     `SELECT a.advertiser_name, COUNT(c.id) AS clicks
        FROM ad_clicks c JOIN ad_submissions a ON a.id = c.ad_id
       WHERE c.clicked_at >= CURRENT_DATE - 7
@@ -71,7 +71,7 @@ async function weeklyDigest() {
 async function expiringAds() {
   const settings = await getSettings();
   if (settings.telegram_expiring_ads !== 'true') return;
-  const { rows } = await pool.query(
+  const { rows } = await getPool().query(
     `SELECT advertiser_name, contact, end_date FROM ad_submissions
       WHERE status='approved' AND end_date BETWEEN CURRENT_DATE AND CURRENT_DATE + 2
       ORDER BY end_date`
@@ -89,7 +89,7 @@ export async function runScheduledTasks() {
   if (running) return { skipped: true, published: 0, expired: 0 };
   running = true;
   try {
-    const posts = await pool.query(
+    const posts = await getPool().query(
       `UPDATE blog_posts SET status='published', publish_at=COALESCE(publish_at, now())
        WHERE status='scheduled' AND publish_at <= now()
        RETURNING title, slug`
@@ -97,7 +97,7 @@ export async function runScheduledTasks() {
     for (const p of posts.rows) {
       await sendTelegram(`📝 Blog post published: <b>${p.title}</b>\n🔗 ${siteUrl()}/blog/${p.slug}`);
     }
-    const ads = await pool.query(
+    const ads = await getPool().query(
       `UPDATE ad_submissions SET status='expired'
        WHERE status='approved' AND end_date < CURRENT_DATE RETURNING id`
     );

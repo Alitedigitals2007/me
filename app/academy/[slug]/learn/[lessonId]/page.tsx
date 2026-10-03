@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import LessonComplete from '@/components/academy/LessonComplete';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import { getStudent } from '@/lib/student-session';
 import { getCourseBySlug, getLesson, getAllLessons, getCurriculum, getEnrollment, isEnrollmentActive, lessonUnlocked, embedVideoUrl } from '@/lib/academy';
 
@@ -38,7 +38,7 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
   const [flat, curriculum, { rows: doneRows }] = await Promise.all([
     getAllLessons(course.id),
     getCurriculum(course.id),
-    pool.query('SELECT lesson_id FROM lesson_progress WHERE student_id=$1 AND course_id=$2', [student.id, course.id])
+    getPool().query('SELECT lesson_id FROM lesson_progress WHERE student_id=$1 AND course_id=$2', [student.id, course.id])
   ]);
   const doneSet = new Set(doneRows.map((r) => r.lesson_id));
   const idx = flat.findIndex((l) => l.id === lesson.id);

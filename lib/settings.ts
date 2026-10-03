@@ -1,4 +1,4 @@
-import pool from './db';
+import getPool from './db';
 import type { Settings } from './types';
 
 const DEFAULTS: Record<string, string> = {
@@ -29,20 +29,30 @@ const TTL = 30 * 1000;
 
 export async function getSettings(force = false): Promise<Settings> {
   if (force || !cache || Date.now() - cacheAt > TTL) {
-    const { rows } = await pool.query('SELECT key, value FROM settings');
-    cache = Object.fromEntries(rows.map((r) => [r.key, r.value]));
-    cacheAt = Date.now();
+    try {
+      const { rows } = await getPool().query('SELECT key, value FROM settings');
+      cache = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+      cacheAt = Date.now();
+    } catch {
+      // DB not available (e.g., during build) - use defaults
+      cache = {};
+      cacheAt = Date.now();
+    }
   }
   const merged = { ...DEFAULTS, ...cache };
   return merged as unknown as Settings;
 }
 
 export async function setSetting(key: string, value: string) {
-  await pool.query(
-    'INSERT INTO settings (key, value) VALUES ($1,$2) ON CONFLICT (key) DO UPDATE SET value=$2',
-    [key, value ?? '']
-  );
-  if (cache) cache[key] = value ?? '';
+  try {
+    await getPool().query(
+      'INSERT INTO settings (key, value) VALUES ($1,$2) ON CONFLICT (key) DO UPDATE SET value=$2',
+      [key, value ?? '']
+    );
+    if (cache) cache[key] = value ?? '';
+  } catch {
+    // Ignore errors during build
+  }
 }
 
 export async function getSetting(key: string): Promise<string> {

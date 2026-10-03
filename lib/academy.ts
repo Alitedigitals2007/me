@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import pool from './db';
+import getPool from './db';
 import { ensureAcademySchema } from './academy-schema';
 
 export interface AcademyCourse {
@@ -32,7 +32,7 @@ export interface Lesson {
 
 export async function getPublishedCourses(): Promise<AcademyCourse[]> {
   await ensureAcademySchema();
-  const { rows } = await pool.query(
+  const { rows } = await getPool().query(
     `SELECT id, title, slug, description, price, image_url, status, delivery, level, duration, link, order_index
      FROM courses WHERE status='published' ORDER BY order_index ASC, id ASC`
   );
@@ -41,7 +41,7 @@ export async function getPublishedCourses(): Promise<AcademyCourse[]> {
 
 export async function getCourseBySlug(slug: string): Promise<AcademyCourse | null> {
   await ensureAcademySchema();
-  const { rows } = await pool.query(
+  const { rows } = await getPool().query(
     `SELECT id, title, slug, description, price, image_url, status, delivery, level, duration, link, order_index
      FROM courses WHERE slug=$1 AND status='published'`,
     [slug]
@@ -51,15 +51,15 @@ export async function getCourseBySlug(slug: string): Promise<AcademyCourse | nul
 
 export async function getCourseById(id: number): Promise<AcademyCourse | null> {
   await ensureAcademySchema();
-  const { rows } = await pool.query('SELECT * FROM courses WHERE id=$1', [id]);
+  const { rows } = await getPool().query('SELECT * FROM courses WHERE id=$1', [id]);
   return rows[0] ?? null;
 }
 
 export async function getCurriculum(courseId: number): Promise<{ id: number; title: string; lessons: Lesson[] }[]> {
   await ensureAcademySchema();
   const [mods, lessons] = await Promise.all([
-    pool.query('SELECT id, title FROM modules WHERE course_id=$1 ORDER BY order_index ASC, id ASC', [courseId]),
-    pool.query('SELECT * FROM lessons WHERE course_id=$1 ORDER BY order_index ASC, id ASC', [courseId])
+    getPool().query('SELECT id, title FROM modules WHERE course_id=$1 ORDER BY order_index ASC, id ASC', [courseId]),
+    getPool().query('SELECT * FROM lessons WHERE course_id=$1 ORDER BY order_index ASC, id ASC', [courseId])
   ]);
   return mods.rows.map((m) => ({
     ...m,
@@ -69,19 +69,19 @@ export async function getCurriculum(courseId: number): Promise<{ id: number; tit
 
 export async function getAllLessons(courseId: number): Promise<Lesson[]> {
   await ensureAcademySchema();
-  const { rows } = await pool.query('SELECT * FROM lessons WHERE course_id=$1 ORDER BY order_index ASC, id ASC', [courseId]);
+  const { rows } = await getPool().query('SELECT * FROM lessons WHERE course_id=$1 ORDER BY order_index ASC, id ASC', [courseId]);
   return rows;
 }
 
 export async function getLesson(lessonId: number): Promise<Lesson | null> {
   await ensureAcademySchema();
-  const { rows } = await pool.query('SELECT * FROM lessons WHERE id=$1', [lessonId]);
+  const { rows } = await getPool().query('SELECT * FROM lessons WHERE id=$1', [lessonId]);
   return rows[0] ?? null;
 }
 
 export async function getEnrollment(studentId: number, courseId: number) {
   await ensureAcademySchema();
-  const { rows } = await pool.query(
+  const { rows } = await getPool().query(
     'SELECT * FROM enrollments WHERE student_id=$1 AND course_id=$2',
     [studentId, courseId]
   );
@@ -91,8 +91,8 @@ export async function getEnrollment(studentId: number, courseId: number) {
 export async function getCourseProgress(studentId: number, courseId: number) {
   await ensureAcademySchema();
   const [{ rows: totalRows }, { rows: doneRows }] = await Promise.all([
-    pool.query('SELECT COUNT(*)::int AS n FROM lessons WHERE course_id=$1', [courseId]),
-    pool.query('SELECT COUNT(*)::int AS n FROM lesson_progress WHERE student_id=$1 AND course_id=$2', [studentId, courseId])
+    getPool().query('SELECT COUNT(*)::int AS n FROM lessons WHERE course_id=$1', [courseId]),
+    getPool().query('SELECT COUNT(*)::int AS n FROM lesson_progress WHERE student_id=$1 AND course_id=$2', [studentId, courseId])
   ]);
   const total = totalRows[0]?.n ?? 0;
   const done = doneRows[0]?.n ?? 0;
@@ -119,9 +119,9 @@ export async function checkAndIssueCertificate(studentId: number, courseId: numb
   const progress = await getCourseProgress(studentId, courseId);
   if (progress.total === 0 || progress.done < progress.total) return null;
 
-  const { rows: assigns } = await pool.query('SELECT id, max_score FROM assignments WHERE course_id=$1', [courseId]);
+  const { rows: assigns } = await getPool().query('SELECT id, max_score FROM assignments WHERE course_id=$1', [courseId]);
   if (assigns.length) {
-    const { rows: subs } = await pool.query(
+    const { rows: subs } = await getPool().query(
       `SELECT s.assignment_id, s.score FROM submissions s
        WHERE s.student_id=$1 AND s.assignment_id = ANY($2::int[]) AND s.status='graded'`,
       [studentId, assigns.map((a) => a.id)]
@@ -133,10 +133,10 @@ export async function checkAndIssueCertificate(studentId: number, courseId: numb
     if (!ok) return null;
   }
 
-  const { rows: quizzes } = await pool.query('SELECT id FROM quizzes WHERE course_id=$1', [courseId]);
+  const { rows: quizzes } = await getPool().query('SELECT id FROM quizzes WHERE course_id=$1', [courseId]);
   if (quizzes.length) {
     for (const q of quizzes) {
-      const { rows: attempts } = await pool.query(
+      const { rows: attempts } = await getPool().query(
         'SELECT passed FROM quiz_attempts WHERE quiz_id=$1 AND student_id=$2 ORDER BY id DESC LIMIT 1',
         [q.id, studentId]
       );
@@ -144,16 +144,16 @@ export async function checkAndIssueCertificate(studentId: number, courseId: numb
     }
   }
 
-  const existing = await pool.query('SELECT code FROM certificates WHERE student_id=$1 AND course_id=$2', [studentId, courseId]);
+  const existing = await getPool().query('SELECT code FROM certificates WHERE student_id=$1 AND course_id=$2', [studentId, courseId]);
   if (existing.rows[0]) return existing.rows[0].code;
 
   const code = `ALITE-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
-  await pool.query(
+  await getPool().query(
     `INSERT INTO certificates (student_id, course_id, code) VALUES ($1, $2, $3)
      ON CONFLICT (student_id, course_id) DO NOTHING`,
     [studentId, courseId, code]
   );
-  await pool.query(`UPDATE enrollments SET status='completed', completed_at=now() WHERE student_id=$1 AND course_id=$2 AND status='active'`, [
+  await getPool().query(`UPDATE enrollments SET status='completed', completed_at=now() WHERE student_id=$1 AND course_id=$2 AND status='active'`, [
     studentId,
     courseId
   ]);

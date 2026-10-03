@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import { getAdmin } from '@/lib/admin-auth';
 
 export const runtime = 'nodejs';
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tab
     );
     values.push(parseInt(String(fd.get('order_index') || '0'), 10) || 0);
     const placeholders = fields.map((_, i) => `$${i + 1}`).join(',');
-    await pool.query(
+    await getPool().query(
       `INSERT INTO ${table} (${fields.join(',')}, order_index) VALUES (${placeholders}, $${fields.length + 1})`,
       values
     );

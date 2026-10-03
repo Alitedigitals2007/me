@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getImage } from '@/lib/uploads';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 
 export const runtime = 'nodejs';
 
@@ -13,7 +13,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     // Paid product files require a completed purchase; everything else is publicly servable
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
     if (isUuid) {
-      const paidFile = await pool.query(
+      const paidFile = await getPool().query(
         `SELECT EXISTS (
            SELECT 1 FROM marketplace_purchases p
             WHERE p.listing_id = l.id AND p.status = 'completed'

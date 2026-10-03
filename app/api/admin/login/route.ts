@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import { createSession } from '@/lib/session';
 import { rateLimit, clientIp } from '@/lib/rate-limit';
 
@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     if (!email || !password) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
-    const { rows } = await pool.query(
+    const { rows } = await getPool().query(
       'SELECT * FROM users WHERE email = $1 OR username = $1',
       [String(email).trim()]
     );

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import crypto from 'crypto';
 import { rateLimit, clientIp } from '@/lib/rate-limit';
 
@@ -12,11 +12,11 @@ function hashIp(ip: string): string {
 export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   try {
     const { slug } = await params;
-    const { rows: post } = await pool.query('SELECT id FROM blog_posts WHERE slug=$1 AND status=\'published\'', [slug]);
+    const { rows: post } = await getPool().query('SELECT id FROM blog_posts WHERE slug=$1 AND status=\'published\'', [slug]);
     if (!post.length) return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     const postId = post[0].id;
 
-    const { rows } = await pool.query(
+    const { rows } = await getPool().query(
       `SELECT id, name, content, created_at 
        FROM blog_comments 
        WHERE post_id=$1 AND is_approved=true 
@@ -49,11 +49,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
                'unknown';
     const ipHash = hashIp(ip);
 
-    const { rows: post } = await pool.query('SELECT id FROM blog_posts WHERE slug=$1 AND status=\'published\'', [slug]);
+    const { rows: post } = await getPool().query('SELECT id FROM blog_posts WHERE slug=$1 AND status=\'published\'', [slug]);
     if (!post.length) return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     const postId = post[0].id;
 
-    await pool.query(
+    await getPool().query(
       `INSERT INTO blog_comments (post_id, name, content, ip_hash) VALUES ($1, $2, $3, $4)`,
       [postId, name.trim(), content.trim(), ipHash]
     );

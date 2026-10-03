@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import { siteUrl } from '@/lib/telegram';
 
 export const runtime = 'nodejs';
@@ -7,11 +7,11 @@ export const runtime = 'nodejs';
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
-    const { rows } = await pool.query(
+    const { rows } = await getPool().query(
       "SELECT target_url FROM ad_submissions WHERE id=$1 AND status='approved'",
       [id]
     );
-    pool.query('INSERT INTO ad_clicks (ad_id) VALUES ($1)', [id]).catch(() => {});
+    getPool().query('INSERT INTO ad_clicks (ad_id) VALUES ($1)', [id]).catch(() => {});
     if (rows.length && rows[0].target_url) {
       return NextResponse.redirect(rows[0].target_url, 302);
     }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import { ensureAcademySchema } from '@/lib/academy-schema';
 import { createStudentSession } from '@/lib/student-session';
 import { rateLimit, clientIp } from '@/lib/rate-limit';
@@ -20,11 +20,11 @@ export async function POST(req: NextRequest) {
     if (!password || String(password).length < 6) return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
 
     await ensureAcademySchema();
-    const existing = await pool.query('SELECT id FROM students WHERE email=$1', [cleanEmail]);
+    const existing = await getPool().query('SELECT id FROM students WHERE email=$1', [cleanEmail]);
     if (existing.rows.length) return NextResponse.json({ error: 'An account with this email already exists — log in instead.' }, { status: 409 });
 
     const hash = await bcrypt.hash(String(password), 10);
-    const { rows } = await pool.query(
+    const { rows } = await getPool().query(
       `INSERT INTO students (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id, name, email`,
       [cleanName, cleanEmail, hash]
     );

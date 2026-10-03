@@ -2,18 +2,18 @@ import Link from 'next/link';
 import ActionButton from '@/components/admin/ActionButton';
 import AdminHeader from '@/components/admin/AdminHeader';
 import PostForm from '@/components/admin/PostForm';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import { formatDateTime } from '@/lib/utils';
 
 export const metadata = { title: 'Blog' };
 
 export default async function BlogPage({ searchParams }: { searchParams: Promise<{ new?: string; edit?: string }> }) {
   const sp = await searchParams;
-  const { rows } = await pool.query(
+  const { rows } = await getPool().query(
     'SELECT id,title,slug,status,publish_at,tags FROM blog_posts ORDER BY COALESCE(publish_at, created_at) DESC'
   );
   const editing = sp.edit ? await (async () => {
-    const r = await pool.query('SELECT * FROM blog_posts WHERE id=$1', [sp.edit]);
+    const r = await getPool().query('SELECT * FROM blog_posts WHERE id=$1', [sp.edit]);
     if (r.rows[0]?.publish_at) r.rows[0].publish_at_local = new Date(r.rows[0].publish_at).toISOString().slice(0, 16);
     return r.rows[0] ?? null;
   })() : null;

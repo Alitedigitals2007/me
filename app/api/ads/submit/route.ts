@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import { getSettings } from '@/lib/settings';
 import { sendTelegram, siteUrl } from '@/lib/telegram';
 import { initializePayment, makeReference, hasPaystackKeys } from '@/lib/paystack';
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Duration must be between 1 and 14 days' }, { status: 400 });
     }
 
-    const { rows } = await pool.query(
+    const { rows } = await getPool().query(
       'SELECT * FROM ad_packages WHERE id=$1 AND is_active=true',
       [packageId]
     );
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
 
     if (mediums.includes('website')) {
       if (!slotId) return NextResponse.json({ error: 'Choose a website placement' }, { status: 400 });
-      const { rows: slotRows } = await pool.query('SELECT id FROM ad_slots WHERE id=$1 AND is_active=true', [slotId]);
+      const { rows: slotRows } = await getPool().query('SELECT id FROM ad_slots WHERE id=$1 AND is_active=true', [slotId]);
       if (!slotRows.length) return NextResponse.json({ error: 'Invalid website placement' }, { status: 400 });
     }
 
@@ -50,14 +50,14 @@ export async function POST(req: NextRequest) {
     const start = new Date();
     const end = new Date(start.getTime() + days * 24 * 60 * 60 * 1000);
 
-    const { rows: sub } = await pool.query(
+    const { rows: sub } = await getPool().query(
       `INSERT INTO ad_submissions (slot_id, package_id, mediums, advertiser_name, contact, image_url, target_url, duration_days, start_date, end_date, amount_paid, status)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'pending_payment') RETURNING id`,
       [slotId, pkg.id, pkg.mediums, advertiserName, contact, imageUrl, targetUrl, days,
         start.toISOString().slice(0, 10), end.toISOString().slice(0, 10), amount]
     );
     const ref = makeReference('ad');
-    await pool.query('UPDATE ad_submissions SET paystack_ref=$2 WHERE id=$1', [sub[0].id, ref]);
+    await getPool().query('UPDATE ad_submissions SET paystack_ref=$2 WHERE id=$1', [sub[0].id, ref]);
 
     const wa = contact.replace(/[^\d+]/g, '').replace(/^\+/, '');
     const isPhone = /^\+?\d{7,15}$/.test(contact.trim());
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
     );
 
     if (!hasPaystackKeys()) {
-      await pool.query(
+      await getPool().query(
         "UPDATE ad_submissions SET status='approved' WHERE id=$1",
         [sub[0].id]
       );

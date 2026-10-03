@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import { getStudent } from '@/lib/student-session';
 import { getEnrollment, isEnrollmentActive } from '@/lib/academy';
 import { sendTelegram, siteUrl } from '@/lib/telegram';
@@ -16,7 +16,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   try {
     const { id } = await params;
     const assignmentId = Number(id);
-    const { rows: aRows } = await pool.query('SELECT a.*, c.title AS course_title FROM assignments a JOIN courses c ON c.id=a.course_id WHERE a.id=$1', [assignmentId]);
+    const { rows: aRows } = await getPool().query('SELECT a.*, c.title AS course_title FROM assignments a JOIN courses c ON c.id=a.course_id WHERE a.id=$1', [assignmentId]);
     if (!aRows.length) return NextResponse.json({ error: 'Assignment not found.' }, { status: 404 });
     const assignment = aRows[0];
 
@@ -29,14 +29,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (!content && !fileUrl) return NextResponse.json({ error: 'Add your answer or attach a file link.' }, { status: 400 });
     if (content.length > 20000) return NextResponse.json({ error: 'Answer is too long (max 20,000 characters).' }, { status: 400 });
 
-    const { rows: existing } = await pool.query('SELECT id, status FROM submissions WHERE assignment_id=$1 AND student_id=$2', [assignmentId, student.id]);
+    const { rows: existing } = await getPool().query('SELECT id, status FROM submissions WHERE assignment_id=$1 AND student_id=$2', [assignmentId, student.id]);
     if (existing[0]?.status === 'graded') {
       return NextResponse.json({ error: 'This submission has already been graded.' }, { status: 409 });
     }
     if (existing[0]) {
-      await pool.query('UPDATE submissions SET content=$1, file_url=$2, submitted_at=now() WHERE id=$3', [content, fileUrl, existing[0].id]);
+      await getPool().query('UPDATE submissions SET content=$1, file_url=$2, submitted_at=now() WHERE id=$3', [content, fileUrl, existing[0].id]);
     } else {
-      await pool.query(
+      await getPool().query(
         'INSERT INTO submissions (assignment_id, student_id, content, file_url) VALUES ($1, $2, $3, $4)',
         [assignmentId, student.id, content, fileUrl]
       );

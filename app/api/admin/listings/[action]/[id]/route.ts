@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import { sendTelegram, siteUrl } from '@/lib/telegram';
 import { getAdmin } from '@/lib/admin-auth';
 
@@ -32,7 +32,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ ac
   const fn = ACTIONS[action];
   if (!fn) return NextResponse.json({ error: 'unknown action' }, { status: 400 });
   try {
-    const { rows } = await pool.query(fn.sql, [id]);
+    const { rows } = await getPool().query(fn.sql, [id]);
     if (fn.telegram && rows.length) sendTelegram(fn.telegram(rows[0]));
     return NextResponse.json({ ok: true });
   } catch (e) {

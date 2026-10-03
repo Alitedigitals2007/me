@@ -1,4 +1,4 @@
-import pool from './db';
+import getPool from './db';
 import { getSettings } from './settings';
 import { tgSend, tgEdit, tgAnswer, siteUrl } from './telegram';
 
@@ -12,8 +12,10 @@ I manage your site from here:
 /ads — pending ad submissions (approve / reject)
 /listings — pending marketplace listings
 /posts — draft blog posts (list, then type the number to publish)
-/publish &lt;id&gt; — publish a draft post by id
-/status &lt;id&gt; &lt;draft|published|scheduled&gt; — change a post's status
+/publish <id> — publish a draft post by id
+/status <id> <draft|published|scheduled> — change a post's status
+/writers — pending writer applications
+/stories — recent story activity
 /stats — quick site numbers
 
 Tap the buttons under each list to act instantly.`;
@@ -32,7 +34,7 @@ async function btnRow(action: string, id: number): Promise<any[]> {
 }
 
 async function showAds(chatId: number, messageId?: number) {
-  const { rows } = await pool.query(
+  const { rows } = await getPool().query(
     `SELECT a.id, a.advertiser_name, a.contact, a.duration_days, a.amount_paid, a.image_url,
             p.name AS package_name, s.name AS slot_name
        FROM ad_submissions a
@@ -53,7 +55,7 @@ async function showAds(chatId: number, messageId?: number) {
 }
 
 async function showListings(chatId: number, messageId?: number) {
-  const { rows } = await pool.query(
+  const { rows } = await getPool().query(
     `SELECT id, title, category, price, owner_name FROM marketplace_listings
       WHERE status = 'pending' ORDER BY id DESC LIMIT 10`
   );
@@ -70,7 +72,7 @@ async function showListings(chatId: number, messageId?: number) {
 }
 
 async function showPosts(chatId: number, messageId?: number) {
-  const { rows } = await pool.query(
+  const { rows } = await getPool().query(
     `SELECT id, title FROM blog_posts WHERE status = 'draft' ORDER BY id DESC LIMIT 10`
   );
   if (!rows.length) {
@@ -84,7 +86,7 @@ async function showPosts(chatId: number, messageId?: number) {
 }
 
 async function publishByNumber(chatId: number, n: number): Promise<boolean> {
-  const { rows } = await pool.query(
+  const { rows } = await getPool().query(
     `SELECT id FROM blog_posts WHERE status = 'draft' ORDER BY id DESC LIMIT 10`
   );
   const byPos = rows[n - 1];
@@ -95,7 +97,7 @@ async function publishByNumber(chatId: number, n: number): Promise<boolean> {
 }
 
 async function showStats(chatId: number) {
-  const { rows } = await pool.query(`
+  const { rows } = await getPool().query(`
     SELECT
       (SELECT count(*) FROM blog_posts) AS posts,
       (SELECT count(*) FROM blog_posts WHERE status = 'published') AS published,
@@ -105,7 +107,11 @@ async function showStats(chatId: number) {
       (SELECT count(*) FROM marketplace_listings WHERE status = 'active') AS listings_live,
       (SELECT count(*) FROM contact_messages) AS contacts,
       (SELECT count(*) FROM ad_clicks) AS clicks,
-      (SELECT count(*) FROM page_views) AS views
+      (SELECT count(*) FROM page_views) AS views,
+      (SELECT count(*) FROM writer_users) AS writers,
+      (SELECT count(*) FROM writer_users WHERE status = 'approved') AS writers_approved,
+      (SELECT count(*) FROM stories) AS stories,
+      (SELECT count(*) FROM stories WHERE status = 'published') AS stories_published
   `);
   const r = rows[0];
   await tgSend(chatId,
@@ -113,15 +119,54 @@ async function showStats(chatId: number) {
     `📝 Posts: <b>${r.posts}</b> (${r.published} live)\n` +
     `📣 Ads: <b>${r.ads}</b> (${r.ads_live} live)\n` +
     `🛒 Listings: <b>${r.listings}</b> (${r.listings_live} live)\n` +
+    `✍️ Writers: <b>${r.writers}</b> (${r.writers_approved} approved)\n` +
+    `📖 Stories: <b>${r.stories}</b> (${r.stories_published} published)\n` +
     `✉️ Contact messages: <b>${r.contacts}</b>\n` +
     `👀 Page views: <b>${Number(r.views).toLocaleString()}</b>\n` +
     `🖱 Ad clicks: <b>${r.clicks}</b>`
   );
 }
 
+async function showWriters(chatId: number, messageId?: number) {
+  const { rows } = await getPool().query(
+    `SELECT id, name, email, status, created_at FROM writer_users
+     WHERE status = 'pending' ORDER BY id DESC LIMIT 10`
+  );
+  if (!rows.length) {
+    const text = `✍️ <b>Pending writers</b>\n\nNothing waiting — all clear.`;
+    return messageId ? tgEdit(chatId, messageId, text) : tgSend(chatId, text);
+  }
+  const lines = rows.map((r, i) =>
+    `${i + 1}. <b>#${r.id}</b> — ${esc(r.name)} (${esc(r.email)})\n   📅 ${new Date(r.created_at).toISOString().slice(0, 10)}`
+  );
+  const keyboard = { inline_keyboard: rows.flatMap((r) => btnRow('writer', r.id)) };
+  if (messageId) await tgEdit(chatId, messageId, `✍️ <b>Pending writers (${rows.length})</b>\n\n${lines.join('\n\n')}`, keyboard);
+  else await tgSend(chatId, `✍️ <b>Pending writers (${rows.length})</b>\n\n${lines.join('\n\n')}`, keyboard);
+}
+
+async function showStories(chatId: number, messageId?: number) {
+  const { rows } = await getPool().query(
+    `SELECT sa.id, sa.action, sa.created_at, s.title, w.name as writer_name
+     FROM story_activity sa
+     JOIN stories s ON s.id = sa.story_id
+     JOIN writer_users w ON w.id = sa.writer_id
+     ORDER BY sa.created_at DESC LIMIT 10`
+  );
+  if (!rows.length) {
+    const text = `📖 <b>Recent story activity</b>\n\nNo activity yet.`;
+    return messageId ? tgEdit(chatId, messageId, text) : tgSend(chatId, text);
+  }
+  const lines = rows.map((r, i) =>
+    `${i + 1}. <b>${esc(r.action)}</b> — ${esc(r.title)} by ${esc(r.writer_name)}\n   📅 ${new Date(r.created_at).toISOString().slice(0, 16).replace('T', ' ')}`
+  );
+  const text = `📖 <b>Recent story activity (${rows.length})</b>\n\n${lines.join('\n\n')}`;
+  if (messageId) await tgEdit(chatId, messageId, text);
+  else await tgSend(chatId, text);
+}
+
 async function runAction(action: string, id: number): Promise<string> {
   if (action === 'ad:approve') {
-    const { rows } = await pool.query(
+    const { rows } = await getPool().query(
       `UPDATE ad_submissions SET status='approved', start_date=CURRENT_DATE,
         end_date=CURRENT_DATE + (duration_days || ' days')::interval
        WHERE id=$1 AND status IN ('paid','pending_payment') RETURNING advertiser_name`,
@@ -131,7 +176,7 @@ async function runAction(action: string, id: number): Promise<string> {
     return `✅ <b>Ad #${id} approved and live</b> — ${esc(rows[0].advertiser_name)}. Start: today.`;
   }
   if (action === 'ad:reject') {
-    const { rows } = await pool.query(
+    const { rows } = await getPool().query(
       `UPDATE ad_submissions SET status='rejected' WHERE id=$1 AND status IN ('paid','pending_payment') RETURNING advertiser_name, paystack_ref`,
       [id]
     );
@@ -139,7 +184,7 @@ async function runAction(action: string, id: number): Promise<string> {
     return `⛔ <b>Ad #${id} rejected</b> — ${esc(rows[0].advertiser_name)}${rows[0].paystack_ref ? ` (ref ${esc(rows[0].paystack_ref)}) — arrange refund` : ''}.`;
   }
   if (action === 'listing:approve') {
-    const { rows } = await pool.query(
+    const { rows } = await getPool().query(
       `UPDATE marketplace_listings SET status='active' WHERE id=$1 AND status IN ('pending','rejected') RETURNING title`,
       [id]
     );
@@ -147,15 +192,31 @@ async function runAction(action: string, id: number): Promise<string> {
     return `✅ <b>Listing #${id} approved</b> — ${esc(rows[0].title)} is now live.`;
   }
   if (action === 'listing:reject') {
-    const { rows } = await pool.query(
+    const { rows } = await getPool().query(
       `UPDATE marketplace_listings SET status='rejected' WHERE id=$1 RETURNING title`,
       [id]
     );
     if (!rows.length) return `Listing #${id} — not found or already handled.`;
     return `⛔ <b>Listing #${id} rejected</b> — ${esc(rows[0].title)}.`;
   }
+  if (action === 'writer:approve') {
+    const { rows } = await getPool().query(
+      `UPDATE writer_users SET status='approved', approved_at=now() WHERE id=$1 AND status='pending' RETURNING name, email`,
+      [id]
+    );
+    if (!rows.length) return `Writer #${id} — not found or already handled.`;
+    return `✅ <b>Writer #${id} approved</b> — ${esc(rows[0].name)} (${esc(rows[0].email)}).`;
+  }
+  if (action === 'writer:reject') {
+    const { rows } = await getPool().query(
+      `UPDATE writer_users SET status='rejected' WHERE id=$1 AND status IN ('pending','approved') RETURNING name, email`,
+      [id]
+    );
+    if (!rows.length) return `Writer #${id} — not found or already handled.`;
+    return `⛔ <b>Writer #${id} rejected</b> — ${esc(rows[0].name)} (${esc(rows[0].email)}).`;
+  }
   if (action === 'post:publish') {
-    const { rows } = await pool.query(
+    const { rows } = await getPool().query(
       `UPDATE blog_posts SET status='published', publish_at=COALESCE(publish_at, now())
        WHERE id=$1 AND status='draft' RETURNING title, slug`,
       [id]
@@ -213,6 +274,12 @@ export async function handleTelegramUpdate(update: any): Promise<void> {
       case '/stats':
         await showStats(chatId);
         break;
+      case '/writers':
+        await showWriters(chatId);
+        break;
+      case '/stories':
+        await showStories(chatId);
+        break;
       case '/status': {
         const parts = text.trim().split(/\s+/);
         const pid = Number(parts[1]);
@@ -221,7 +288,7 @@ export async function handleTelegramUpdate(update: any): Promise<void> {
           await tgSend(chatId, 'Usage: /status &lt;id&gt; &lt;draft|published|scheduled&gt;');
           break;
         }
-        const { rows } = await pool.query(
+        const { rows } = await getPool().query(
           `UPDATE blog_posts SET status=$2, updated_at=now(), publish_at=COALESCE(publish_at, now())
            WHERE id=$1 RETURNING title, slug`,
           [pid, st]

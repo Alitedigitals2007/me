@@ -1,4 +1,4 @@
-import pool from './db';
+import getPool from './db';
 
 const MAX_BYTES = 50 * 1024 * 1024;
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif', 'application/pdf', 'application/zip', 'application/x-zip-compressed', 'application/x-rar-compressed', 'application/epub+zip', 'application/octet-stream'];
@@ -18,7 +18,7 @@ export async function saveUploadFile(file: File | null, folder = 'general'): Pro
 
   const ext = (file.name.split('.').pop() || 'bin').toLowerCase().replace(/[^a-z0-9]/g, '') || 'bin';
   
-  const { rows } = await pool.query(
+  const { rows } = await getPool().query(
     `INSERT INTO uploaded_images (filename, content_type, data, folder, size_bytes)
      VALUES ($1, $2, $3, $4, $5) RETURNING id`,
     [`upload.${ext}`, file.type, buffer, folder, buffer.length]
@@ -30,7 +30,7 @@ export async function saveUploadFile(file: File | null, folder = 'general'): Pro
 export async function getImage(id: string): Promise<{ buffer: Buffer; contentType: string; filename: string } | null> {
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return null;
   try {
-    const { rows } = await pool.query(
+    const { rows } = await getPool().query(
       `SELECT data, content_type, filename FROM uploaded_images WHERE id = $1`,
       [id]
     );

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import PrintButton from '@/components/academy/PrintButton';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import { ensureAcademySchema } from '@/lib/academy-schema';
 
 export const dynamic = 'force-dynamic';
@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
 export default async function CertificatePage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
   await ensureAcademySchema();
-  const { rows } = await pool.query(
+  const { rows } = await getPool().query(
     `SELECT cert.code, cert.issued_at, s.name AS student_name, c.title AS course_title
      FROM certificates cert
      JOIN students s ON s.id=cert.student_id

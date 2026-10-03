@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import Reveal from '@/components/site/Reveal';
 import AssignmentSubmit from '@/components/academy/AssignmentSubmit';
 import LogoutButton from '@/components/academy/LogoutButton';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import { getStudent } from '@/lib/student-session';
 import { ensureAcademySchema } from '@/lib/academy-schema';
 import { getCourseProgress } from '@/lib/academy';
@@ -17,7 +17,7 @@ export default async function DashboardPage() {
   if (!student) redirect('/academy/login?next=/dashboard');
   await ensureAcademySchema();
 
-  const { rows: enrollments } = await pool.query(
+  const { rows: enrollments } = await getPool().query(
     `SELECT e.status, e.enrolled_at, e.completed_at, c.id AS course_id, c.title, c.slug, c.image_url, c.price
      FROM enrollments e JOIN courses c ON c.id=e.course_id
      WHERE e.student_id=$1 AND e.status IN ('active','completed')
@@ -28,7 +28,7 @@ export default async function DashboardPage() {
   const courseIds = enrollments.map((e) => e.course_id);
   const [assignmentsRes, certsRes, classesRes] = courseIds.length
     ? await Promise.all([
-        pool.query(
+        getPool().query(
           `SELECT a.id, a.title, a.instructions, a.due_at, a.max_score, c.title AS course_title, c.slug AS course_slug,
                   s.content AS sub_content, s.file_url AS sub_file, s.status AS sub_status, s.score, s.feedback, s.submitted_at
            FROM assignments a
@@ -38,13 +38,13 @@ export default async function DashboardPage() {
            ORDER BY a.due_at ASC NULLS LAST, a.id ASC`,
           [student.id, courseIds]
         ),
-        pool.query(
+        getPool().query(
           `SELECT cert.code, cert.issued_at, c.title, c.slug
            FROM certificates cert JOIN courses c ON c.id=cert.course_id
            WHERE cert.student_id=$1 ORDER BY cert.issued_at DESC`,
           [student.id]
         ),
-        pool.query(
+        getPool().query(
           `SELECT cs.id, cs.title, cs.starts_at, cs.join_url, cs.recording_url, c.title AS course_title
            FROM class_sessions cs JOIN courses c ON c.id=cs.course_id
            WHERE cs.course_id = ANY($1::int[]) AND cs.starts_at >= now()

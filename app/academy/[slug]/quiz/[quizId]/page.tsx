@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import QuizTaker from '@/components/academy/QuizTaker';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import { getStudent } from '@/lib/student-session';
 import { getCourseBySlug, getEnrollment, isEnrollmentActive } from '@/lib/academy';
 
@@ -20,14 +20,14 @@ export default async function QuizPage({ params }: { params: Promise<{ slug: str
   const course = await getCourseBySlug(slug);
   if (!course) notFound();
 
-  const { rows: qRows } = await pool.query('SELECT * FROM quizzes WHERE id=$1 AND course_id=$2', [Number(quizId), course.id]);
+  const { rows: qRows } = await getPool().query('SELECT * FROM quizzes WHERE id=$1 AND course_id=$2', [Number(quizId), course.id]);
   if (!qRows.length) notFound();
   const quiz = qRows[0];
 
   const enrollment = await getEnrollment(student.id, course.id);
   if (!isEnrollmentActive(enrollment)) redirect(`/academy/${slug}`);
 
-  const { rows: questions } = await pool.query(
+  const { rows: questions } = await getPool().query(
     'SELECT id, question, options FROM quiz_questions WHERE quiz_id=$1 ORDER BY order_index ASC, id ASC',
     [quiz.id]
   );

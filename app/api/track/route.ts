@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import { rateLimit, clientIp } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     } catch { /* ignore */ }
     const ua = req.headers.get('user-agent') || '';
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '';
-    await pool.query(
+    await getPool().query(
       'INSERT INTO page_views (path, referrer, user_agent, ip) VALUES ($1,$2,$3,$4)',
       [path, referrer, ua.slice(0, 500), ip.slice(0, 100)]
     ).catch(() => {});

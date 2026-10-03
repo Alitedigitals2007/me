@@ -1,6 +1,6 @@
 import AdminHeader from '@/components/admin/AdminHeader';
 import GradeForm from '@/components/academy/GradeForm';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import { ensureAcademySchema } from '@/lib/academy-schema';
 import { getAdmin } from '@/lib/admin-auth';
 import { notFound } from 'next/navigation';
@@ -13,7 +13,7 @@ export default async function AdminSubmissionsPage() {
   if (!admin) notFound();
   await ensureAcademySchema();
 
-  const { rows } = await pool.query(
+  const { rows } = await getPool().query(
     `SELECT sub.id, sub.content, sub.file_url, sub.status, sub.score, sub.feedback, sub.submitted_at, sub.graded_at,
             a.title AS assignment_title, a.max_score, a.instructions, a.due_at,
             c.title AS course_title, c.slug AS course_slug,

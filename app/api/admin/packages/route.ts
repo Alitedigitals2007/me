@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import { getAdmin } from '@/lib/admin-auth';
 
 export const runtime = 'nodejs';
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     if (!name || !mediums || !dailyRate || !bundle3Rate) {
       return NextResponse.json({ error: 'Name, mediums and rates are required' }, { status: 400 });
     }
-    await pool.query(
+    await getPool().query(
       `INSERT INTO ad_packages (name, mediums, daily_rate, bundle_3_rate, description)
        VALUES ($1,$2,$3,$4,$5)
        ON CONFLICT (name) DO UPDATE SET mediums=$2, daily_rate=$3, bundle_3_rate=$4, description=$5`,

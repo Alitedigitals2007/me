@@ -3,7 +3,7 @@ import ActionButton from '@/components/admin/ActionButton';
 import SlotForm from '@/components/admin/SlotForm';
 import PackageForm from '@/components/admin/PackageForm';
 import AdminHeader from '@/components/admin/AdminHeader';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import { formatDate, formatMoney } from '@/lib/utils';
 
 export const metadata = { title: 'Ads' };
@@ -15,16 +15,16 @@ export default async function AdsPage({ searchParams }: { searchParams: Promise<
   const status = FILTERS.includes(filter || '') ? filter! : 'pending';
   const where = status === 'all' ? 'TRUE' : `a.status = '${status}'`;
   const [subs, counts, slots, packages] = await Promise.all([
-    pool.query(
+    getPool().query(
       `SELECT a.*, s.name AS slot_name, s.position, p.name AS package_name, p.mediums AS package_mediums
        FROM ad_submissions a
        LEFT JOIN ad_slots s ON s.id = a.slot_id
        LEFT JOIN ad_packages p ON p.id = a.package_id
        WHERE ${where} ORDER BY a.created_at DESC`
     ),
-    pool.query('SELECT status, COUNT(*)::int AS c FROM ad_submissions GROUP BY status'),
-    pool.query('SELECT * FROM ad_slots ORDER BY id ASC'),
-    pool.query('SELECT * FROM ad_packages ORDER BY id ASC')
+    getPool().query('SELECT status, COUNT(*)::int AS c FROM ad_submissions GROUP BY status'),
+    getPool().query('SELECT * FROM ad_slots ORDER BY id ASC'),
+    getPool().query('SELECT * FROM ad_packages ORDER BY id ASC')
   ]);
   const countMap = Object.fromEntries(counts.rows.map((r) => [r.status, r.c]));
 

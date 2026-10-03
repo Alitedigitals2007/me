@@ -1,4 +1,4 @@
-import pool from './db';
+import getPool from './db';
 
 // Idempotent academy DDL. Runs at most once per process; also mirrored in db/schema.sql.
 export const ACADEMY_DDL = `
@@ -142,9 +142,9 @@ const CRITICAL_TABLES = [
 async function schemaReady(): Promise<boolean> {
   try {
     const tableChecks = CRITICAL_TABLES.map((t, i) => `to_regclass('public.${t}') IS NOT NULL AS t${i}`).join(', ');
-    const { rows } = await pool.query(`SELECT ${tableChecks}`);
+    const { rows } = await getPool().query(`SELECT ${tableChecks}`);
     if (!Object.values(rows[0]).every(Boolean)) return false;
-    await pool.query(`SELECT slug, status, delivery, level, duration FROM courses LIMIT 0`);
+    await getPool().query(`SELECT slug, status, delivery, level, duration FROM courses LIMIT 0`);
     return true;
   } catch {
     return false;
@@ -160,7 +160,7 @@ export async function ensureAcademySchema(): Promise<void> {
       .map((s) => `${s};`);
     for (const stmt of statements) {
       try {
-        await pool.query(stmt);
+        await getPool().query(stmt);
       } catch (e) {
         console.error('academy ddl statement failed:', (e as Error).message, '->', stmt.slice(0, 80));
       }

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import AdminHeader from '@/components/admin/AdminHeader';
 import CourseStudio from '@/components/academy/CourseStudio';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import { getAdmin } from '@/lib/admin-auth';
 import { ensureAcademySchema } from '@/lib/academy-schema';
 
@@ -15,21 +15,21 @@ export default async function CourseStudioPage({ params }: { params: Promise<{ i
   const { id } = await params;
   await ensureAcademySchema();
 
-  const { rows: cRows } = await pool.query('SELECT * FROM courses WHERE id=$1', [Number(id)]);
+  const { rows: cRows } = await getPool().query('SELECT * FROM courses WHERE id=$1', [Number(id)]);
   if (!cRows.length) notFound();
   const course = cRows[0];
 
   const [{ rows: modRows }, { rows: lessonRows }, { rows: assignments }, { rows: quizzes }, { rows: qnRows }, { rows: sessions }] =
     await Promise.all([
-      pool.query('SELECT * FROM modules WHERE course_id=$1 ORDER BY order_index ASC, id ASC', [course.id]),
-      pool.query('SELECT * FROM lessons WHERE course_id=$1 ORDER BY order_index ASC, id ASC', [course.id]),
-      pool.query('SELECT * FROM assignments WHERE course_id=$1 ORDER BY id ASC', [course.id]),
-      pool.query('SELECT * FROM quizzes WHERE course_id=$1 ORDER BY id ASC', [course.id]),
-      pool.query(
+      getPool().query('SELECT * FROM modules WHERE course_id=$1 ORDER BY order_index ASC, id ASC', [course.id]),
+      getPool().query('SELECT * FROM lessons WHERE course_id=$1 ORDER BY order_index ASC, id ASC', [course.id]),
+      getPool().query('SELECT * FROM assignments WHERE course_id=$1 ORDER BY id ASC', [course.id]),
+      getPool().query('SELECT * FROM quizzes WHERE course_id=$1 ORDER BY id ASC', [course.id]),
+      getPool().query(
         `SELECT qn.* FROM quiz_questions qn JOIN quizzes q ON q.id=qn.quiz_id WHERE q.course_id=$1 ORDER BY qn.order_index ASC, qn.id ASC`,
         [course.id]
       ),
-      pool.query('SELECT * FROM class_sessions WHERE course_id=$1 ORDER BY starts_at ASC', [course.id])
+      getPool().query('SELECT * FROM class_sessions WHERE course_id=$1 ORDER BY starts_at ASC', [course.id])
     ]);
 
   const modules = modRows.map((m) => ({ ...m, lessons: lessonRows.filter((l) => l.module_id === m.id) }));

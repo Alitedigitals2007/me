@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import { sendTelegram, siteUrl } from '@/lib/telegram';
 import { rateLimit, clientIp } from '@/lib/rate-limit';
 
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Enter a valid email address' }, { status: 400 });
     }
 
-    await pool.query(
+    await getPool().query(
       'INSERT INTO contact_messages (name, email, message) VALUES ($1,$2,$3)',
       [name, email, message]
     );

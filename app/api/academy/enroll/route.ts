@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import { getStudent } from '@/lib/student-session';
 import { ensureAcademySchema } from '@/lib/academy-schema';
 import { initializePayment, makeReference, hasPaystackKeys } from '@/lib/paystack';
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
   try {
     const { course_id } = await req.json();
     await ensureAcademySchema();
-    const { rows } = await pool.query(
+    const { rows } = await getPool().query(
       `SELECT id, title, slug, price, delivery, status FROM courses WHERE id=$1 AND status='published'`,
       [course_id]
     );
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
 
     const price = coursePriceNumber(course.price);
     if (price === 0) {
-      await pool.query(
+      await getPool().query(
         `INSERT INTO enrollments (student_id, course_id, status) VALUES ($1, $2, 'active')
          ON CONFLICT (student_id, course_id) DO UPDATE SET status='active'`,
         [student.id, course.id]
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
     }
 
     const ref = makeReference('course');
-    await pool.query(
+    await getPool().query(
       `INSERT INTO enrollments (student_id, course_id, status, payment_ref, amount_paid)
        VALUES ($1, $2, 'pending', $3, $4)
        ON CONFLICT (student_id, course_id)
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     );
 
     if (!hasPaystackKeys()) {
-      await pool.query(`UPDATE enrollments SET status='active' WHERE student_id=$1 AND course_id=$2`, [student.id, course.id]);
+      await getPool().query(`UPDATE enrollments SET status='active' WHERE student_id=$1 AND course_id=$2`, [student.id, course.id]);
       return NextResponse.json({ url: `/dashboard` });
     }
 

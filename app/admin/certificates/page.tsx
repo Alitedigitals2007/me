@@ -1,7 +1,7 @@
 import AdminHeader from '@/components/admin/AdminHeader';
 import AdminApiButton from '@/components/academy/AdminApiButton';
 import IssueCertForm from '@/components/academy/IssueCertForm';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import { ensureAcademySchema } from '@/lib/academy-schema';
 
 export const metadata: { title: string } = { title: 'Certificates' };
@@ -10,15 +10,15 @@ export const dynamic = 'force-dynamic';
 export default async function AdminCertificatesPage() {
   await ensureAcademySchema();
   const [{ rows: certs }, { rows: students }, { rows: courses }] = await Promise.all([
-    pool.query(
+    getPool().query(
       `SELECT cert.id, cert.code, cert.issued_at, s.name AS student_name, s.email, c.title AS course_title, c.slug
        FROM certificates cert
        JOIN students s ON s.id = cert.student_id
        JOIN courses c ON c.id = cert.course_id
        ORDER BY cert.issued_at DESC`
     ),
-    pool.query('SELECT id, name, email FROM students ORDER BY name ASC'),
-    pool.query('SELECT id, title FROM courses ORDER BY title ASC')
+    getPool().query('SELECT id, name, email FROM students ORDER BY name ASC'),
+    getPool().query('SELECT id, title FROM courses ORDER BY title ASC')
   ]);
 
   return (

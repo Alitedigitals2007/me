@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import { getAdmin } from '@/lib/admin-auth';
 import { slugify, parseGallery } from '@/lib/utils';
 
@@ -18,7 +18,7 @@ interface ProjectsColumn {
 let projectsColumns: ProjectsColumn[] | null = null;
 async function getProjectsColumns(): Promise<ProjectsColumn[]> {
   if (projectsColumns) return projectsColumns;
-  const res = await pool.query(
+  const res = await getPool().query(
     `SELECT column_name, is_nullable, column_default, data_type, udt_name
      FROM information_schema.columns
      WHERE table_name = 'projects'`
@@ -69,10 +69,10 @@ export async function POST(req: NextRequest) {
 
     let slug = slugBase;
     if (id) {
-      const { rows: dupe } = await pool.query('SELECT id FROM projects WHERE slug=$1 AND id<>$2 LIMIT 1', [slug, id]);
+      const { rows: dupe } = await getPool().query('SELECT id FROM projects WHERE slug=$1 AND id<>$2 LIMIT 1', [slug, id]);
       if (dupe.length) slug = `${slugBase}-${id}`;
     } else {
-      const { rows: dupe } = await pool.query('SELECT id FROM projects WHERE slug=$1 LIMIT 1', [slug]);
+      const { rows: dupe } = await getPool().query('SELECT id FROM projects WHERE slug=$1 LIMIT 1', [slug]);
       if (dupe.length) slug = `${slugBase}-${Date.now().toString(36)}`;
     }
 
@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
       const sets = names.map((n, i) => `${n}=$${i + 1}`).join(',');
       const params = names.map((n) => values[n]);
       params.push(id);
-      const { rowCount } = await pool.query(`UPDATE projects SET ${sets} WHERE id=$${names.length + 1}`, params);
+      const { rowCount } = await getPool().query(`UPDATE projects SET ${sets} WHERE id=$${names.length + 1}`, params);
       if (!rowCount) return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     } else {
       const names = Object.keys(values).filter((n) => byName.has(n));
@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
       }
       const placeholders = names.map((_, i) => `$${i + 1}`).join(',');
       const params = names.map((n) => (n in values ? values[n] : fills[n]));
-      await pool.query(`INSERT INTO projects (${names.join(',')}) VALUES (${placeholders})`, params);
+      await getPool().query(`INSERT INTO projects (${names.join(',')}) VALUES (${placeholders})`, params);
     }
     return NextResponse.json({ ok: true });
   } catch (e) {

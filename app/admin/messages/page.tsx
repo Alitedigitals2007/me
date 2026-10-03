@@ -1,12 +1,21 @@
 import ActionButton from '@/components/admin/ActionButton';
 import AdminHeader from '@/components/admin/AdminHeader';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import { formatDateTime } from '@/lib/utils';
 
 export const metadata = { title: 'Messages' };
 
+async function safeQuery(query: string, params?: any[]) {
+  try {
+    const { rows } = await getPool().query(query, params);
+    return rows;
+  } catch {
+    return [];
+  }
+}
+
 export default async function MessagesPage() {
-  const { rows } = await pool.query('SELECT * FROM contact_messages ORDER BY created_at DESC');
+  const rows = await safeQuery('SELECT * FROM contact_messages ORDER BY created_at DESC');
   return (
     <div>
       <AdminHeader title="Messages" sub="Contact form submissions." />

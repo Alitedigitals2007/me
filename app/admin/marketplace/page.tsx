@@ -1,13 +1,22 @@
 import ActionButton from '@/components/admin/ActionButton';
 import AdminHeader from '@/components/admin/AdminHeader';
 import ListingForm from '@/components/admin/ListingForm';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import { formatMoney } from '@/lib/utils';
 
 export const metadata = { title: 'Marketplace' };
 
+async function safeQuery(query: string, params?: any[]) {
+  try {
+    const { rows } = await getPool().query(query, params);
+    return rows;
+  } catch {
+    return [];
+  }
+}
+
 export default async function MarketplacePage() {
-  const { rows } = await pool.query('SELECT * FROM marketplace_listings ORDER BY created_at DESC');
+  const rows = await safeQuery('SELECT * FROM marketplace_listings ORDER BY created_at DESC');
   return (
     <div>
       <AdminHeader title="Marketplace" sub="Listings awaiting review and live orders." />

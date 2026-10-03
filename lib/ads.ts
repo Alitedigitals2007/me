@@ -1,8 +1,8 @@
-import pool from './db';
+import getPool from './db';
 import type { Ad } from './types';
 
 export async function loadAds(): Promise<Record<string, Ad[]>> {
-  const { rows } = await pool.query(
+  const { rows } = await getPool().query(
     `SELECT a.id, a.image_url, a.target_url, s.position
      FROM ad_submissions a
      JOIN ad_slots s ON s.id = a.slot_id

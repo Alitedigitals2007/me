@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import { getStudent } from '@/lib/student-session';
 import { getEnrollment, isEnrollmentActive, checkAndIssueCertificate } from '@/lib/academy';
 import { sendTelegram, siteUrl } from '@/lib/telegram';
@@ -16,7 +16,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   try {
     const { id } = await params;
     const quizId = Number(id);
-    const { rows: qRows } = await pool.query(
+    const { rows: qRows } = await getPool().query(
       'SELECT q.*, c.title AS course_title FROM quizzes q JOIN courses c ON c.id=q.course_id WHERE q.id=$1',
       [quizId]
     );
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const enrollment = await getEnrollment(student.id, quiz.course_id);
     if (!isEnrollmentActive(enrollment)) return NextResponse.json({ error: 'Enroll in this course first.' }, { status: 403 });
 
-    const { rows: questions } = await pool.query(
+    const { rows: questions } = await getPool().query(
       'SELECT id, correct_index FROM quiz_questions WHERE quiz_id=$1 ORDER BY order_index ASC, id ASC',
       [quizId]
     );
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const total = questions.length;
     const passed = Math.round((score / total) * 100) >= quiz.pass_pct;
 
-    await pool.query(
+    await getPool().query(
       'INSERT INTO quiz_attempts (quiz_id, student_id, answers, score, total, passed) VALUES ($1, $2, $3, $4, $5, $6)',
       [quizId, student.id, JSON.stringify(answers), score, total, passed]
     );

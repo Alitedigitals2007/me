@@ -1,6 +1,6 @@
 import AdminHeader from '@/components/admin/AdminHeader';
 import AdminApiButton from '@/components/academy/AdminApiButton';
-import pool from '@/lib/db';
+import getPool from '@/lib/db';
 import { ensureAcademySchema } from '@/lib/academy-schema';
 import { formatDateTime } from '@/lib/utils';
 
@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function AdminStudentsPage() {
   await ensureAcademySchema();
-  const { rows: students } = await pool.query(
+  const { rows: students } = await getPool().query(
     `SELECT s.id, s.name, s.email, s.status, s.created_at,
             COALESCE(e.n, 0)::int AS courses,
             COALESCE(c.certs, 0)::int AS certs
