@@ -51,22 +51,28 @@ export default function SessionNav() {
     return (
       <div className="flex items-center gap-2">
         <Link
-          href="/writer/login"
+          href="/login?role=writer"
           className="inline-flex items-center rounded-full ring-1 ring-line px-4 py-2 text-sm font-semibold text-ink-soft hover:text-ink hover:ring-accent/50 transition-all"
         >
-          Writer Login
+          Writer
         </Link>
         <Link
-          href="/writer/signup"
+          href="/login?role=writer&mode=signup"
           className="inline-flex items-center rounded-full bg-gradient-cta text-white text-sm font-semibold px-4 py-2"
         >
-          Join as Writer
+          Join
         </Link>
         <Link
           href="/login"
           className="inline-flex items-center rounded-full ring-1 ring-line px-4 py-2 text-sm font-semibold text-ink-soft hover:text-ink hover:ring-accent/50 transition-all"
         >
-          Admin Login
+          Admin
+        </Link>
+        <Link
+          href="/login?role=student"
+          className="inline-flex items-center rounded-full ring-1 ring-line px-4 py-2 text-sm font-semibold text-ink-soft hover:text-ink hover:ring-accent/50 transition-all"
+        >
+          Student
         </Link>
       </div>
     );

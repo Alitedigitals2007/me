@@ -101,7 +101,23 @@ export async function middleware(req: NextRequest) {
 
   if (pathname.startsWith('/writer/login') || pathname.startsWith('/writer/signup')) {
     if (hasWriterSession) return NextResponse.redirect(new URL('/writer/dashboard', req.url));
-    return NextResponse.next();
+    const login = new URL('/login', req.url);
+    login.searchParams.set('role', 'writer');
+    login.searchParams.set('mode', pathname.startsWith('/writer/signup') ? 'signup' : 'login');
+    if (req.nextUrl.searchParams.get('next')) {
+      login.searchParams.set('next', req.nextUrl.searchParams.get('next')!);
+    }
+    return NextResponse.redirect(login);
+  }
+
+  if (pathname.startsWith('/academy/login') || pathname.startsWith('/academy/signup')) {
+    const login = new URL('/login', req.url);
+    login.searchParams.set('role', 'student');
+    login.searchParams.set('mode', pathname.startsWith('/academy/signup') ? 'signup' : 'login');
+    if (req.nextUrl.searchParams.get('next')) {
+      login.searchParams.set('next', req.nextUrl.searchParams.get('next')!);
+    }
+    return NextResponse.redirect(login);
   }
 
   if (pathname.startsWith('/writer')) {
