@@ -8,15 +8,24 @@ export const metadata = { title: 'Writers' };
 
 const FILTERS = ['pending', 'approved', 'rejected', 'all'];
 
+async function safeQuery(query: string, params?: any[]) {
+  try {
+    const { rows } = await getPool().query(query, params);
+    return rows;
+  } catch {
+    return [];
+  }
+}
+
 export default async function WritersPage({ searchParams }: { searchParams: Promise<{ filter?: string }> }) {
   const { filter } = await searchParams;
   const status = FILTERS.includes(filter || '') ? filter! : 'pending';
   const where = status === 'all' ? 'TRUE' : `status = '${status}'`;
   const [writers, counts] = await Promise.all([
-    getPool().query(`SELECT * FROM writer_users WHERE ${where} ORDER BY created_at DESC`),
-    getPool().query('SELECT status, COUNT(*)::int AS c FROM writer_users GROUP BY status')
+    safeQuery(`SELECT * FROM writer_users WHERE ${where} ORDER BY created_at DESC`),
+    safeQuery('SELECT status, COUNT(*)::int AS c FROM writer_users GROUP BY status')
   ]);
-  const countMap = Object.fromEntries(counts.rows.map((r) => [r.status, r.c]));
+  const countMap = Object.fromEntries(counts.map((r) => [r.status, r.c]));
 
   return (
     <div>

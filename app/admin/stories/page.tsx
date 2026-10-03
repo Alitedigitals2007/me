@@ -8,19 +8,28 @@ export const metadata = { title: 'Stories' };
 
 const FILTERS = ['published', 'draft', 'all'];
 
+async function safeQuery(query: string, params?: any[]) {
+  try {
+    const { rows } = await getPool().query(query, params);
+    return rows;
+  } catch {
+    return [];
+  }
+}
+
 export default async function StoriesPage({ searchParams }: { searchParams: Promise<{ filter?: string }> }) {
   const { filter } = await searchParams;
   const status = FILTERS.includes(filter || '') ? filter! : 'all';
   const where = status === 'all' ? 'TRUE' : `s.status = '${status}'`;
   const [stories, counts, activity] = await Promise.all([
-    getPool().query(
+    safeQuery(
       `SELECT s.*, w.name as writer_name, w.email as writer_email
        FROM stories s
        JOIN writer_users w ON w.id = s.writer_id
        WHERE ${where} ORDER BY s.updated_at DESC`
     ),
-    getPool().query('SELECT status, COUNT(*)::int AS c FROM stories GROUP BY status'),
-    getPool().query(
+    safeQuery('SELECT status, COUNT(*)::int AS c FROM stories GROUP BY status'),
+    safeQuery(
       `SELECT sa.*, s.title as story_title, w.name as writer_name
        FROM story_activity sa
        JOIN stories s ON s.id = sa.story_id
@@ -28,7 +37,7 @@ export default async function StoriesPage({ searchParams }: { searchParams: Prom
        ORDER BY sa.created_at DESC LIMIT 50`
     )
   ]);
-  const countMap = Object.fromEntries(counts.rows.map((r) => [r.status, r.c]));
+  const countMap = Object.fromEntries(counts.map((r) => [r.status, r.c]));
 
   return (
     <div>

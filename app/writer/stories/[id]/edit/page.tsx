@@ -11,12 +11,21 @@ interface Props {
   params: Promise<{ id: string }>;
 }
 
+async function safeQuery(query: string, params?: any[]) {
+  try {
+    const { rows } = await getPool().query(query, params);
+    return rows;
+  } catch {
+    return [];
+  }
+}
+
 export default async function EditStoryPage({ params }: Props) {
   const writer = await getWriter();
   if (!writer) return redirect('/writer/login');
 
   const { id } = await params;
-  const { rows } = await getPool().query('SELECT * FROM stories WHERE id=$1 AND writer_id=$2', [id, writer.id]);
+  const rows = await safeQuery('SELECT * FROM stories WHERE id=$1 AND writer_id=$2', [id, writer.id]);
   const story = rows[0] as Story | undefined;
   if (!story) notFound();
 

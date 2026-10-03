@@ -6,11 +6,20 @@ import { formatDate } from '@/lib/utils';
 
 export const metadata = { title: 'Writer Dashboard' };
 
+async function safeQuery(query: string, params?: any[]) {
+  try {
+    const { rows } = await getPool().query(query, params);
+    return rows;
+  } catch {
+    return [];
+  }
+}
+
 export default async function WriterDashboard() {
   const writer = await getWriter();
   if (!writer) return redirect('/writer/login');
 
-  const { rows: stories } = await getPool().query(
+  const stories = await safeQuery(
     `SELECT id, title, slug, status, cover_image, created_at, published_at, updated_at
      FROM stories WHERE writer_id = $1 ORDER BY updated_at DESC`,
     [writer.id]
