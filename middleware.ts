@@ -3,6 +3,7 @@ import { SignJWT, jwtVerify } from 'jose';
 
 const ADMIN_COOKIE = 'alite_session';
 const WRITER_COOKIE = 'alite_writer';
+const STUDENT_COOKIE = 'alite_student';
 const ADMIN_MAX_AGE = 30 * 60; // 30 minutes
 const WRITER_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
 
@@ -24,23 +25,18 @@ interface WriterPayload {
   iat?: number;
 }
 
-async function verifyAdminToken(token: string | undefined): Promise<AdminPayload | null> {
-  const key = secret();
-  if (!key || !token) return null;
-  try {
-    const { payload } = await jwtVerify(token, key);
-    return payload as AdminPayload;
-  } catch {
-    return null;
-  }
+interface StudentPayload {
+  student?: { id: number; email: string; name: string };
+  exp?: number;
+  iat?: number;
 }
 
-async function verifyWriterToken(token: string | undefined): Promise<WriterPayload | null> {
+async function verifyToken<T>(token: string | undefined): Promise<T | null> {
   const key = secret();
   if (!key || !token) return null;
   try {
     const { payload } = await jwtVerify(token, key);
-    return payload as WriterPayload;
+    return payload as T;
   } catch {
     return null;
   }
@@ -60,12 +56,20 @@ async function refreshAdminSession(payload: AdminPayload): Promise<string | null
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Admin routes
-  const adminPayload = await verifyAdminToken(req.cookies.get(ADMIN_COOKIE)?.value);
-  const hasAdminSession = !!adminPayload;
+  const [adminPayload, writerPayload, studentPayload] = await Promise.all([
+    verifyToken<AdminPayload>(req.cookies.get(ADMIN_COOKIE)?.value),
+    verifyToken<WriterPayload>(req.cookies.get(WRITER_COOKIE)?.value),
+    verifyToken<StudentPayload>(req.cookies.get(STUDENT_COOKIE)?.value)
+  ]);
+  const hasAdminSession = !!adminPayload?.user;
+  const hasWriterSession = !!writerPayload?.writer;
+  const hasStudentSession = !!studentPayload?.student;
 
+  // Unified auth page: signed-in visitors go straight to their dashboard.
   if (pathname === '/login') {
     if (hasAdminSession) return NextResponse.redirect(new URL('/admin', req.url));
+    if (hasStudentSession) return NextResponse.redirect(new URL('/dashboard', req.url));
+    if (hasWriterSession) return NextResponse.redirect(new URL('/writer/dashboard', req.url));
     return NextResponse.next();
   }
 
@@ -73,6 +77,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL(hasAdminSession ? '/admin' : '/login', req.url));
   }
 
+  // Admin routes
   if (pathname.startsWith('/admin')) {
     if (!hasAdminSession) {
       const login = new URL('/login', req.url);
@@ -81,7 +86,7 @@ export async function middleware(req: NextRequest) {
     }
 
     const res = NextResponse.next();
-    if (adminPayload.exp && adminPayload.user) {
+    if (adminPayload?.exp && adminPayload.user) {
       const elapsed = Math.floor(Date.now() / 1000) - (adminPayload.iat ?? 0);
       if (elapsed > ADMIN_MAX_AGE / 2) {
         const token = await refreshAdminSession(adminPayload);
@@ -99,10 +104,7 @@ export async function middleware(req: NextRequest) {
     return res;
   }
 
-  // Writer routes
-  const writerPayload = await verifyWriterToken(req.cookies.get(WRITER_COOKIE)?.value);
-  const hasWriterSession = !!writerPayload?.writer;
-
+  // Legacy auth URLs -> unified /login page
   if (pathname === '/writer/login' || pathname === '/writer/signup') {
     if (hasWriterSession) return NextResponse.redirect(new URL('/writer/dashboard', req.url));
     const login = new URL('/login', req.url);
@@ -115,6 +117,7 @@ export async function middleware(req: NextRequest) {
   }
 
   if (pathname === '/academy/login' || pathname === '/academy/signup') {
+    if (hasStudentSession) return NextResponse.redirect(new URL('/dashboard', req.url));
     const login = new URL('/login', req.url);
     login.searchParams.set('role', 'student');
     login.searchParams.set('mode', pathname === '/academy/signup' ? 'signup' : 'login');
@@ -124,6 +127,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(login);
   }
 
+  // Writer routes
   if (pathname.startsWith('/writer')) {
     if (!hasWriterSession) {
       const login = new URL('/writer/login', req.url);

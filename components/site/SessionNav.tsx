@@ -21,8 +21,8 @@ export default function SessionNav() {
           fetch('/api/writer/me').then((r) => r.json())
         ]);
         if (!alive) return;
-        if (s?.student) setSession({ kind: 'student', name: s.student.name });
-        else if (a?.admin) setSession({ kind: 'admin', name: a.admin.username });
+        if (a?.admin) setSession({ kind: 'admin', name: a.admin.username });
+        else if (s?.student) setSession({ kind: 'student', name: s.student.name });
         else if (w?.writer) setSession({ kind: 'writer', name: w.writer.name });
         else setSession(null);
       } catch {
@@ -53,47 +53,38 @@ export default function SessionNav() {
     return (
       <div className="flex items-center gap-2">
         <Link
-          href="/login?role=writer"
-          className="inline-flex items-center rounded-full ring-1 ring-line px-4 py-2 text-sm font-semibold text-ink-soft hover:text-ink hover:ring-accent/50 transition-all hidden sm:inline-flex"
-        >
-          Writer
-        </Link>
-        <Link
-          href="/login?role=student"
-          className="inline-flex items-center rounded-full ring-1 ring-line px-4 py-2 text-sm font-semibold text-ink-soft hover:text-ink hover:ring-accent/50 transition-all hidden sm:inline-flex"
-        >
-          Student
-        </Link>
-        <Link
           href="/login"
-          className="inline-flex items-center rounded-full ring-1 ring-line px-4 py-2 text-sm font-semibold text-ink-soft hover:text-ink hover:ring-accent/50 transition-all lg:hidden"
+          className="inline-flex items-center rounded-full ring-1 ring-line px-3.5 sm:px-4 py-2 text-sm font-semibold text-ink-soft hover:text-ink hover:ring-accent/50 transition-all"
         >
-          Login
+          Log in
         </Link>
         <Link
-          href="/login?role=writer&mode=signup"
-          className="inline-flex items-center rounded-full bg-gradient-cta text-white text-sm font-semibold px-4 py-2"
+          href="/login?mode=signup"
+          className="inline-flex items-center rounded-full bg-gradient-cta text-white text-sm font-semibold px-3.5 sm:px-4 py-2 shadow-[0_8px_24px_rgba(79,70,229,0.3)] hover:-translate-y-0.5 transition-all"
         >
-          Join
+          Sign up
         </Link>
       </div>
     );
   }
 
   const routes = {
-    admin: { href: '/admin', label: 'Admin', icon: '⚙️' },
-    student: { href: '/dashboard', label: 'Dashboard', icon: '🎓' },
-    writer: { href: '/writer/dashboard', label: 'Writer', icon: '✍️' }
+    admin: { href: '/admin', label: 'Admin' },
+    student: { href: '/dashboard', label: 'Dashboard' },
+    writer: { href: '/writer/dashboard', label: 'Writer' }
   };
   const route = routes[session.kind];
+  const initial = (session.name || route.label).trim().charAt(0).toUpperCase() || 'A';
   return (
     <div className="flex items-center gap-2">
       <Link
         href={route.href}
         title={`${session.name} — ${route.label.toLowerCase()}`}
-        className="inline-flex items-center gap-1.5 rounded-full bg-accent/10 text-accent px-3.5 py-2 text-sm font-semibold ring-1 ring-accent/30 hover:bg-accent/15 transition-all"
+        className="inline-flex items-center gap-2 rounded-full bg-accent/10 text-accent px-2 sm:px-2.5 sm:pr-3.5 py-1.5 text-sm font-semibold ring-1 ring-accent/30 hover:bg-accent/15 transition-all"
       >
-        <span aria-hidden>{route.icon}</span>
+        <span className="grid place-items-center w-7 h-7 rounded-full bg-gradient-cta text-white text-xs font-bold" aria-hidden>
+          {initial}
+        </span>
         <span className="hidden sm:inline">{route.label}</span>
       </Link>
       <button
@@ -101,7 +92,7 @@ export default function SessionNav() {
         disabled={busy}
         className="inline-flex items-center rounded-full ring-1 ring-line px-3.5 py-2 text-sm font-semibold text-muted hover:text-danger hover:ring-danger/40 transition-all disabled:opacity-60"
       >
-        {busy ? '…' : 'Logout'}
+        {busy ? '…' : 'Log out'}
       </button>
     </div>
   );

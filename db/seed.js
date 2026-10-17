@@ -202,19 +202,23 @@ async function main() {
 
   const email = (process.env.ADMIN_EMAIL || '').trim();
   const password = (process.env.ADMIN_PASSWORD || '').trim();
+  const explicitUsername = (process.env.ADMIN_USERNAME || '').trim();
   if (email && password) {
     const hash = await bcrypt.hash(password, 10);
-    const username = email.includes('@') ? null : email;
-    const em = email.includes('@') ? email : null;
+    const isEmail = email.includes('@');
+    const em = isEmail ? email : null;
+    const username = explicitUsername || (isEmail ? email.split('@')[0] : email);
     const { rows: existing } = await pool.query(
-      'SELECT id FROM users WHERE ($1::text IS NOT NULL AND username = $1) OR ($2::text IS NOT NULL AND email = $2) LIMIT 1',
+      'SELECT id FROM users WHERE username = $1 OR ($2::text IS NOT NULL AND email = $2) LIMIT 1',
       [username, em]
     );
     const hasOldPasswordCol = (await pool.query(
       `SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='password'`
     )).rowCount > 0;
     if (existing.length) {
-      await pool.query('UPDATE users SET password_hash=$2, role=$3 WHERE id=$1', [existing[0].id, hash, 'admin']);
+      await pool.query('UPDATE users SET username=$2, email=$3, password_hash=$4, role=$5 WHERE id=$1', [
+        existing[0].id, username, em, hash, 'admin'
+      ]);
       if (hasOldPasswordCol) await pool.query('UPDATE users SET password=$2 WHERE id=$1', [existing[0].id, hash]);
     } else if (hasOldPasswordCol) {
       await pool.query(
@@ -227,7 +231,7 @@ async function main() {
         [em, username, hash, 'admin']
       );
     }
-    console.log(`-- Admin ready (login: ${email}) --`);
+    console.log(`-- Admin ready (login: ${email}${em ? ` or username "${username}"` : ''}) --`);
   } else {
     console.log('-- WARNING: ADMIN_EMAIL/ADMIN_PASSWORD not set in .env, admin not created --');
   }
