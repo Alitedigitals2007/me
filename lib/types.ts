@@ -209,6 +209,8 @@ export interface Story {
   excerpt: string;
   content: string;
   cover_image: string;
+  category: string;
+  tags: string;
   status: 'draft' | 'published';
   published_at: string | null;
   created_at: string;

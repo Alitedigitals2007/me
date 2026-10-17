@@ -29,6 +29,8 @@ CREATE TABLE IF NOT EXISTS stories (
   excerpt TEXT NOT NULL DEFAULT '',
   content TEXT NOT NULL DEFAULT '',
   cover_image TEXT NOT NULL DEFAULT '',
+  category TEXT NOT NULL DEFAULT '',
+  tags TEXT NOT NULL DEFAULT '',
   status TEXT NOT NULL DEFAULT 'draft',
   published_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -38,6 +40,8 @@ CREATE TABLE IF NOT EXISTS stories (
 ALTER TABLE stories ADD COLUMN IF NOT EXISTS excerpt TEXT NOT NULL DEFAULT '';
 ALTER TABLE stories ADD COLUMN IF NOT EXISTS content TEXT NOT NULL DEFAULT '';
 ALTER TABLE stories ADD COLUMN IF NOT EXISTS cover_image TEXT NOT NULL DEFAULT '';
+ALTER TABLE stories ADD COLUMN IF NOT EXISTS category TEXT NOT NULL DEFAULT '';
+ALTER TABLE stories ADD COLUMN IF NOT EXISTS tags TEXT NOT NULL DEFAULT '';
 ALTER TABLE stories ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'draft';
 ALTER TABLE stories ADD COLUMN IF NOT EXISTS published_at TIMESTAMPTZ;
 ALTER TABLE stories ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
@@ -54,6 +58,7 @@ CREATE TABLE IF NOT EXISTS story_activity (
 CREATE INDEX IF NOT EXISTS stories_writer_idx ON stories (writer_id);
 CREATE INDEX IF NOT EXISTS stories_status_idx ON stories (status);
 CREATE INDEX IF NOT EXISTS stories_slug_key ON stories (slug);
+CREATE INDEX IF NOT EXISTS stories_category_idx ON stories (category);
 CREATE INDEX IF NOT EXISTS story_activity_story_idx ON story_activity (story_id);
 CREATE INDEX IF NOT EXISTS story_activity_writer_idx ON story_activity (writer_id);
 `;
@@ -69,7 +74,7 @@ async function schemaReady(): Promise<boolean> {
     );
     if (!Object.values(rows[0]).every(Boolean)) return false;
     await getPool().query(`SELECT status, bio, avatar_url, approved_at, approved_by FROM writer_users LIMIT 0`);
-    await getPool().query(`SELECT excerpt, content, cover_image, status, published_at, updated_at FROM stories LIMIT 0`);
+    await getPool().query(`SELECT excerpt, content, cover_image, category, tags, status, published_at, updated_at FROM stories LIMIT 0`);
     return true;
   } catch {
     return false;

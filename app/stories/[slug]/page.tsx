@@ -2,10 +2,10 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import AdSlot from '@/components/site/AdSlot';
-import { SectionHead } from '@/components/site/Cards';
-import { getStory } from '@/lib/data';
+import StoryCard from '@/components/site/StoryCard';
+import { getStory, getRelatedStories } from '@/lib/data';
 import { loadAds } from '@/lib/ads';
-import { formatDate } from '@/lib/utils';
+import { formatDate, parseTags } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,7 +29,8 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
   const { slug } = await params;
   const story = await getStory(slug);
   if (!story) notFound();
-  const ads = await loadAds();
+  const [ads, related] = await Promise.all([loadAds(), getRelatedStories(story, 3)]);
+  const tags = parseTags(story.tags);
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-14 md:py-20">
@@ -50,9 +51,30 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                 <circle cx="12" cy="7" r="4" />
               </svg>
-              <Link href={`/writer/${story.writer_id}`} className="hover:text-accent transition-colors">{story.writer_name}</Link>
+              <Link href={`/stories?author=${encodeURIComponent(story.writer_name)}`} className="hover:text-accent transition-colors">{story.writer_name}</Link>
             </span>
+            {story.category && (
+              <Link
+                href={`/stories?category=${encodeURIComponent(story.category)}`}
+                className="font-semibold text-accent bg-accent/10 px-3 py-1 rounded-full hover:bg-accent/15 transition-colors"
+              >
+                {story.category}
+              </Link>
+            )}
           </div>
+          {tags.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {tags.map((t) => (
+                <Link
+                  key={t}
+                  href={`/stories?tag=${encodeURIComponent(t)}`}
+                  className="text-xs font-semibold px-2.5 py-1 rounded-full bg-card ring-1 ring-line text-muted hover:text-accent hover:ring-accent/40 transition-all"
+                >
+                  #{t}
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -66,6 +88,24 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
         <AdSlot ads={ads} position="story_inline" />
       </div>
 
+      {related.length > 0 && (
+        <section className="mt-16">
+          <div className="flex items-end justify-between gap-4 mb-5">
+            <h2 className="font-display font-extrabold uppercase text-2xl tracking-tight">
+              Related stories<span className="text-gradient">.</span>
+            </h2>
+            <Link href="/stories" className="text-sm font-semibold text-accent hover:text-accent-2 transition-colors shrink-0">
+              View all →
+            </Link>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {related.map((r) => (
+              <StoryCard key={r.id} s={r} />
+            ))}
+          </div>
+        </section>
+      )}
+
       {story.writer_name && (
         <div className="mt-16 border-t border-line pt-8">
           <div className="flex items-start gap-4">
@@ -77,6 +117,12 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
             <div>
               <p className="font-semibold">{story.writer_name}</p>
               <p className="text-sm text-muted">Writer on ALITE</p>
+              <Link
+                href={`/stories?author=${encodeURIComponent(story.writer_name)}`}
+                className="inline-block mt-2 text-sm font-semibold text-accent hover:text-accent-2 transition-colors"
+              >
+                More from {story.writer_name} →
+              </Link>
             </div>
           </div>
         </div>

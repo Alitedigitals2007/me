@@ -1,5 +1,6 @@
 import getPool from './db';
 import { ensureWriterSchema } from './writer-schema';
+import { parseTags } from './utils';
 import type {
   Project, EducationItem, RoleItem, Course, BlogPost, Listing, AdSlot, AdPackage, AdSubmission, Message, SocialAccount, Story, WriterUser
 } from './types';
@@ -219,6 +220,115 @@ export async function getPublishedStories(): Promise<Story[]> {
        ORDER BY s.published_at DESC`
     );
     return rows;
+  } catch {
+    return [];
+  }
+}
+
+export interface StoryFilters {
+  q?: string;
+  category?: string;
+  tag?: string;
+  author?: string;
+}
+
+/** Published stories filtered by free-text (title/excerpt/author/category/tags), category or author. */
+export async function searchPublishedStories(filters: StoryFilters = {}): Promise<Story[]> {
+  try {
+    await ensureWriterSchema();
+    const conds = ["s.status='published'", "w.status='approved'"];
+    const params: string[] = [];
+
+    const q = String(filters.q || '').trim();
+    if (q) {
+      params.push(`%${q}%`);
+      const p = `$${params.length}`;
+      conds.push(
+        `(s.title ILIKE ${p} OR s.excerpt ILIKE ${p} OR s.category ILIKE ${p} OR s.tags ILIKE ${p} OR w.name ILIKE ${p})`
+      );
+    }
+    const category = String(filters.category || '').trim();
+    if (category) {
+      params.push(category);
+      conds.push(`LOWER(s.category) = LOWER($${params.length})`);
+    }
+    const author = String(filters.author || '').trim();
+    if (author) {
+      params.push(`%${author}%`);
+      conds.push(`w.name ILIKE $${params.length}`);
+    }
+    const tag = String(filters.tag || '').trim();
+    if (tag) {
+      params.push(`%,${tag.toLowerCase().replace(/\s+/g, '')},%`);
+      conds.push(`(',' || LOWER(REPLACE(s.tags, ' ', '')) || ',') LIKE $${params.length}`);
+    }
+
+    const { rows } = await getPool().query(
+      `SELECT s.*, w.name as writer_name, w.avatar_url as writer_avatar
+       FROM stories s
+       JOIN writer_users w ON w.id = s.writer_id
+       WHERE ${conds.join(' AND ')}
+       ORDER BY s.published_at DESC NULLS LAST
+       LIMIT 60`,
+      params
+    );
+    return rows;
+  } catch {
+    return [];
+  }
+}
+
+export async function getStoryCategories(): Promise<string[]> {
+  try {
+    await ensureWriterSchema();
+    const { rows } = await getPool().query(
+      `SELECT DISTINCT s.category
+       FROM stories s
+       JOIN writer_users w ON w.id = s.writer_id
+       WHERE s.status='published' AND w.status='approved' AND s.category <> ''
+       ORDER BY s.category ASC`
+    );
+    return rows.map((r) => r.category as string);
+  } catch {
+    return [];
+  }
+}
+
+/** Related stories: same category (strong), shared tags, same author — newest first as tiebreaker. */
+export async function getRelatedStories(story: Story, limit = 3): Promise<Story[]> {
+  try {
+    await ensureWriterSchema();
+    const tags = parseTags(story.tags).map((t) => t.toLowerCase());
+    const patterns = tags.map((t) => `%${t}%`);
+    const { rows } = await getPool().query(
+      `SELECT s.*, w.name as writer_name, w.avatar_url as writer_avatar
+       FROM stories s
+       JOIN writer_users w ON w.id = s.writer_id
+       WHERE s.status='published' AND w.status='approved' AND s.id <> $1
+         AND (
+           (s.category <> '' AND LOWER(s.category) = LOWER($2))
+           OR s.writer_id = $3
+           OR s.tags ILIKE ANY($4::text[])
+         )
+       ORDER BY s.published_at DESC NULLS LAST
+       LIMIT 24`,
+      [story.id, story.category || '', story.writer_id, patterns]
+    );
+
+    const category = (story.category || '').toLowerCase();
+    const scored = rows.map((r) => {
+      let score = 0;
+      if (category && String(r.category || '').toLowerCase() === category) score += 3;
+      if (r.writer_id === story.writer_id) score += 1;
+      const rowTags = new Set(parseTags(r.tags).map((t) => t.toLowerCase()));
+      for (const t of tags) if (rowTags.has(t)) score += 2;
+      return { r, score };
+    });
+
+    return scored
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit)
+      .map((s) => s.r);
   } catch {
     return [];
   }

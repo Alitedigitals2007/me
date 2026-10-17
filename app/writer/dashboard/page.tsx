@@ -22,7 +22,7 @@ export default async function WriterDashboard() {
 
   await ensureWriterSchema();
   const stories = await safeQuery(
-    `SELECT id, title, slug, status, cover_image, created_at, published_at, updated_at
+    `SELECT id, title, slug, status, cover_image, category, tags, created_at, published_at, updated_at
      FROM stories WHERE writer_id = $1 ORDER BY updated_at DESC`,
     [writer.id]
   );
@@ -60,6 +60,8 @@ export default async function WriterDashboard() {
                 <div className="min-w-0">
                   <p className="font-semibold text-sm truncate">{s.title}</p>
                   <p className="text-xs text-muted truncate">
+                    {s.category ? <span className="text-accent font-semibold">{s.category}</span> : null}
+                    {s.category ? ' · ' : ''}
                     {s.slug} · {formatDate(s.updated_at)}
                   </p>
                 </div>

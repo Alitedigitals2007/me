@@ -3,7 +3,7 @@ import getPool from '@/lib/db';
 import { getWriter } from '@/lib/writer-session';
 import { ensureWriterSchema } from '@/lib/writer-schema';
 import { sendTelegram, siteUrl } from '@/lib/telegram';
-import { slugify } from '@/lib/utils';
+import { slugify, normalizeTags } from '@/lib/utils';
 
 export const runtime = 'nodejs';
 
@@ -21,6 +21,8 @@ export async function POST(req: NextRequest) {
     const excerpt = String(fd.get('excerpt') || '').trim();
     const content = String(fd.get('content') || '').trim();
     const coverImage = String(fd.get('cover_image') || '').trim();
+    const category = String(fd.get('category') || '').trim().replace(/\s+/g, ' ').slice(0, 60);
+    const tags = normalizeTags(String(fd.get('tags') || '')).join(', ');
     const status = ['draft', 'published'].includes(String(fd.get('status'))) ? String(fd.get('status')) : 'draft';
 
     let slug = slugBase;
@@ -37,14 +39,14 @@ export async function POST(req: NextRequest) {
 
       await getPool().query(
         `UPDATE stories SET title=$1, slug=$2, excerpt=$3, content=$4,
-         cover_image=COALESCE(NULLIF($5,''), cover_image), status=$6, updated_at=now()
-         WHERE id=$7 AND writer_id=$8`,
-        [title, slug, excerpt, content, coverImage, status, id, writer.id]
+         cover_image=COALESCE(NULLIF($5,''), cover_image), category=$6, tags=$7, status=$8, updated_at=now()
+         WHERE id=$9 AND writer_id=$10`,
+        [title, slug, excerpt, content, coverImage, category, tags, status, id, writer.id]
       );
 
       await getPool().query(
         `INSERT INTO story_activity (story_id, writer_id, action, meta) VALUES ($1, $2, $3, $4)`,
-        [id, writer.id, isNewPublish ? 'published' : 'updated', JSON.stringify({ title, slug })]
+        [id, writer.id, isNewPublish ? 'published' : 'updated', JSON.stringify({ title, slug, category, tags })]
       );
 
       if (isNewPublish) {
@@ -55,14 +57,14 @@ export async function POST(req: NextRequest) {
       if (dupe.length) slug = `${slugBase}-${Date.now().toString(36)}`;
 
       const { rows } = await getPool().query(
-        `INSERT INTO stories (writer_id, title, slug, excerpt, content, cover_image, status, published_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
-        [writer.id, title, slug, excerpt, content, coverImage, status, status === 'published' ? new Date().toISOString() : null]
+        `INSERT INTO stories (writer_id, title, slug, excerpt, content, cover_image, category, tags, status, published_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
+        [writer.id, title, slug, excerpt, content, coverImage, category, tags, status, status === 'published' ? new Date().toISOString() : null]
       );
 
       await getPool().query(
         `INSERT INTO story_activity (story_id, writer_id, action, meta) VALUES ($1, $2, $3, $4)`,
-        [rows[0].id, writer.id, status === 'published' ? 'published' : 'created', JSON.stringify({ title, slug })]
+        [rows[0].id, writer.id, status === 'published' ? 'published' : 'created', JSON.stringify({ title, slug, category, tags })]
       );
 
       if (status === 'published') {

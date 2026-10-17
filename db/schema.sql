@@ -300,11 +300,16 @@ CREATE TABLE IF NOT EXISTS stories (
   excerpt TEXT NOT NULL DEFAULT '',
   content TEXT NOT NULL DEFAULT '',
   cover_image TEXT NOT NULL DEFAULT '',
+  category TEXT NOT NULL DEFAULT '',
+  tags TEXT NOT NULL DEFAULT '',
   status TEXT NOT NULL DEFAULT 'draft',
   published_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+ALTER TABLE stories ADD COLUMN IF NOT EXISTS category TEXT NOT NULL DEFAULT '';
+ALTER TABLE stories ADD COLUMN IF NOT EXISTS tags TEXT NOT NULL DEFAULT '';
 
 CREATE TABLE IF NOT EXISTS story_activity (
   id SERIAL PRIMARY KEY,
@@ -318,5 +323,6 @@ CREATE TABLE IF NOT EXISTS story_activity (
 CREATE INDEX IF NOT EXISTS stories_writer_idx ON stories (writer_id);
 CREATE INDEX IF NOT EXISTS stories_status_idx ON stories (status);
 CREATE INDEX IF NOT EXISTS stories_slug_key ON stories (slug);
+CREATE INDEX IF NOT EXISTS stories_category_idx ON stories (category);
 CREATE INDEX IF NOT EXISTS story_activity_story_idx ON story_activity (story_id);
 CREATE INDEX IF NOT EXISTS story_activity_writer_idx ON story_activity (writer_id);

@@ -84,6 +84,22 @@ export function parseTags(raw: string | null | undefined, limit = 0): string[] {
   return limit > 0 ? tags.slice(0, limit) : tags;
 }
 
+/** Clean a comma-separated tag input: trim, dedupe (case-insensitive), cap count/length. */
+export function normalizeTags(input: string | null | undefined, max = 8): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of String(input || '').split(',')) {
+    const tag = raw.trim().replace(/\s+/g, ' ').slice(0, 30);
+    if (!tag) continue;
+    const key = tag.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(tag);
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
 export function cn(...classes: Array<string | false | null | undefined>): string {
   return classes.filter(Boolean).join(' ');
 }

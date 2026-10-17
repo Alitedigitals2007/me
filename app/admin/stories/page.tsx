@@ -71,6 +71,13 @@ export default async function StoriesPage({ searchParams }: { searchParams: Prom
                     <p className="text-xs text-muted truncate">
                       by {s.writer_name} ({s.writer_email}) · {formatDate(s.updated_at)}
                     </p>
+                    {(s.category || s.tags) && (
+                      <p className="text-xs mt-1 truncate">
+                        {s.category && <span className="font-semibold text-accent">{s.category}</span>}
+                        {s.category && s.tags ? ' · ' : ''}
+                        {s.tags && <span className="text-muted">#{s.tags.split(',').map((t: string) => t.trim()).filter(Boolean).join(' #')}</span>}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
