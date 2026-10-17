@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import getPool from '@/lib/db';
-import { createWriterSession } from '@/lib/writer-session';
+import { ensureWriterSchema } from '@/lib/writer-schema';
 import { sendTelegram, siteUrl } from '@/lib/telegram';
 import { rateLimit, clientIp } from '@/lib/rate-limit';
 
@@ -19,6 +19,7 @@ export async function POST(req: NextRequest) {
     if (!/^\S+@\S+\.\S+$/.test(cleanEmail)) return NextResponse.json({ error: 'A valid email is required' }, { status: 400 });
     if (!password || String(password).length < 6) return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
 
+    await ensureWriterSchema();
     const existing = await getPool().query('SELECT id FROM writer_users WHERE email=$1', [cleanEmail]);
     if (existing.rows.length) return NextResponse.json({ error: 'An account with this email already exists — log in instead.' }, { status: 409 });
 
@@ -27,8 +28,6 @@ export async function POST(req: NextRequest) {
       `INSERT INTO writer_users (name, email, password_hash, status) VALUES ($1, $2, $3, 'pending') RETURNING id, name, email`,
       [cleanName, cleanEmail, hash]
     );
-
-    await createWriterSession({ id: rows[0].id, name: rows[0].name, email: rows[0].email });
 
     sendTelegram(
       `📝 <b>New writer application</b>\n` +

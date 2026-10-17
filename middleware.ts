@@ -64,9 +64,13 @@ export async function middleware(req: NextRequest) {
   const adminPayload = await verifyAdminToken(req.cookies.get(ADMIN_COOKIE)?.value);
   const hasAdminSession = !!adminPayload;
 
-  if (pathname.startsWith('/login')) {
+  if (pathname === '/login') {
     if (hasAdminSession) return NextResponse.redirect(new URL('/admin', req.url));
     return NextResponse.next();
+  }
+
+  if (pathname === '/admin/login') {
+    return NextResponse.redirect(new URL(hasAdminSession ? '/admin' : '/login', req.url));
   }
 
   if (pathname.startsWith('/admin')) {
@@ -99,21 +103,21 @@ export async function middleware(req: NextRequest) {
   const writerPayload = await verifyWriterToken(req.cookies.get(WRITER_COOKIE)?.value);
   const hasWriterSession = !!writerPayload?.writer;
 
-  if (pathname.startsWith('/writer/login') || pathname.startsWith('/writer/signup')) {
+  if (pathname === '/writer/login' || pathname === '/writer/signup') {
     if (hasWriterSession) return NextResponse.redirect(new URL('/writer/dashboard', req.url));
     const login = new URL('/login', req.url);
     login.searchParams.set('role', 'writer');
-    login.searchParams.set('mode', pathname.startsWith('/writer/signup') ? 'signup' : 'login');
+    login.searchParams.set('mode', pathname === '/writer/signup' ? 'signup' : 'login');
     if (req.nextUrl.searchParams.get('next')) {
       login.searchParams.set('next', req.nextUrl.searchParams.get('next')!);
     }
     return NextResponse.redirect(login);
   }
 
-  if (pathname.startsWith('/academy/login') || pathname.startsWith('/academy/signup')) {
+  if (pathname === '/academy/login' || pathname === '/academy/signup') {
     const login = new URL('/login', req.url);
     login.searchParams.set('role', 'student');
-    login.searchParams.set('mode', pathname.startsWith('/academy/signup') ? 'signup' : 'login');
+    login.searchParams.set('mode', pathname === '/academy/signup' ? 'signup' : 'login');
     if (req.nextUrl.searchParams.get('next')) {
       login.searchParams.set('next', req.nextUrl.searchParams.get('next')!);
     }
@@ -133,5 +137,13 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/login', '/writer/:path*', '/writer/login', '/writer/signup']
+  matcher: [
+    '/admin/:path*',
+    '/login',
+    '/writer/:path*',
+    '/writer/login',
+    '/writer/signup',
+    '/academy/login',
+    '/academy/signup'
+  ]
 };

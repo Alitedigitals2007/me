@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import getPool from '@/lib/db';
 import { getWriter } from '@/lib/writer-session';
+import { ensureWriterSchema } from '@/lib/writer-schema';
 import { sendTelegram, siteUrl } from '@/lib/telegram';
 import { slugify } from '@/lib/utils';
 
@@ -11,6 +12,7 @@ export async function POST(req: NextRequest) {
   if (!writer) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
   try {
+    await ensureWriterSchema();
     const fd = await req.formData();
     const id = String(fd.get('id') || '');
     const title = String(fd.get('title') || '').trim();

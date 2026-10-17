@@ -1,4 +1,5 @@
 import getPool from './db';
+import { ensureWriterSchema } from './writer-schema';
 import type {
   Project, EducationItem, RoleItem, Course, BlogPost, Listing, AdSlot, AdPackage, AdSubmission, Message, SocialAccount, Story, WriterUser
 } from './types';
@@ -209,6 +210,7 @@ export async function getSettingsValue(key: string): Promise<string> {
 
 export async function getPublishedStories(): Promise<Story[]> {
   try {
+    await ensureWriterSchema();
     const { rows } = await getPool().query(
       `SELECT s.*, w.name as writer_name, w.avatar_url as writer_avatar
        FROM stories s
@@ -224,6 +226,7 @@ export async function getPublishedStories(): Promise<Story[]> {
 
 export async function getStory(slug: string): Promise<(Story & { writer_name: string; writer_avatar: string }) | null> {
   try {
+    await ensureWriterSchema();
     const { rows } = await getPool().query(
       `SELECT s.*, w.name as writer_name, w.avatar_url as writer_avatar
        FROM stories s
@@ -239,6 +242,7 @@ export async function getStory(slug: string): Promise<(Story & { writer_name: st
 
 export async function getWriterStories(writerId: number): Promise<Story[]> {
   try {
+    await ensureWriterSchema();
     const { rows } = await getPool().query(
       'SELECT * FROM stories WHERE writer_id=$1 ORDER BY updated_at DESC',
       [writerId]

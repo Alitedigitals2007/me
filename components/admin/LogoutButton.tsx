@@ -10,7 +10,7 @@ export default function LogoutButton({ compact = false }: { compact?: boolean })
       onClick={async () => {
         setBusy(true);
         await fetch('/api/admin/logout', { method: 'POST' });
-        window.location.href = '/admin/login';
+        window.location.href = '/login';
       }}
       className={
         compact

@@ -22,9 +22,13 @@ function UnifiedAuth() {
   const router = useRouter();
   const params = useSearchParams();
   const [mode, setMode] = useState<Mode>(params.get('mode') === 'signup' ? 'signup' : 'login');
-  const [role, setRole] = useState<Role>((params.get('role') as Role) || 'admin');
+  const [role, setRole] = useState<Role>(() => {
+    const r = params.get('role');
+    return r === 'student' || r === 'writer' || r === 'admin' ? r : 'admin';
+  });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [name, setName] = useState('');
 
   const endpoints = roleEndpoints[role];
@@ -33,6 +37,7 @@ function UnifiedAuth() {
     e.preventDefault();
     setBusy(true);
     setError('');
+    setNotice('');
     const fd = new FormData(e.currentTarget);
     try {
       const body: Record<string, string> = {
@@ -49,7 +54,13 @@ function UnifiedAuth() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || (mode === 'login' ? 'Login failed' : 'Signup failed'));
-      
+      if (data.pending) {
+        setNotice('Application submitted! Your writer account is pending approval — you will be able to log in once an admin approves it.');
+        setMode('login');
+        setBusy(false);
+        return;
+      }
+
       const next = params.get('next');
       const redirectTo = next && next.startsWith('/') ? next : endpoints.redirect;
       router.push(redirectTo);
@@ -77,7 +88,7 @@ function UnifiedAuth() {
               type="button"
               role="tab"
               aria-selected={role === r.value}
-              onClick={() => { setRole(r.value); setError(''); }}
+              onClick={() => { setRole(r.value); setError(''); setNotice(''); }}
               className={`flex-1 flex items-center gap-2 px-3 py-3 rounded-xl text-sm font-semibold transition-all ${
                 role === r.value
                   ? 'bg-accent text-white shadow-[0_4px_12px_rgba(79,70,229,0.3)]'
@@ -97,7 +108,7 @@ function UnifiedAuth() {
               type="button"
               role="tab"
               aria-selected={mode === 'login'}
-              onClick={() => { setMode('login'); setError(''); }}
+              onClick={() => { setMode('login'); setError(''); setNotice(''); }}
               className={`rounded-full px-3 py-2 transition-all ${
                 mode === 'login' ? 'bg-accent text-white' : 'text-muted hover:text-ink'
               }`}
@@ -108,7 +119,7 @@ function UnifiedAuth() {
               type="button"
               role="tab"
               aria-selected={mode === 'signup'}
-              onClick={() => { setMode('signup'); setError(''); }}
+              onClick={() => { setMode('signup'); setError(''); setNotice(''); }}
               className={`rounded-full px-3 py-2 transition-all ${
                 mode === 'signup' ? 'bg-accent text-white' : 'text-muted hover:text-ink'
               }`}
@@ -124,6 +135,7 @@ function UnifiedAuth() {
         <p className="text-sm text-muted text-center mt-1 mb-6">{selectedRole.description}</p>
 
         {error && <p className="mb-4 rounded-xl bg-danger/10 text-danger px-4 py-2.5 text-sm">{error}</p>}
+        {notice && <p className="mb-4 rounded-xl bg-emerald-500/10 text-emerald-700 px-4 py-2.5 text-sm">{notice}</p>}
 
         <form onSubmit={onSubmit} className="space-y-4">
           {mode === 'signup' && (
@@ -178,7 +190,7 @@ function UnifiedAuth() {
             canSignup ? (
               <>
                 New {selectedRole.label.toLowerCase()}?{' '}
-                <button type="button" onClick={() => setMode('signup')} className="text-accent font-semibold">
+                <button type="button" onClick={() => { setMode('signup'); setNotice(''); }} className="text-accent font-semibold">
                   Create an account →
                 </button>
               </>
@@ -208,7 +220,7 @@ function UnifiedAuth() {
             <button
               key={r.value}
               type="button"
-              onClick={() => { setRole(r.value); setError(''); }}
+              onClick={() => { setRole(r.value); setError(''); setNotice(''); }}
               className="text-muted hover:text-accent font-semibold"
             >
               {r.label}

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import getPool from '@/lib/db';
 import { getWriter } from '@/lib/writer-session';
+import { ensureWriterSchema } from '@/lib/writer-schema';
 import { redirect } from 'next/navigation';
 import { formatDate } from '@/lib/utils';
 
@@ -19,6 +20,7 @@ export default async function WriterDashboard() {
   const writer = await getWriter();
   if (!writer) return redirect('/writer/login');
 
+  await ensureWriterSchema();
   const stories = await safeQuery(
     `SELECT id, title, slug, status, cover_image, created_at, published_at, updated_at
      FROM stories WHERE writer_id = $1 ORDER BY updated_at DESC`,

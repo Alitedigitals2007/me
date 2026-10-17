@@ -61,7 +61,7 @@ export default async function Footer({ settings }: { settings: Settings }) {
           <p>© {year} {settings.site_name}. All rights reserved.</p>
           <div className="flex items-center gap-4">
             <a href="/sitemap.xml" className="hover:text-ink transition-colors">Sitemap</a>
-            <Link href="/admin/login" className="hover:text-ink transition-colors">Admin</Link>
+            <Link href="/login" className="hover:text-ink transition-colors">Admin</Link>
           </div>
         </div>
       </div>
