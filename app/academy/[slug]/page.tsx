@@ -38,8 +38,18 @@ export default async function CoursePage({ params }: { params: Promise<{ slug: s
   const external = course.delivery === 'external';
 
   const [{ rows: assignments }, { rows: quizzes }, { rows: sessions }] = await Promise.all([
-    getPool().query('SELECT id, title, due_at, max_score FROM assignments WHERE course_id=$1 ORDER BY id ASC', [course.id]),
-    getPool().query('SELECT id, title, pass_pct FROM quizzes WHERE course_id=$1 ORDER BY id ASC', [course.id]),
+    getPool().query(
+      `SELECT a.id, a.title, a.due_at, a.max_score, l.title AS lesson_title
+       FROM assignments a LEFT JOIN lessons l ON l.id=a.lesson_id
+       WHERE a.course_id=$1 ORDER BY a.id ASC`,
+      [course.id]
+    ),
+    getPool().query(
+      `SELECT q.id, q.title, q.pass_pct, q.is_final_exam, l.title AS lesson_title
+       FROM quizzes q LEFT JOIN lessons l ON l.id=q.lesson_id
+       WHERE q.course_id=$1 ORDER BY q.is_final_exam DESC, q.id ASC`,
+      [course.id]
+    ),
     getPool().query('SELECT id, title, starts_at FROM class_sessions WHERE course_id=$1 AND starts_at >= now() ORDER BY starts_at ASC LIMIT 5', [course.id])
   ]);
 
@@ -139,8 +149,9 @@ export default async function CoursePage({ params }: { params: Promise<{ slug: s
                 <h2 className="font-display font-bold uppercase text-lg mb-4">Assignments</h2>
                 <div className="space-y-2">
                   {assignments.map((a) => (
-                    <div key={a.id} className="flex items-center gap-3 rounded-xl bg-paper ring-1 ring-line px-4 py-3">
+                    <div key={a.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl bg-paper ring-1 ring-line px-4 py-3">
                       <span className="text-sm font-semibold">{a.title}</span>
+                      {a.lesson_title && <span className="text-xs text-muted">· {a.lesson_title}</span>}
                       <span className="ml-auto text-xs text-muted">
                         {a.due_at ? `Due ${new Date(a.due_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}` : 'No deadline'} · max {a.max_score}
                       </span>
@@ -155,15 +166,17 @@ export default async function CoursePage({ params }: { params: Promise<{ slug: s
           {quizzes.length > 0 && enrolled && (
             <Reveal>
               <div className="rounded-3xl bg-card ring-1 ring-line shadow-card p-6">
-                <h2 className="font-display font-bold uppercase text-lg mb-4">Quizzes</h2>
+                <h2 className="font-display font-bold uppercase text-lg mb-4">Tests &amp; final exam</h2>
                 <div className="space-y-2">
                   {quizzes.map((q) => (
                     <Link
                       key={q.id}
                       href={`/academy/${course.slug}/quiz/${q.id}`}
-                      className="flex items-center gap-3 rounded-xl bg-paper ring-1 ring-line px-4 py-3 hover:ring-accent/50 transition-all"
+                      className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl bg-paper ring-1 ring-line px-4 py-3 hover:ring-accent/50 transition-all"
                     >
                       <span className="text-sm font-semibold">{q.title}</span>
+                      {q.is_final_exam && <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-500/10 px-2 py-0.5 rounded-full">Final exam</span>}
+                      {q.lesson_title && <span className="text-xs text-muted">· {q.lesson_title}</span>}
                       <span className="ml-auto text-xs text-muted">Pass mark {q.pass_pct}%</span>
                     </Link>
                   ))}
@@ -202,7 +215,7 @@ export default async function CoursePage({ params }: { params: Promise<{ slug: s
                   <li>✓ All lessons + videos</li>
                   <li>✓ Assignments with grading</li>
                   <li>✓ Quizzes & live class links</li>
-                  <li>✓ Certificate on completion</li>
+                  <li>✓ Certificate after passing the final exam</li>
                 </ul>
               </div>
             </Reveal>

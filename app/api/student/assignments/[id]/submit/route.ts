@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import getPool from '@/lib/db';
 import { getStudent } from '@/lib/student-session';
 import { getEnrollment, isEnrollmentActive } from '@/lib/academy';
+import { ensureAcademySchema } from '@/lib/academy-schema';
 import { sendTelegram, siteUrl } from '@/lib/telegram';
 import { rateLimit, clientIp } from '@/lib/rate-limit';
 
@@ -14,6 +15,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: 'Too many submissions. Try again later.' }, { status: 429 });
   }
   try {
+    await ensureAcademySchema();
     const { id } = await params;
     const assignmentId = Number(id);
     const { rows: aRows } = await getPool().query('SELECT a.*, c.title AS course_title FROM assignments a JOIN courses c ON c.id=a.course_id WHERE a.id=$1', [assignmentId]);
@@ -33,14 +35,23 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (existing[0]?.status === 'graded') {
       return NextResponse.json({ error: 'This submission has already been graded.' }, { status: 409 });
     }
+    let submissionId: number;
     if (existing[0]) {
       await getPool().query('UPDATE submissions SET content=$1, file_url=$2, submitted_at=now() WHERE id=$3', [content, fileUrl, existing[0].id]);
+      submissionId = existing[0].id;
     } else {
-      await getPool().query(
-        'INSERT INTO submissions (assignment_id, student_id, content, file_url) VALUES ($1, $2, $3, $4)',
+      const { rows: inserted } = await getPool().query(
+        'INSERT INTO submissions (assignment_id, student_id, content, file_url) VALUES ($1, $2, $3, $4) RETURNING id',
         [assignmentId, student.id, content, fileUrl]
       );
+      submissionId = inserted[0].id;
     }
+
+    // Keep every attempt so admins can review all past answers/files.
+    await getPool().query(
+      'INSERT INTO submission_history (submission_id, content, file_url) VALUES ($1, $2, $3)',
+      [submissionId, content, fileUrl]
+    );
 
     await sendTelegram(
       `📝 <b>New assignment submission</b>\nAssignment: ${assignment.title}\nCourse: ${assignment.course_title}\nStudent: ${student.name} (${student.email})` +

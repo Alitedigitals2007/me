@@ -4,7 +4,7 @@ import { notFound, redirect } from 'next/navigation';
 import QuizTaker from '@/components/academy/QuizTaker';
 import getPool from '@/lib/db';
 import { getStudent } from '@/lib/student-session';
-import { getCourseBySlug, getEnrollment, isEnrollmentActive } from '@/lib/academy';
+import { getCourseBySlug, getEnrollment, isEnrollmentActive, getCourseProgress } from '@/lib/academy';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,6 +32,9 @@ export default async function QuizPage({ params }: { params: Promise<{ slug: str
     [quiz.id]
   );
 
+  const progress = quiz.is_final_exam ? await getCourseProgress(student.id, course.id) : null;
+  const locked = !!progress && (progress.total === 0 || progress.done < progress.total);
+
   return (
     <div className="mx-auto max-w-3xl px-5 py-12">
       <div className="flex flex-wrap items-center gap-2 text-sm text-muted mb-4">
@@ -41,11 +44,25 @@ export default async function QuizPage({ params }: { params: Promise<{ slug: str
         <span>/</span>
         <span className="text-ink">Quiz</span>
       </div>
-      <h1 className="font-display font-extrabold uppercase text-2xl md:text-4xl tracking-[-0.01em] mb-2">{quiz.title}</h1>
-      <p className="text-muted mb-8">
+      <div className="flex flex-wrap items-center gap-2">
+        <h1 className="font-display font-extrabold uppercase text-2xl md:text-4xl tracking-[-0.01em]">{quiz.title}</h1>
+        {quiz.is_final_exam && <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-500/10 px-2.5 py-1 rounded-full">Final exam</span>}
+      </div>
+      <p className="text-muted mb-8 mt-2">
         {questions.length} questions · pass mark {quiz.pass_pct}% · you can retake it.
       </p>
-      {questions.length === 0 ? (
+      {locked ? (
+        <div className="rounded-2xl bg-amber-500/10 ring-1 ring-amber-500/30 p-8 text-center">
+          <p className="text-4xl mb-2">🔒</p>
+          <p className="font-display font-bold uppercase">Finish all lessons first</p>
+          <p className="text-sm text-muted mt-1">
+            You have completed {progress?.done}/{progress?.total} lessons. The final exam unlocks when the whole curriculum is complete.
+          </p>
+          <Link href={`/academy/${course.slug}`} className="inline-block mt-4 bg-gradient-cta text-white text-sm font-semibold px-6 py-3 rounded-full">
+            Back to course
+          </Link>
+        </div>
+      ) : questions.length === 0 ? (
         <p className="text-muted rounded-2xl bg-card ring-1 ring-line p-8 text-center">This quiz has no questions yet.</p>
       ) : (
         <QuizTaker quizId={quiz.id} questions={questions} passPct={quiz.pass_pct} />

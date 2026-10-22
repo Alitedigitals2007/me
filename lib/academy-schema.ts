@@ -64,12 +64,15 @@ CREATE TABLE IF NOT EXISTS lesson_progress (
 CREATE TABLE IF NOT EXISTS assignments (
   id SERIAL PRIMARY KEY,
   course_id INT NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+  lesson_id INT REFERENCES lessons(id) ON DELETE SET NULL,
   title TEXT NOT NULL,
   instructions TEXT NOT NULL DEFAULT '',
   due_at TIMESTAMPTZ,
   max_score INT NOT NULL DEFAULT 100,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+ALTER TABLE assignments ADD COLUMN IF NOT EXISTS lesson_id INT REFERENCES lessons(id) ON DELETE SET NULL;
 
 CREATE TABLE IF NOT EXISTS submissions (
   id SERIAL PRIMARY KEY,
@@ -85,13 +88,28 @@ CREATE TABLE IF NOT EXISTS submissions (
   UNIQUE (assignment_id, student_id)
 );
 
+CREATE TABLE IF NOT EXISTS submission_history (
+  id SERIAL PRIMARY KEY,
+  submission_id INT NOT NULL REFERENCES submissions(id) ON DELETE CASCADE,
+  content TEXT NOT NULL DEFAULT '',
+  file_url TEXT NOT NULL DEFAULT '',
+  submitted_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS submission_history_submission_idx ON submission_history (submission_id);
+
 CREATE TABLE IF NOT EXISTS quizzes (
   id SERIAL PRIMARY KEY,
   course_id INT NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+  lesson_id INT REFERENCES lessons(id) ON DELETE SET NULL,
   title TEXT NOT NULL,
   pass_pct INT NOT NULL DEFAULT 60,
+  is_final_exam BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+ALTER TABLE quizzes ADD COLUMN IF NOT EXISTS lesson_id INT REFERENCES lessons(id) ON DELETE SET NULL;
+ALTER TABLE quizzes ADD COLUMN IF NOT EXISTS is_final_exam BOOLEAN NOT NULL DEFAULT false;
 
 CREATE TABLE IF NOT EXISTS quiz_questions (
   id SERIAL PRIMARY KEY,
@@ -136,7 +154,7 @@ let ensured = false;
 
 const CRITICAL_TABLES = [
   'students', 'modules', 'lessons', 'enrollments', 'lesson_progress', 'assignments',
-  'submissions', 'quizzes', 'quiz_questions', 'quiz_attempts', 'class_sessions', 'certificates'
+  'submissions', 'submission_history', 'quizzes', 'quiz_questions', 'quiz_attempts', 'class_sessions', 'certificates'
 ];
 
 async function schemaReady(): Promise<boolean> {
@@ -145,6 +163,8 @@ async function schemaReady(): Promise<boolean> {
     const { rows } = await getPool().query(`SELECT ${tableChecks}`);
     if (!Object.values(rows[0]).every(Boolean)) return false;
     await getPool().query(`SELECT slug, status, delivery, level, duration FROM courses LIMIT 0`);
+    await getPool().query(`SELECT lesson_id FROM assignments LIMIT 0`);
+    await getPool().query(`SELECT lesson_id, is_final_exam FROM quizzes LIMIT 0`);
     return true;
   } catch {
     return false;

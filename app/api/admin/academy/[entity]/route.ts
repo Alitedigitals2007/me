@@ -9,8 +9,8 @@ const FIELDS: Record<string, string[]> = {
   courses: ['title', 'slug', 'description', 'price', 'status', 'delivery', 'level', 'duration', 'image_url', 'link', 'order_index', 'is_own_product'],
   modules: ['course_id', 'title', 'order_index'],
   lessons: ['course_id', 'module_id', 'title', 'content', 'video_url', 'material_url', 'material_name', 'order_index', 'is_free_preview'],
-  assignments: ['course_id', 'title', 'instructions', 'due_at', 'max_score'],
-  quizzes: ['course_id', 'title', 'pass_pct'],
+  assignments: ['course_id', 'lesson_id', 'title', 'instructions', 'due_at', 'max_score'],
+  quizzes: ['course_id', 'lesson_id', 'title', 'pass_pct', 'is_final_exam'],
   questions: ['quiz_id', 'question', 'options', 'correct_index', 'order_index'],
   sessions: ['course_id', 'title', 'starts_at', 'join_url', 'recording_url'],
   certificates: ['student_id', 'course_id', 'code']
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ ent
 
     const data: Record<string, unknown> = {};
     for (const col of FIELDS[entity]) {
-      if (body[col] !== undefined) data[col] = body[col] === '' && col.endsWith('_at') ? null : body[col];
+      if (body[col] !== undefined) data[col] = body[col] === '' && (col.endsWith('_at') || col === 'lesson_id') ? null : body[col];
     }
 
     if (entity === 'courses') {
@@ -80,6 +80,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ ent
       `INSERT INTO ${entity} (${cols}) VALUES (${placeholders}) RETURNING *`,
       keys.map((k) => data[k])
     );
+    if (entity === 'quizzes' && rows[0]?.is_final_exam) {
+      await getPool().query('UPDATE quizzes SET is_final_exam=false WHERE course_id=$1 AND id<>$2', [rows[0].course_id, rows[0].id]);
+    }
     return NextResponse.json({ ok: true, item: rows[0] });
   } catch (e) {
     console.error('academy create', e);

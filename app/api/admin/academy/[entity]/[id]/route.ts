@@ -10,8 +10,8 @@ const PATCHABLE: Record<string, string[]> = {
   courses: ['title', 'slug', 'description', 'price', 'status', 'delivery', 'level', 'duration', 'image_url', 'link', 'order_index', 'is_own_product'],
   modules: ['title', 'order_index'],
   lessons: ['title', 'content', 'video_url', 'material_url', 'material_name', 'order_index', 'is_free_preview', 'module_id'],
-  assignments: ['title', 'instructions', 'due_at', 'max_score'],
-  quizzes: ['title', 'pass_pct'],
+  assignments: ['title', 'instructions', 'due_at', 'max_score', 'lesson_id'],
+  quizzes: ['title', 'pass_pct', 'lesson_id', 'is_final_exam'],
   questions: ['question', 'options', 'correct_index', 'order_index'],
   sessions: ['title', 'starts_at', 'join_url', 'recording_url'],
   students: ['status', 'name'],
@@ -47,7 +47,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ en
 
     const data: Record<string, unknown> = {};
     for (const col of cols) {
-      if (body[col] !== undefined) data[col] = body[col] === '' && col.endsWith('_at') ? null : body[col];
+      if (body[col] !== undefined) data[col] = body[col] === '' && (col.endsWith('_at') || col === 'lesson_id') ? null : body[col];
     }
     const keys = Object.keys(data);
     if (!keys.length) return NextResponse.json({ error: 'Nothing to update' }, { status: 400 });
@@ -65,6 +65,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ en
       [...keys.map((k) => data[k]), Number(id)]
     );
     if (!rows.length) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+    if (entity === 'quizzes' && rows[0].is_final_exam) {
+      await getPool().query('UPDATE quizzes SET is_final_exam=false WHERE course_id=$1 AND id<>$2', [rows[0].course_id, rows[0].id]);
+    }
 
     if (entity === 'submissions' && rows[0].status === 'graded') {
       try {

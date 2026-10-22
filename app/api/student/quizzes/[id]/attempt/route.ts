@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import getPool from '@/lib/db';
 import { getStudent } from '@/lib/student-session';
-import { getEnrollment, isEnrollmentActive, checkAndIssueCertificate } from '@/lib/academy';
+import { getEnrollment, isEnrollmentActive, getCourseProgress, checkAndIssueCertificate } from '@/lib/academy';
 import { sendTelegram, siteUrl } from '@/lib/telegram';
 import { rateLimit, clientIp } from '@/lib/rate-limit';
 
@@ -26,6 +26,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const enrollment = await getEnrollment(student.id, quiz.course_id);
     if (!isEnrollmentActive(enrollment)) return NextResponse.json({ error: 'Enroll in this course first.' }, { status: 403 });
 
+    if (quiz.is_final_exam) {
+      const progress = await getCourseProgress(student.id, quiz.course_id);
+      if (progress.total === 0 || progress.done < progress.total) {
+        return NextResponse.json({ error: 'Finish all lessons before taking the final exam.' }, { status: 403 });
+      }
+    }
+
     const { rows: questions } = await getPool().query(
       'SELECT id, correct_index FROM quiz_questions WHERE quiz_id=$1 ORDER BY order_index ASC, id ASC',
       [quizId]
@@ -48,7 +55,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     );
 
     await sendTelegram(
-      `❓ <b>New quiz attempt</b>\nQuiz: ${quiz.title}\nCourse: ${quiz.course_title}\nStudent: ${student.name} (${student.email})\nScore: ${score}/${total} — ${passed ? 'PASSED ✅' : 'FAILED ⚠️'}\n🔗 ${siteUrl()}/admin/submissions`
+      `❓ <b>New quiz attempt</b>\nQuiz: ${quiz.title}${quiz.is_final_exam ? ' (final exam)' : ''}\nCourse: ${quiz.course_title}\nStudent: ${student.name} (${student.email})\nScore: ${score}/${total} — ${passed ? 'PASSED ✅' : 'FAILED ⚠️'}\n🔗 ${siteUrl()}/admin/submissions`
     );
 
     const certificate = passed ? await checkAndIssueCertificate(student.id, quiz.course_id) : null;

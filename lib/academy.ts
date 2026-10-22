@@ -113,7 +113,7 @@ export function lessonUnlocked(lesson: Lesson, enrolled: boolean): boolean {
 }
 
 // Certificate: all lessons done AND (no assignments OR all graded with >= 60%)
-// AND (no quizzes OR latest attempt passed).
+// AND every quiz passed AND a designated final exam passed.
 export async function checkAndIssueCertificate(studentId: number, courseId: number): Promise<string | null> {
   await ensureAcademySchema();
   const progress = await getCourseProgress(studentId, courseId);
@@ -133,7 +133,7 @@ export async function checkAndIssueCertificate(studentId: number, courseId: numb
     if (!ok) return null;
   }
 
-  const { rows: quizzes } = await getPool().query('SELECT id FROM quizzes WHERE course_id=$1', [courseId]);
+  const { rows: quizzes } = await getPool().query('SELECT id, is_final_exam FROM quizzes WHERE course_id=$1', [courseId]);
   if (quizzes.length) {
     for (const q of quizzes) {
       const { rows: attempts } = await getPool().query(
@@ -143,6 +143,9 @@ export async function checkAndIssueCertificate(studentId: number, courseId: numb
       if (!attempts[0]?.passed) return null;
     }
   }
+
+  // A final exam must exist and be passed before a certificate can be issued.
+  if (!quizzes.some((q) => q.is_final_exam)) return null;
 
   const existing = await getPool().query('SELECT code FROM certificates WHERE student_id=$1 AND course_id=$2', [studentId, courseId]);
   if (existing.rows[0]) return existing.rows[0].code;

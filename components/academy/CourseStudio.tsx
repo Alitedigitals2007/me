@@ -13,9 +13,9 @@ interface Lesson {
   material_name: string; order_index: number; is_free_preview: boolean; module_id: number | null;
 }
 interface Mod { id: number; title: string; order_index: number; lessons: Lesson[] }
-interface Assignment { id: number; title: string; instructions: string; due_at: string | null; max_score: number }
+interface Assignment { id: number; lesson_id: number | null; title: string; instructions: string; due_at: string | null; max_score: number }
 interface Question { id: number; question: string; options: string[]; correct_index: number }
-interface Quiz { id: number; title: string; pass_pct: number; questions: Question[] }
+interface Quiz { id: number; lesson_id: number | null; is_final_exam: boolean; title: string; pass_pct: number; questions: Question[] }
 interface ClassSession { id: number; title: string; starts_at: string; join_url: string; recording_url: string }
 
 const input = 'rounded-xl bg-paper ring-1 ring-line px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-accent w-full';
@@ -66,12 +66,13 @@ export default function CourseStudio({
   // --- New item forms ---
   const [newModule, setNewModule] = useState('');
   const [lessonForm, setLessonForm] = useState({ module_id: 0, title: '', content: '', video_url: '', material_url: '', material_name: '', order_index: 0, is_free_preview: false });
-  const [assignForm, setAssignForm] = useState({ title: '', instructions: '', due_at: '', max_score: 100 });
-  const [quizForm, setQuizForm] = useState({ title: '', pass_pct: 60 });
+  const [assignForm, setAssignForm] = useState({ title: '', instructions: '', due_at: '', max_score: 100, lesson_id: 0 });
+  const [quizForm, setQuizForm] = useState({ title: '', pass_pct: 60, lesson_id: 0, is_final_exam: false });
   const [qForm, setQForm] = useState({ question: '', o1: '', o2: '', o3: '', o4: '', correct: 0 });
   const [classForm, setClassForm] = useState({ title: '', starts_at: '', join_url: '', recording_url: '' });
 
   const allLessons = modules.flatMap((m) => m.lessons);
+  const lessonTitle = (id: number | null) => (id ? allLessons.find((l) => l.id === id)?.title : null);
 
   const TABS: [typeof tab, string][] = [
     ['curriculum', 'Curriculum'],
@@ -183,6 +184,26 @@ export default function CourseStudio({
                       <button onClick={() => setEditingLesson(editingLesson === l.id ? null : l.id)} className="text-xs font-semibold text-accent">{editingLesson === l.id ? 'Close' : 'Edit'}</button>
                       <AdminApiButtonMini url={`/api/admin/academy/lessons/${l.id}`} method="DELETE" label="✕" confirmText="Delete this lesson?" busy={busy} />
                     </div>
+                    <div className="mt-2 flex flex-wrap items-center gap-2 pl-7">
+                      {assignments.filter((a) => a.lesson_id === l.id).map((a) => (
+                        <span key={`a-${a.id}`} className="text-[10px] font-black uppercase text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded-full">📝 {a.title}</span>
+                      ))}
+                      {quizzes.filter((q) => q.lesson_id === l.id).map((q) => (
+                        <span key={`q-${q.id}`} className="text-[10px] font-black uppercase text-cyan-700 bg-cyan-500/10 px-2 py-0.5 rounded-full">🧪 {q.title}</span>
+                      ))}
+                      <button
+                        onClick={() => { setTab('assignments'); setAssignForm((f) => ({ ...f, lesson_id: l.id })); }}
+                        className="text-[11px] font-semibold text-amber-700 hover:underline"
+                      >
+                        + Assignment
+                      </button>
+                      <button
+                        onClick={() => { setTab('quizzes'); setQuizForm((f) => ({ ...f, lesson_id: l.id })); }}
+                        className="text-[11px] font-semibold text-cyan-700 hover:underline"
+                      >
+                        + Test
+                      </button>
+                    </div>
                     {editingLesson === l.id && (
                       <InlineLessonEdit
                         lesson={l}
@@ -212,14 +233,18 @@ export default function CourseStudio({
           <form
             onSubmit={async (e) => {
               e.preventDefault();
-              if (await call('assignments', 'POST', { course_id: course.id, ...assignForm, due_at: assignForm.due_at || '', max_score: Number(assignForm.max_score) || 100 })) {
-                setAssignForm({ title: '', instructions: '', due_at: '', max_score: 100 });
+              if (await call('assignments', 'POST', { course_id: course.id, ...assignForm, lesson_id: assignForm.lesson_id || null, due_at: assignForm.due_at || '', max_score: Number(assignForm.max_score) || 100 })) {
+                setAssignForm({ title: '', instructions: '', due_at: '', max_score: 100, lesson_id: 0 });
               }
             }}
             className="rounded-2xl bg-card ring-1 ring-line p-5 space-y-3"
           >
             <p className="text-xs font-black uppercase tracking-widest text-accent">New assignment</p>
             <input className={input} value={assignForm.title} onChange={(e) => setAssignForm({ ...assignForm, title: e.target.value })} placeholder="Title" required />
+            <select className={input} value={assignForm.lesson_id} onChange={(e) => setAssignForm({ ...assignForm, lesson_id: Number(e.target.value) })}>
+              <option value={0}>Course-wide (not linked to a lesson)</option>
+              {allLessons.map((l) => <option key={l.id} value={l.id}>Lesson: {l.title}</option>)}
+            </select>
             <textarea className={`${input} h-24`} value={assignForm.instructions} onChange={(e) => setAssignForm({ ...assignForm, instructions: e.target.value })} placeholder="Instructions — what should students submit?" />
             <div className="grid sm:grid-cols-2 gap-3">
               <label className="text-xs text-muted">Deadline
@@ -239,6 +264,7 @@ export default function CourseStudio({
                 <div className="min-w-0">
                   <p className="font-semibold">{a.title}</p>
                   <p className="text-xs text-muted">
+                    {a.lesson_id && lessonTitle(a.lesson_id) ? `${lessonTitle(a.lesson_id)} · ` : 'Course-wide · '}
                     {a.due_at ? `Due ${new Date(a.due_at).toLocaleString('en-GB')}` : 'No deadline'} · max {a.max_score}
                   </p>
                 </div>
@@ -257,33 +283,68 @@ export default function CourseStudio({
           <form
             onSubmit={async (e) => {
               e.preventDefault();
-              if (await call('quizzes', 'POST', { course_id: course.id, title: quizForm.title, pass_pct: Number(quizForm.pass_pct) || 60 })) {
-                setQuizForm({ title: '', pass_pct: 60 });
+              if (await call('quizzes', 'POST', {
+                course_id: course.id,
+                title: quizForm.title,
+                pass_pct: Number(quizForm.pass_pct) || 60,
+                lesson_id: quizForm.lesson_id || null,
+                is_final_exam: quizForm.is_final_exam
+              })) {
+                setQuizForm({ title: '', pass_pct: 60, lesson_id: 0, is_final_exam: false });
               }
             }}
-            className="rounded-2xl bg-card ring-1 ring-line p-5 flex flex-wrap gap-3 items-end"
+            className="rounded-2xl bg-card ring-1 ring-line p-5 space-y-3"
           >
-            <label className="text-xs text-muted flex-1 min-w-40">Quiz title
-              <input className={`${input} mt-1`} value={quizForm.title} onChange={(e) => setQuizForm({ ...quizForm, title: e.target.value })} placeholder="e.g. Final quiz" required />
-            </label>
-            <label className="text-xs text-muted w-28">Pass %
-              <input className={`${input} mt-1`} type="number" min={1} max={100} value={quizForm.pass_pct} onChange={(e) => setQuizForm({ ...quizForm, pass_pct: Number(e.target.value) || 60 })} />
+            <p className="text-xs font-black uppercase tracking-widest text-accent">New test / quiz</p>
+            <div className="grid sm:grid-cols-3 gap-3">
+              <label className="text-xs text-muted sm:col-span-2">Quiz title
+                <input className={`${input} mt-1`} value={quizForm.title} onChange={(e) => setQuizForm({ ...quizForm, title: e.target.value })} placeholder="e.g. Final exam" required />
+              </label>
+              <label className="text-xs text-muted">Pass %
+                <input className={`${input} mt-1`} type="number" min={1} max={100} value={quizForm.pass_pct} onChange={(e) => setQuizForm({ ...quizForm, pass_pct: Number(e.target.value) || 60 })} />
+              </label>
+            </div>
+            <select className={input} value={quizForm.lesson_id} onChange={(e) => setQuizForm({ ...quizForm, lesson_id: Number(e.target.value) })}>
+              <option value={0}>Course-wide (not linked to a lesson)</option>
+              {allLessons.map((l) => <option key={l.id} value={l.id}>Lesson: {l.title}</option>)}
+            </select>
+            <label className="flex items-center gap-2 text-xs text-muted">
+              <input type="checkbox" checked={quizForm.is_final_exam} onChange={(e) => setQuizForm({ ...quizForm, is_final_exam: e.target.checked })} className="accent-accent" />
+              Make this the final exam (required before a certificate is issued)
             </label>
             <button className={btn} disabled={busy}>+ Add quiz</button>
           </form>
 
-          {quizzes.length === 0 && <p className="text-sm text-muted">No quizzes yet.</p>}
+          {quizzes.length === 0 && <p className="text-sm text-muted">No quizzes yet — add a test and mark one as the final exam so students can earn certificates.</p>}
+          {quizzes.length > 0 && !quizzes.some((q) => q.is_final_exam) && (
+            <p className="text-sm text-amber-700 bg-amber-500/10 ring-1 ring-amber-500/30 rounded-xl p-3">
+              ⚠️ No final exam set — certificates stay locked until you mark one quiz as the final exam.
+            </p>
+          )}
           {quizzes.map((q) => (
             <div key={q.id} className="rounded-2xl bg-card ring-1 ring-line p-5">
               <div className="flex items-center gap-3">
                 <div>
-                  <p className="font-semibold">{q.title}</p>
-                  <p className="text-xs text-muted">{q.questions.length} questions · pass {q.pass_pct}%</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-semibold">{q.title}</p>
+                    {q.is_final_exam && <span className="text-[10px] font-black uppercase text-emerald-700 bg-emerald-500/10 px-2 py-0.5 rounded-full">Final exam</span>}
+                  </div>
+                  <p className="text-xs text-muted">
+                    {q.lesson_id && lessonTitle(q.lesson_id) ? `${lessonTitle(q.lesson_id)} · ` : 'Course-wide · '}
+                    {q.questions.length} questions · pass {q.pass_pct}%
+                  </p>
                 </div>
-                <div className="ml-auto flex gap-2">
+                <div className="ml-auto flex flex-wrap justify-end gap-2">
                   <button onClick={() => setExpandedQuiz(expandedQuiz === q.id ? null : q.id)} className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-paper ring-1 ring-line">
                     {expandedQuiz === q.id ? 'Close' : 'Questions'}
                   </button>
+                  <AdminApiButtonMini
+                    url={`/api/admin/academy/quizzes/${q.id}`}
+                    method="PATCH"
+                    body={{ is_final_exam: !q.is_final_exam }}
+                    label={q.is_final_exam ? 'Unset final' : 'Make final exam'}
+                    busy={busy}
+                  />
                   <AdminApiButtonMini url={`/api/admin/academy/quizzes/${q.id}`} method="DELETE" label="Delete" confirmText="Delete quiz and its questions?" busy={busy} />
                 </div>
               </div>
@@ -382,7 +443,14 @@ export default function CourseStudio({
   );
 }
 
-function AdminApiButtonMini({ url, method, label, confirmText, busy }: { url: string; method: 'DELETE'; label: string; confirmText?: string; busy: boolean }) {
+function AdminApiButtonMini({ url, method, body, label, confirmText, busy }: {
+  url: string;
+  method: 'DELETE' | 'PATCH' | 'POST';
+  body?: Record<string, unknown>;
+  label: string;
+  confirmText?: string;
+  busy: boolean;
+}) {
   const router = useRouter();
   const [localBusy, setLocalBusy] = useState(false);
   return (
@@ -392,7 +460,11 @@ function AdminApiButtonMini({ url, method, label, confirmText, busy }: { url: st
         if (confirmText && !window.confirm(confirmText)) return;
         setLocalBusy(true);
         try {
-          const res = await fetch(url, { method });
+          const res = await fetch(url, {
+            method,
+            headers: body ? { 'Content-Type': 'application/json' } : undefined,
+            body: body ? JSON.stringify(body) : undefined
+          });
           if (res.status === 401) { window.location.href = '/login?next=/admin'; return; }
           const data = await res.json().catch(() => null);
           if (!res.ok) window.alert(data?.error || 'Action failed');
