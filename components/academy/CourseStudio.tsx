@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ImageUploader from '@/components/admin/ImageUploader';
+import BulkQuestionImport from '@/components/academy/BulkQuestionImport';
 
 interface Course {
   id: number; title: string; slug: string; description: string; price: string; status: string;
@@ -390,6 +391,7 @@ export default function CourseStudio({
                     </div>
                     <button className={btn} disabled={busy}>+ Add question</button>
                   </form>
+                  <BulkQuestionImport quizId={q.id} />
                 </div>
               )}
             </div>
