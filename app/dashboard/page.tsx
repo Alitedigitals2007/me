@@ -26,7 +26,7 @@ export default async function DashboardPage() {
   );
 
   const courseIds = enrollments.map((e) => e.course_id);
-  const [assignmentsRes, certsRes, classesRes] = courseIds.length
+  const [assignmentsRes, quizzesRes, certsRes, classesRes] = courseIds.length
     ? await Promise.all([
         getPool().query(
           `SELECT a.id, a.title, a.instructions, a.due_at, a.max_score, c.title AS course_title, c.slug AS course_slug,
@@ -36,6 +36,19 @@ export default async function DashboardPage() {
            LEFT JOIN submissions s ON s.assignment_id=a.id AND s.student_id=$1
            WHERE a.course_id = ANY($2::int[])
            ORDER BY a.due_at ASC NULLS LAST, a.id ASC`,
+          [student.id, courseIds]
+        ),
+        getPool().query(
+          `SELECT q.id, q.title, q.pass_pct, q.is_final_exam, c.title AS course_title, c.slug AS course_slug,
+                  a.score, a.total, a.passed, a.attempted_at
+           FROM quizzes q
+           JOIN courses c ON c.id=q.course_id
+           LEFT JOIN LATERAL (
+             SELECT score, total, passed, attempted_at FROM quiz_attempts
+             WHERE quiz_id=q.id AND student_id=$1 ORDER BY id DESC LIMIT 1
+           ) a ON true
+           WHERE q.course_id = ANY($2::int[])
+           ORDER BY q.is_final_exam DESC, q.id ASC`,
           [student.id, courseIds]
         ),
         getPool().query(
@@ -53,6 +66,7 @@ export default async function DashboardPage() {
         )
       ])
     : [
+        { rows: [] as any[] },
         { rows: [] as any[] },
         { rows: [] as any[] },
         { rows: [] as any[] }
@@ -83,6 +97,7 @@ export default async function DashboardPage() {
       <div className="mt-8 flex flex-wrap gap-2 text-xs font-semibold">
         <a href="#courses" className="rounded-full bg-accent/10 text-accent px-4 py-2.5">My courses ({enrollments.length})</a>
         <a href="#assignments" className="rounded-full bg-card ring-1 ring-line px-4 py-2.5">Assignments ({pending.length + pendingSubs.length})</a>
+        <a href="#tests" className="rounded-full bg-card ring-1 ring-line px-4 py-2.5">Tests ({quizzesRes.rows.length})</a>
         <a href="#certificates" className="rounded-full bg-card ring-1 ring-line px-4 py-2.5">Certificates ({certsRes.rows.length})</a>
         <a href="#classes" className="rounded-full bg-card ring-1 ring-line px-4 py-2.5">Classes ({classesRes.rows.length})</a>
       </div>
@@ -171,11 +186,44 @@ export default async function DashboardPage() {
         )}
       </section>
 
+      <section id="tests" className="mt-12">
+        <h2 className="font-display font-bold uppercase text-xl mb-4">Tests &amp; final exam</h2>
+        {quizzesRes.rows.length === 0 ? (
+          <p className="text-muted rounded-2xl bg-card ring-1 ring-line p-8 text-center">No tests in your courses yet.</p>
+        ) : (
+          <div className="grid sm:grid-cols-2 gap-4">
+            {quizzesRes.rows.map((q) => (
+              <div key={q.id} className={`rounded-3xl bg-card ring-1 p-6 shadow-card ${q.is_final_exam ? 'ring-emerald-500/40' : 'ring-line'}`}>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-accent bg-accent/10 px-2 py-0.5 rounded-full">{q.course_title}</span>
+                  <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${q.is_final_exam ? 'bg-emerald-500/10 text-emerald-600' : 'bg-ink/5 text-muted'}`}>
+                    {q.is_final_exam ? 'Final exam' : 'Test'}
+                  </span>
+                  {q.attempted_at && (
+                    <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${q.passed ? 'bg-emerald-500/10 text-emerald-600' : 'bg-amber-500/10 text-amber-600'}`}>
+                      {q.passed ? 'Passed' : 'Retry'}
+                    </span>
+                  )}
+                </div>
+                <h3 className="font-display font-bold text-lg mt-2">{q.title}</h3>
+                <p className="text-xs text-muted mt-1">
+                  Pass mark {q.pass_pct}%
+                  {q.attempted_at ? ` · last attempt ${q.score}/${q.total} (${q.total ? Math.round((q.score / q.total) * 100) : 0}%)` : ' · not attempted yet'}
+                </p>
+                <Link href={`/academy/${q.course_slug}/quiz/${q.id}`} className="inline-block mt-4 bg-gradient-cta text-white text-sm font-semibold px-5 py-2.5 rounded-full hover:-translate-y-0.5 transition-all">
+                  {q.attempted_at ? 'Retake test' : 'Take test'} →
+                </Link>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
       <section id="certificates" className="mt-12">
         <h2 className="font-display font-bold uppercase text-xl mb-4">Certificates</h2>
         {certsRes.rows.length === 0 ? (
           <p className="text-muted rounded-2xl bg-card ring-1 ring-line p-8 text-center">
-            Complete a course (all lessons + assignments + quizzes) and your certificate appears here.
+            Complete all lessons, get your assignments graded, and pass the final exam — then your certificate appears here.
           </p>
         ) : (
           <div className="grid sm:grid-cols-2 gap-5">
