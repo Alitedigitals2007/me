@@ -13,6 +13,7 @@ export const NAV = [
   { href: '/admin/messages', label: 'Messages', icon: '✉' },
   { href: '/admin/ads', label: 'Ads', icon: '▣' },
   { href: '/admin/marketplace', label: 'Marketplace', icon: '◍' },
+  { href: '/admin/coupons', label: 'Coupons', icon: '%' },
   { href: '/admin/blog', label: 'Blog', icon: '☰' },
   { href: '/admin/writers', label: 'Writers', icon: '✍' },
   { href: '/admin/stories', label: 'Stories', icon: '📖' },

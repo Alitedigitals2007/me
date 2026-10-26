@@ -6,7 +6,7 @@ import { ensureAcademySchema } from '@/lib/academy-schema';
 export const runtime = 'nodejs';
 
 const FIELDS: Record<string, string[]> = {
-  courses: ['title', 'slug', 'description', 'price', 'status', 'delivery', 'level', 'duration', 'image_url', 'link', 'order_index', 'is_own_product'],
+  courses: ['title', 'slug', 'description', 'price', 'status', 'delivery', 'level', 'duration', 'image_url', 'link', 'order_index', 'is_own_product', 'animation_text', 'text_animation', 'animation_speed'],
   modules: ['course_id', 'title', 'order_index'],
   lessons: ['course_id', 'module_id', 'title', 'content', 'video_url', 'material_url', 'material_name', 'order_index', 'is_free_preview'],
   assignments: ['course_id', 'lesson_id', 'title', 'instructions', 'due_at', 'max_score'],

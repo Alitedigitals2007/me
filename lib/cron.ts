@@ -1,6 +1,7 @@
 import getPool from './db';
 import { sendTelegram, siteUrl } from './telegram';
 import { getSettings } from './settings';
+import { releaseExpiredCouponRedemptions } from './coupons';
 
 let running = false;
 
@@ -113,6 +114,7 @@ export async function runScheduledTasks() {
       `UPDATE ad_submissions SET status='expired'
        WHERE status='approved' AND end_date < CURRENT_DATE RETURNING id`
     );
+    await releaseExpiredCouponRedemptions();
     await dailyReport();
     await expiringAds();
     await weeklyDigest();

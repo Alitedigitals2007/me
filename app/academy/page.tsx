@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import Reveal from '@/components/site/Reveal';
 import LogoutButton from '@/components/academy/LogoutButton';
+import AnimatedCourseText from '@/components/academy/AnimatedCourseText';
 import { SectionHead } from '@/components/site/Cards';
 import { getPublishedCourses, coursePriceNumber } from '@/lib/academy';
 import { getStudent } from '@/lib/student-session';
@@ -70,7 +71,9 @@ export default async function AcademyPage() {
                     {c.level && <span className="text-[11px] font-semibold uppercase tracking-wider text-muted ring-1 ring-line px-2.5 py-1 rounded-full">{c.level}</span>}
                     {c.duration && <span className="text-[11px] font-semibold text-muted ring-1 ring-line px-2.5 py-1 rounded-full">{c.duration}</span>}
                   </div>
-                  <h3 className="font-display font-bold text-lg mt-3 group-hover:text-accent transition-colors">{c.title}</h3>
+                  <h3 className="font-display font-bold text-lg mt-3 group-hover:text-accent transition-colors">
+                    <AnimatedCourseText text={c.title} animation={c.text_animation} speed={c.animation_speed} />
+                  </h3>
                   <p className="text-sm text-muted mt-2 line-clamp-2">{c.description}</p>
                   <span className="inline-block mt-4 text-sm font-semibold text-accent">{external ? 'View course →' : 'View curriculum →'}</span>
                 </div>

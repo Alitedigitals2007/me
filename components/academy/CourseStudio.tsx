@@ -4,11 +4,22 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ImageUploader from '@/components/admin/ImageUploader';
 import BulkQuestionImport from '@/components/academy/BulkQuestionImport';
+import AnimatedCourseText, { COURSE_TEXT_ANIMATIONS } from '@/components/academy/AnimatedCourseText';
 
 interface Course {
   id: number; title: string; slug: string; description: string; price: string; status: string;
   delivery: string; level: string; duration: string; image_url: string; link: string; order_index: number;
+  animation_text: string; text_animation: string; animation_speed: number;
 }
+
+const FX_LABELS: Record<string, string> = {
+  none: 'None',
+  gradient: 'Gradient shimmer',
+  typewriter: 'Typewriter',
+  rise: 'Words rise',
+  stagger: 'Words fade in',
+  glitch: 'Glitch'
+};
 interface Lesson {
   id: number; title: string; content: string; video_url: string; material_url: string;
   material_name: string; order_index: number; is_free_preview: boolean; module_id: number | null;
@@ -29,7 +40,7 @@ export default function CourseStudio({
   course: Course; modules: Mod[]; assignments: Assignment[]; quizzes: Quiz[]; sessions: ClassSession[];
 }) {
   const router = useRouter();
-  const [tab, setTab] = useState<'basics' | 'curriculum' | 'assignments' | 'quizzes' | 'classes'>('curriculum');
+  const [tab, setTab] = useState<'basics' | 'appearance' | 'curriculum' | 'assignments' | 'quizzes' | 'classes'>('curriculum');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [editingLesson, setEditingLesson] = useState<number | null>(null);
@@ -64,6 +75,12 @@ export default function CourseStudio({
     image_url: course.image_url, link: course.link, order_index: course.order_index
   });
 
+  const [fx, setFx] = useState({
+    animation_text: course.animation_text || '',
+    text_animation: course.text_animation || 'none',
+    animation_speed: String(course.animation_speed || 1)
+  });
+
   // --- New item forms ---
   const [newModule, setNewModule] = useState('');
   const [lessonForm, setLessonForm] = useState({ module_id: 0, title: '', content: '', video_url: '', material_url: '', material_name: '', order_index: 0, is_free_preview: false });
@@ -78,6 +95,7 @@ export default function CourseStudio({
   const TABS: [typeof tab, string][] = [
     ['curriculum', 'Curriculum'],
     ['basics', 'Basics'],
+    ['appearance', 'Text FX'],
     ['assignments', 'Assignments'],
     ['quizzes', 'Quizzes'],
     ['classes', 'Live classes']
@@ -132,6 +150,96 @@ export default function CourseStudio({
           </div>
           <textarea className={`${input} h-24`} value={basics.description} onChange={(e) => setBasics({ ...basics, description: e.target.value })} placeholder="Description" />
           <button className={btn} disabled={busy}>{busy ? 'Saving…' : 'Save changes'}</button>
+        </form>
+      )}
+
+      {tab === 'appearance' && (
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            await call(
+              'courses',
+              'PATCH',
+              {
+                animation_text: fx.animation_text,
+                text_animation: fx.text_animation,
+                animation_speed: Number(fx.animation_speed) || 1
+              },
+              course.id
+            );
+          }}
+          className="grid lg:grid-cols-2 gap-5 items-start"
+        >
+          <div className="rounded-2xl bg-card ring-1 ring-line p-5 space-y-3">
+            <div>
+              <p className="text-xs font-black uppercase tracking-widest text-accent">Course text animation</p>
+              <p className="text-xs text-muted mt-1">
+                Pick how course titles animate on the academy list and course page. On the course page, you can add a custom line to animate above the title.
+              </p>
+            </div>
+            <label className="text-xs font-semibold text-ink-soft block">
+              Text to animate
+              <input
+                className={`${input} mt-1`}
+                value={fx.animation_text}
+                onChange={(e) => setFx({ ...fx, animation_text: e.target.value })}
+                placeholder="Leave empty to animate the course title"
+                maxLength={120}
+              />
+            </label>
+            <div className="grid sm:grid-cols-2 gap-3">
+              <label className="text-xs font-semibold text-ink-soft">
+                Animation
+                <select
+                  className={`${input} mt-1`}
+                  value={fx.text_animation}
+                  onChange={(e) => setFx({ ...fx, text_animation: e.target.value })}
+                >
+                  {COURSE_TEXT_ANIMATIONS.map((animation) => (
+                    <option key={animation} value={animation}>{FX_LABELS[animation] || animation}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="text-xs font-semibold text-ink-soft">
+                Speed
+                <select
+                  className={`${input} mt-1`}
+                  value={fx.animation_speed}
+                  onChange={(e) => setFx({ ...fx, animation_speed: e.target.value })}
+                >
+                  <option value="1">Normal</option>
+                  <option value="2">Fast</option>
+                  <option value="3">Very fast</option>
+                </select>
+              </label>
+            </div>
+            <button className={btn} disabled={busy}>{busy ? 'Saving…' : 'Save animation'}</button>
+          </div>
+
+          <div className="rounded-2xl bg-card ring-1 ring-line p-5">
+            <p className="text-xs font-black uppercase tracking-widest text-accent">Live preview</p>
+            <div className="mt-4 rounded-2xl bg-gradient-to-br from-accent/[0.08] via-card to-cyan-accent/[0.06] ring-1 ring-line p-6 min-h-44 flex flex-col justify-center overflow-hidden">
+              <span className="text-[11px] font-black uppercase tracking-widest text-accent mb-2">Preview</span>
+              <h3 className="font-display font-extrabold uppercase text-2xl md:text-3xl leading-tight break-words">
+                <AnimatedCourseText
+                  key={`${fx.text_animation}-${fx.animation_text}-${fx.animation_speed}`}
+                  text={fx.animation_text.trim() || course.title}
+                  animation={fx.text_animation}
+                  speed={Number(fx.animation_speed)}
+                />
+              </h3>
+              {fx.animation_text.trim() && (
+                <p className="font-display font-bold uppercase text-base mt-2 text-ink-soft/80 break-words">
+                  {course.title}
+                </p>
+              )}
+              <p className="text-xs text-muted mt-3">
+                {fx.animation_text.trim()
+                  ? 'This line appears above the course title.'
+                  : 'The course title itself animates with this style.'}
+              </p>
+            </div>
+          </div>
         </form>
       )}
 

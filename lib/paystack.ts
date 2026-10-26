@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import getPool from './db';
 import { sendTelegram, siteUrl } from './telegram';
+import { completeCouponRedemption } from './coupons';
 
 const SECRET = process.env.PAYSTACK_SECRET_KEY || '';
 
@@ -54,9 +55,47 @@ export function hasPaystackKeys(): boolean {
   return !!SECRET && !!process.env.PAYSTACK_PUBLIC_KEY;
 }
 
+async function finalizeLocalPayment(reference: string): Promise<{ success: boolean; message: string; type?: string; delivery?: { type: 'file' | 'link'; file_id?: string; link?: string; title?: string } }> {
+  const { rows } = await getPool().query(
+    `SELECT l.title, l.delivery_type, l.file_id, l.link
+     FROM marketplace_purchases p JOIN marketplace_listings l ON l.id=p.listing_id
+     WHERE p.paystack_ref=$1 AND p.status='completed'`,
+    [reference]
+  );
+  if (rows.length) {
+    await completeCouponRedemption(reference);
+    return {
+      success: true,
+      message: 'Purchase complete! Check your email for details.',
+      type: 'listing',
+      delivery: {
+        type: rows[0].delivery_type === 'file' ? 'file' as const : 'link' as const,
+        file_id: rows[0].file_id || undefined,
+        link: rows[0].link || undefined,
+        title: rows[0].title
+      }
+    };
+  }
+  const { rows: courseRows } = await getPool().query(
+    `SELECT c.title FROM enrollments e JOIN courses c ON c.id=e.course_id
+     WHERE e.payment_ref=$1 AND e.status IN ('active','completed')`,
+    [reference]
+  );
+  if (courseRows.length) {
+    await completeCouponRedemption(reference);
+    return {
+      success: true,
+      message: 'Enrollment confirmed — start learning!',
+      type: 'course',
+      delivery: { type: 'link' as const, link: '/dashboard', title: 'Your Academy dashboard' }
+    };
+  }
+  return { success: false, message: 'Payment could not be verified.' };
+}
+
 export async function finalizePayment(reference: string): Promise<{ success: boolean; message: string; type?: string; delivery?: { type: 'file' | 'link'; file_id?: string; link?: string; title?: string } }> {
   const txn = await verifyTransaction(reference);
-  if (!txn) return { success: false, message: 'Payment could not be verified.' };
+  if (!txn) return finalizeLocalPayment(reference);
   const meta = txn.metadata || {};
   const amountNaira = (txn.amount || 0) / 100;
   if (meta.type === 'ad') {
@@ -85,7 +124,7 @@ export async function finalizePayment(reference: string): Promise<{ success: boo
       );
       if (listingRows.length) {
         sendTelegram(
-          `💰 <b>Listing sold:</b> ${listingRows[0].title} — ₦${amountNaira.toLocaleString()}\n📧 buyer email on Paystack receipt\n🔗 ${siteUrl()}/admin/marketplace`
+          `💰 <b>Listing sold:</b> ${listingRows[0].title} — ₦${amountNaira.toLocaleString()}${meta.coupon_code ? ` (coupon ${meta.coupon_code})` : ''}\n📧 buyer email on Paystack receipt\n🔗 ${siteUrl()}/admin/marketplace`
         );
         delivery = {
           type: listingRows[0].delivery_type === 'file' ? 'file' as const : 'link' as const,
@@ -95,6 +134,7 @@ export async function finalizePayment(reference: string): Promise<{ success: boo
         };
       }
     }
+    await completeCouponRedemption(reference);
     return { 
       success: !!rowCount, 
       message: rowCount ? 'Purchase complete! Check your email for details.' : 'This order was already processed.', 
@@ -113,7 +153,8 @@ export async function finalizePayment(reference: string): Promise<{ success: boo
     );
     if (rowCount) {
       const { rows: cRows } = await getPool().query('SELECT title FROM courses WHERE id=$1', [courseId]);
-      sendTelegram(`🎓 <b>Paid course enrollment</b>\nCourse: ${cRows[0]?.title || courseId} — ₦${amountNaira.toLocaleString()}\nRef: ${reference}\n🔗 ${siteUrl()}/admin/academy`);
+      sendTelegram(`🎓 <b>Paid course enrollment</b>\nCourse: ${cRows[0]?.title || courseId} — ₦${amountNaira.toLocaleString()}${meta.coupon_code ? ` (coupon ${meta.coupon_code})` : ''}\nRef: ${reference}\n🔗 ${siteUrl()}/admin/academy`);
+      await completeCouponRedemption(reference);
       return { success: true, message: 'Enrollment confirmed — start learning!', type: 'course', delivery: { type: 'link' as const, link: '/dashboard', title: 'Your Academy dashboard' } };
     }
     const active = await getPool().query(`SELECT id FROM enrollments WHERE course_id=$1 AND student_id=$2 AND status IN ('active','completed')`, [courseId, studentId]);

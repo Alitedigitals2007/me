@@ -155,7 +155,7 @@ export function ListingCard({ l }: { l: Listing }) {
         <p className="text-sm text-muted line-clamp-2 flex-1">{l.description.slice(0, 120)}</p>
         {Number(l.price) > 0 && <p className="font-display font-bold text-xl text-accent">{formatMoney(l.price)}</p>}
         {l.is_own && Number(l.price) > 0 ? (
-          <BuyNow listingId={l.id} title={l.title} priceLabel={formatMoney(l.price)} />
+          <BuyNow listingId={l.id} title={l.title} price={Number(l.price) || 0} priceLabel={formatMoney(l.price)} />
         ) : l.delivery_type === 'link' && l.link ? (
           <a
             href={l.link}

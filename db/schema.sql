@@ -84,8 +84,15 @@ CREATE TABLE IF NOT EXISTS courses (
   is_own_product BOOLEAN NOT NULL DEFAULT true,
   image_url TEXT NOT NULL DEFAULT '',
   order_index INT NOT NULL DEFAULT 0,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  animation_text TEXT NOT NULL DEFAULT '',
+  text_animation TEXT NOT NULL DEFAULT 'none',
+  animation_speed INT NOT NULL DEFAULT 1
 );
+
+ALTER TABLE courses ADD COLUMN IF NOT EXISTS animation_text TEXT NOT NULL DEFAULT '';
+ALTER TABLE courses ADD COLUMN IF NOT EXISTS text_animation TEXT NOT NULL DEFAULT 'none';
+ALTER TABLE courses ADD COLUMN IF NOT EXISTS animation_speed INT NOT NULL DEFAULT 1;
 
 CREATE TABLE IF NOT EXISTS blog_posts (
   id SERIAL PRIMARY KEY,
@@ -192,6 +199,53 @@ CREATE TABLE IF NOT EXISTS marketplace_purchases (
 );
 
 CREATE INDEX IF NOT EXISTS marketplace_purchases_listing_idx ON marketplace_purchases (listing_id);
+
+ALTER TABLE marketplace_purchases ADD COLUMN IF NOT EXISTS original_amount NUMERIC(12,2) NOT NULL DEFAULT 0;
+ALTER TABLE marketplace_purchases ADD COLUMN IF NOT EXISTS discount_amount NUMERIC(12,2) NOT NULL DEFAULT 0;
+ALTER TABLE marketplace_purchases ADD COLUMN IF NOT EXISTS coupon_code TEXT NOT NULL DEFAULT '';
+
+CREATE TABLE IF NOT EXISTS coupons (
+  id SERIAL PRIMARY KEY,
+  code TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  discount_type TEXT NOT NULL DEFAULT 'percent',
+  discount_value NUMERIC(12,2) NOT NULL DEFAULT 0,
+  max_discount NUMERIC(12,2) NOT NULL DEFAULT 0,
+  applies_to TEXT NOT NULL DEFAULT 'all',
+  course_id INT REFERENCES courses(id) ON DELETE CASCADE,
+  listing_id INT REFERENCES marketplace_listings(id) ON DELETE CASCADE,
+  starts_at TIMESTAMPTZ,
+  expires_at TIMESTAMPTZ,
+  max_uses INT,
+  used_count INT NOT NULL DEFAULT 0,
+  max_uses_per_customer INT NOT NULL DEFAULT 0,
+  min_order NUMERIC(12,2) NOT NULL DEFAULT 0,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS coupons_code_key ON coupons (code);
+
+CREATE TABLE IF NOT EXISTS coupon_redemptions (
+  id SERIAL PRIMARY KEY,
+  coupon_id INT NOT NULL REFERENCES coupons(id) ON DELETE CASCADE,
+  context TEXT NOT NULL,
+  course_id INT,
+  listing_id INT,
+  student_id INT,
+  email TEXT NOT NULL DEFAULT '',
+  amount_before NUMERIC(12,2) NOT NULL DEFAULT 0,
+  discount_amount NUMERIC(12,2) NOT NULL DEFAULT 0,
+  amount_after NUMERIC(12,2) NOT NULL DEFAULT 0,
+  payment_ref TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS coupon_redemptions_coupon_idx ON coupon_redemptions (coupon_id);
+CREATE INDEX IF NOT EXISTS coupon_redemptions_ref_idx ON coupon_redemptions (payment_ref);
+CREATE INDEX IF NOT EXISTS coupon_redemptions_student_idx ON coupon_redemptions (student_id);
+CREATE INDEX IF NOT EXISTS coupon_redemptions_email_idx ON coupon_redemptions (LOWER(email));
 
 CREATE TABLE IF NOT EXISTS contact_messages (
   id SERIAL PRIMARY KEY,

@@ -16,6 +16,9 @@ ALTER TABLE courses ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'publi
 ALTER TABLE courses ADD COLUMN IF NOT EXISTS delivery TEXT NOT NULL DEFAULT 'internal';
 ALTER TABLE courses ADD COLUMN IF NOT EXISTS level TEXT NOT NULL DEFAULT '';
 ALTER TABLE courses ADD COLUMN IF NOT EXISTS duration TEXT NOT NULL DEFAULT '';
+ALTER TABLE courses ADD COLUMN IF NOT EXISTS animation_text TEXT NOT NULL DEFAULT '';
+ALTER TABLE courses ADD COLUMN IF NOT EXISTS text_animation TEXT NOT NULL DEFAULT 'none';
+ALTER TABLE courses ADD COLUMN IF NOT EXISTS animation_speed INT NOT NULL DEFAULT 1;
 UPDATE courses SET slug = lower(regexp_replace(title, '[^a-zA-Z0-9]+', '-', 'g')) WHERE slug IS NULL OR slug = '';
 UPDATE courses SET slug = slug || '-' || id WHERE slug IN (SELECT slug FROM courses WHERE slug IS NOT NULL AND slug <> '' GROUP BY slug HAVING COUNT(*) > 1);
 CREATE UNIQUE INDEX IF NOT EXISTS courses_slug_key ON courses (slug);
@@ -162,7 +165,7 @@ async function schemaReady(): Promise<boolean> {
     const tableChecks = CRITICAL_TABLES.map((t, i) => `to_regclass('public.${t}') IS NOT NULL AS t${i}`).join(', ');
     const { rows } = await getPool().query(`SELECT ${tableChecks}`);
     if (!Object.values(rows[0]).every(Boolean)) return false;
-    await getPool().query(`SELECT slug, status, delivery, level, duration FROM courses LIMIT 0`);
+    await getPool().query(`SELECT slug, status, delivery, level, duration, animation_text, text_animation, animation_speed FROM courses LIMIT 0`);
     await getPool().query(`SELECT lesson_id FROM assignments LIMIT 0`);
     await getPool().query(`SELECT lesson_id, is_final_exam FROM quizzes LIMIT 0`);
     return true;

@@ -15,6 +15,9 @@ export interface AcademyCourse {
   duration: string;
   link: string;
   order_index: number;
+  animation_text: string;
+  text_animation: string;
+  animation_speed: number;
 }
 
 export interface Lesson {
@@ -33,7 +36,8 @@ export interface Lesson {
 export async function getPublishedCourses(): Promise<AcademyCourse[]> {
   await ensureAcademySchema();
   const { rows } = await getPool().query(
-    `SELECT id, title, slug, description, price, image_url, status, delivery, level, duration, link, order_index
+    `SELECT id, title, slug, description, price, image_url, status, delivery, level, duration, link, order_index,
+            animation_text, text_animation, animation_speed
      FROM courses WHERE status='published' ORDER BY order_index ASC, id ASC`
   );
   return rows;
@@ -42,7 +46,8 @@ export async function getPublishedCourses(): Promise<AcademyCourse[]> {
 export async function getCourseBySlug(slug: string): Promise<AcademyCourse | null> {
   await ensureAcademySchema();
   const { rows } = await getPool().query(
-    `SELECT id, title, slug, description, price, image_url, status, delivery, level, duration, link, order_index
+    `SELECT id, title, slug, description, price, image_url, status, delivery, level, duration, link, order_index,
+            animation_text, text_animation, animation_speed
      FROM courses WHERE slug=$1 AND status='published'`,
     [slug]
   );

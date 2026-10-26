@@ -7,7 +7,7 @@ import { checkAndIssueCertificate } from '@/lib/academy';
 export const runtime = 'nodejs';
 
 const PATCHABLE: Record<string, string[]> = {
-  courses: ['title', 'slug', 'description', 'price', 'status', 'delivery', 'level', 'duration', 'image_url', 'link', 'order_index', 'is_own_product'],
+  courses: ['title', 'slug', 'description', 'price', 'status', 'delivery', 'level', 'duration', 'image_url', 'link', 'order_index', 'is_own_product', 'animation_text', 'text_animation', 'animation_speed'],
   modules: ['title', 'order_index'],
   lessons: ['title', 'content', 'video_url', 'material_url', 'material_name', 'order_index', 'is_free_preview', 'module_id'],
   assignments: ['title', 'instructions', 'due_at', 'max_score', 'lesson_id'],

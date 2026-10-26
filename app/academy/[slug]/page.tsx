@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import Reveal from '@/components/site/Reveal';
 import EnrollButton from '@/components/academy/EnrollButton';
+import AnimatedCourseText from '@/components/academy/AnimatedCourseText';
 import getPool from '@/lib/db';
 import { getStudent } from '@/lib/student-session';
 import {
@@ -36,6 +37,9 @@ export default async function CoursePage({ params }: { params: Promise<{ slug: s
   const enrolled = isEnrollmentActive(enrollment);
   const price = coursePriceNumber(course.price);
   const external = course.delivery === 'external';
+  const fxText = (course.animation_text || '').trim();
+  const textAnimation = course.text_animation || 'none';
+  const animateTitle = !fxText && textAnimation !== 'none';
 
   const [{ rows: assignments }, { rows: quizzes }, { rows: sessions }] = await Promise.all([
     getPool().query(
@@ -71,7 +75,18 @@ export default async function CoursePage({ params }: { params: Promise<{ slug: s
               {course.duration && <span className="text-[11px] font-semibold text-muted ring-1 ring-line px-2.5 py-1 rounded-full">{course.duration}</span>}
               <span className="text-[11px] font-semibold text-muted ring-1 ring-line px-2.5 py-1 rounded-full">{lessonCount} lessons</span>
             </div>
-            <h1 className="font-display font-extrabold uppercase text-3xl md:text-5xl mt-4 leading-[1.02] tracking-[-0.02em]">{course.title}</h1>
+            {fxText && (
+              <p className="text-accent font-display font-bold uppercase tracking-[0.12em] text-sm md:text-base mt-4">
+                <AnimatedCourseText text={fxText} animation={textAnimation} speed={course.animation_speed} />
+              </p>
+            )}
+            <h1 className={`font-display font-extrabold uppercase text-3xl md:text-5xl ${fxText ? 'mt-2' : 'mt-4'} leading-[1.02] tracking-[-0.02em]`}>
+              {animateTitle ? (
+                <AnimatedCourseText text={course.title} animation={textAnimation} speed={course.animation_speed} />
+              ) : (
+                course.title
+              )}
+            </h1>
             <p className="text-muted mt-3 max-w-2xl whitespace-pre-wrap">{course.description}</p>
             <div className="mt-6">
               {external ? (
