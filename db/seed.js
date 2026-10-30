@@ -200,16 +200,6 @@ async function main() {
 
   await seedRealContent();
 
-  // Birthday settings
-  const bdayExists = await pool.query('SELECT COUNT(*)::int AS c FROM birthday_settings');
-  if (bdayExists.rows[0].c === 0) {
-    await pool.query(
-      `INSERT INTO birthday_settings (birthday_date, title, subtitle, google_drive_folder, use_drive_photos)
-       VALUES ('2026-10-30', 'Happy Birthday Alite', 'Atilola Israel Ayomide · 30 Oct 2026', '1Ck8R9eLPfv3CvvjRBI9jwNjUWhbKAKrs', true)`
-    );
-    console.log('-- Birthday settings seeded --');
-  }
-
   const email = (process.env.ADMIN_EMAIL || '').trim();
   const password = (process.env.ADMIN_PASSWORD || '').trim();
   const explicitUsername = (process.env.ADMIN_USERNAME || '').trim();

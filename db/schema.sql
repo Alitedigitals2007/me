@@ -380,25 +380,3 @@ CREATE INDEX IF NOT EXISTS stories_slug_key ON stories (slug);
 CREATE INDEX IF NOT EXISTS stories_category_idx ON stories (category);
 CREATE INDEX IF NOT EXISTS story_activity_story_idx ON story_activity (story_id);
 CREATE INDEX IF NOT EXISTS story_activity_writer_idx ON story_activity (writer_id);
-
--- Birthday celebration
-CREATE TABLE IF NOT EXISTS birthday_settings (
-  id SERIAL PRIMARY KEY,
-  birthday_date DATE NOT NULL DEFAULT '2026-10-30',
-  title TEXT NOT NULL DEFAULT 'Happy Birthday Alite',
-  subtitle TEXT NOT NULL DEFAULT 'Atilola Israel Ayomide · 30 Oct 2026',
-  google_drive_folder TEXT NOT NULL DEFAULT '1Ck8R9eLPfv3CvvjRBI9jwNjUWhbKAKrs',
-  use_drive_photos BOOLEAN NOT NULL DEFAULT true,
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE TABLE IF NOT EXISTS birthday_photos (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  url TEXT NOT NULL,
-  alt TEXT NOT NULL DEFAULT '',
-  sort_order INT NOT NULL DEFAULT 0,
-  is_drive BOOLEAN NOT NULL DEFAULT false,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX IF NOT EXISTS birthday_photos_order_idx ON birthday_photos (sort_order);
