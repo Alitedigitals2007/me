@@ -19,6 +19,7 @@ export const NAV = [
   { href: '/admin/stories', label: 'Stories', icon: '📖' },
   { href: '/admin/projects', label: 'Projects', icon: '❐' },
   { href: '/admin/education', label: 'Education', icon: '♜' },
+  { href: '/admin/birthday', label: 'Birthday', icon: '🎂' },
   { href: '/admin/roles', label: 'Roles', icon: '★' },
   { href: '/admin/settings', label: 'Settings', icon: '⚙' }
 ];
