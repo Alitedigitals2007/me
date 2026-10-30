@@ -8,11 +8,11 @@ type Photo = { id: number; url: string; alt: string; isDrive: boolean };
 type Settings = { birthday_date: string; title: string; subtitle: string; google_drive_folder: string; use_drive_photos: boolean };
 
 const COLORS = {
-  ink: '#0b0a13',
-  panel: '#14122a',
-  line: '#2a2646',
-  paper: '#f4f0ff',
-  muted: '#9b95c4',
+  ink: '#fdf6ec',
+  panel: '#fffaf2',
+  line: '#f0e2d4',
+  paper: '#2a2138',
+  muted: '#8a7f96',
   gold: '#ffc247',
   pink: '#ff4f9a',
   teal: '#35e0c4',
