@@ -31,7 +31,9 @@ const DEFAULT_SETTINGS = {
 const AD_SLOTS = [
   { name: 'Homepage banner', position: 'home_banner', price_per_day: 2000, max_active: 1, description: 'Large banner at the top of the homepage' },
   { name: 'Sidebar', position: 'sidebar', price_per_day: 800, max_active: 2, description: 'Sidebar ad shown across blog & portfolio pages' },
-  { name: 'Blog inline', position: 'blog_inline', price_per_day: 1000, max_active: 1, description: 'Inline ad inside blog posts' }
+  { name: 'Blog inline', position: 'blog_inline', price_per_day: 1000, max_active: 1, description: 'Inline ad inside blog posts' },
+  { name: 'Story inline', position: 'story_inline', price_per_day: 1000, max_active: 1, description: 'Inline ad inside stories' },
+  { name: 'Story bottom', position: 'story_bottom', price_per_day: 900, max_active: 1, description: 'Ad at the end of a story' }
 ];
 
 const REAL_CONTENT_SETTINGS = {

@@ -2,7 +2,7 @@ import getPool from './db';
 import { ensureWriterSchema } from './writer-schema';
 import { parseTags } from './utils';
 import type {
-  Project, EducationItem, RoleItem, Course, BlogPost, Listing, AdSlot, AdPackage, AdSubmission, Message, SocialAccount, Story, WriterUser
+  Project, EducationItem, RoleItem, Course, BlogPost, Listing, AdSlot, AdPackage, AdSubmission, Message, SocialAccount, Story, StoryComment, WriterUser
 } from './types';
 
 export async function getFeaturedProjects(limit = 3): Promise<Project[]> {
@@ -228,11 +228,12 @@ export async function getPublishedStories(): Promise<Story[]> {
 export interface StoryFilters {
   q?: string;
   category?: string;
+  topic?: string;
   tag?: string;
   author?: string;
 }
 
-/** Published stories filtered by free-text (title/excerpt/author/category/tags), category or author. */
+/** Published stories filtered by free-text (title/excerpt/author/category/topic/tags), category, topic, tag or author. */
 export async function searchPublishedStories(filters: StoryFilters = {}): Promise<Story[]> {
   try {
     await ensureWriterSchema();
@@ -244,13 +245,18 @@ export async function searchPublishedStories(filters: StoryFilters = {}): Promis
       params.push(`%${q}%`);
       const p = `$${params.length}`;
       conds.push(
-        `(s.title ILIKE ${p} OR s.excerpt ILIKE ${p} OR s.category ILIKE ${p} OR s.tags ILIKE ${p} OR w.name ILIKE ${p})`
+        `(s.title ILIKE ${p} OR s.excerpt ILIKE ${p} OR s.category ILIKE ${p} OR s.topic ILIKE ${p} OR s.tags ILIKE ${p} OR w.name ILIKE ${p})`
       );
     }
     const category = String(filters.category || '').trim();
     if (category) {
       params.push(category);
       conds.push(`LOWER(s.category) = LOWER($${params.length})`);
+    }
+    const topic = String(filters.topic || '').trim();
+    if (topic) {
+      params.push(topic);
+      conds.push(`LOWER(s.topic) = LOWER($${params.length})`);
     }
     const author = String(filters.author || '').trim();
     if (author) {
@@ -289,6 +295,39 @@ export async function getStoryCategories(): Promise<string[]> {
        ORDER BY s.category ASC`
     );
     return rows.map((r) => r.category as string);
+  } catch {
+    return [];
+  }
+}
+
+export async function getStoryTopics(): Promise<string[]> {
+  try {
+    await ensureWriterSchema();
+    const { rows } = await getPool().query(
+      `SELECT DISTINCT s.topic
+       FROM stories s
+       JOIN writer_users w ON w.id = s.writer_id
+       WHERE s.status='published' AND w.status='approved' AND s.topic <> ''
+       ORDER BY s.topic ASC`
+    );
+    return rows.map((r) => r.topic as string);
+  } catch {
+    return [];
+  }
+}
+
+export async function getStoryTags(): Promise<string[]> {
+  try {
+    await ensureWriterSchema();
+    const { rows } = await getPool().query(
+      `SELECT s.tags
+       FROM stories s
+       JOIN writer_users w ON w.id = s.writer_id
+       WHERE s.status='published' AND w.status='approved' AND s.tags <> ''`
+    );
+    const set = new Set<string>();
+    for (const r of rows) for (const t of parseTags(r.tags)) set.add(t);
+    return [...set].sort((a, b) => a.localeCompare(b));
   } catch {
     return [];
   }
@@ -347,6 +386,82 @@ export async function getStory(slug: string): Promise<(Story & { writer_name: st
     return rows[0] ?? null;
   } catch {
     return null;
+  }
+}
+
+/** Count a unique view (per ip_hash) and bump the denormalised counter. Returns the new total. */
+export async function recordStoryView(storyId: number, ipHash: string): Promise<number> {
+  try {
+    const { rowCount } = await getPool().query(
+      `INSERT INTO story_views (story_id, ip_hash) VALUES ($1, $2) ON CONFLICT (story_id, ip_hash) DO NOTHING`,
+      [storyId, ipHash]
+    );
+    if (rowCount) {
+      await getPool().query(`UPDATE stories SET views = views + 1 WHERE id=$1`, [storyId]);
+    }
+    const { rows } = await getPool().query(`SELECT views FROM stories WHERE id=$1`, [storyId]);
+    return rows[0]?.views ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+export async function getStoryComments(storyId: number): Promise<StoryComment[]> {
+  try {
+    const { rows } = await getPool().query(
+      `SELECT id, story_id, name, content, created_at FROM story_comments
+       WHERE story_id=$1 AND is_approved=true ORDER BY created_at DESC`,
+      [storyId]
+    );
+    return rows;
+  } catch {
+    return [];
+  }
+}
+
+export async function getWriterProfile(
+  writerId: number
+): Promise<(WriterUser & { story_count: number }) | null> {
+  try {
+    await ensureWriterSchema();
+    const { rows } = await getPool().query(
+      `SELECT w.id, w.name, w.bio, w.avatar_url, w.status, w.created_at,
+              (SELECT COUNT(*)::int FROM stories s WHERE s.writer_id = w.id AND s.status='published') AS story_count
+       FROM writer_users w
+       WHERE w.id=$1 AND w.status='approved'`,
+      [writerId]
+    );
+    return rows[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function getPublishedStoriesByWriter(writerId: number): Promise<Story[]> {
+  try {
+    await ensureWriterSchema();
+    const { rows } = await getPool().query(
+      `SELECT * FROM stories WHERE writer_id=$1 AND status='published' ORDER BY published_at DESC NULLS LAST`,
+      [writerId]
+    );
+    return rows;
+  } catch {
+    return [];
+  }
+}
+
+/** Publish any scheduled stories whose time has arrived. Returns the ones just published. */
+export async function publishDueStories(): Promise<{ title: string; slug: string }[]> {
+  try {
+    await ensureWriterSchema();
+    const { rows } = await getPool().query(
+      `UPDATE stories SET status='published', published_at=COALESCE(publish_at, now()), updated_at=now()
+       WHERE status='scheduled' AND publish_at IS NOT NULL AND publish_at <= now()
+       RETURNING title, slug`
+    );
+    return rows;
+  } catch {
+    return [];
   }
 }
 

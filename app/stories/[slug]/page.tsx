@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import AdSlot from '@/components/site/AdSlot';
 import StoryCard from '@/components/site/StoryCard';
+import StoryPostActions from '@/components/site/StoryPostActions';
+import StoryViewTracker from '@/components/site/StoryViewTracker';
 import { getStory, getRelatedStories } from '@/lib/data';
 import { loadAds } from '@/lib/ads';
 import { formatDate, parseTags } from '@/lib/utils';
@@ -34,6 +36,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-14 md:py-20">
+      <StoryViewTracker slug={slug} />
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-accent/[0.08] via-card to-cyan-accent/[0.06] ring-1 ring-line p-7 md:p-9">
         <span className="absolute -top-20 -right-16 h-48 w-48 rounded-full bg-cyan-accent/15 blur-3xl" aria-hidden />
         <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-accent via-accent-2 to-cyan-accent" aria-hidden />
@@ -46,12 +49,26 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
           </h1>
           <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-muted">
             <span>{formatDate(story.published_at)}</span>
+            <span aria-hidden>·</span>
+            <span>{story.reading_minutes || 1} min read</span>
+            {story.views > 0 && (
+              <>
+                <span aria-hidden>·</span>
+                <span className="flex items-center gap-1">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                  {story.views}
+                </span>
+              </>
+            )}
             <span className="flex items-center gap-1.5">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                 <circle cx="12" cy="7" r="4" />
               </svg>
-              <Link href={`/stories?author=${encodeURIComponent(story.writer_name)}`} className="hover:text-accent transition-colors">{story.writer_name}</Link>
+              <Link href={`/writers/${story.writer_id}`} className="hover:text-accent transition-colors">{story.writer_name}</Link>
             </span>
             {story.category && (
               <Link
@@ -59,6 +76,14 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
                 className="font-semibold text-accent bg-accent/10 px-3 py-1 rounded-full hover:bg-accent/15 transition-colors"
               >
                 {story.category}
+              </Link>
+            )}
+            {story.topic && (
+              <Link
+                href={`/stories?topic=${encodeURIComponent(story.topic)}`}
+                className="font-semibold text-accent-2 bg-accent-2/10 px-3 py-1 rounded-full hover:bg-accent-2/15 transition-colors"
+              >
+                {story.topic}
               </Link>
             )}
           </div>
@@ -83,6 +108,8 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
       )}
 
       <article className="prose-alite mt-8" dangerouslySetInnerHTML={{ __html: story.content }} />
+
+      <StoryPostActions slug={slug} title={story.title} initialLikes={story.like_count} />
 
       <div className="mt-12">
         <AdSlot ads={ads} position="story_inline" />
@@ -117,12 +144,20 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
             <div>
               <p className="font-semibold">{story.writer_name}</p>
               <p className="text-sm text-muted">Writer on ALITE</p>
-              <Link
-                href={`/stories?author=${encodeURIComponent(story.writer_name)}`}
-                className="inline-block mt-2 text-sm font-semibold text-accent hover:text-accent-2 transition-colors"
-              >
-                More from {story.writer_name} →
-              </Link>
+              <div className="flex flex-wrap gap-4 mt-2">
+                <Link
+                  href={`/writers/${story.writer_id}`}
+                  className="text-sm font-semibold text-accent hover:text-accent-2 transition-colors"
+                >
+                  View profile →
+                </Link>
+                <Link
+                  href={`/stories?author=${encodeURIComponent(story.writer_name)}`}
+                  className="text-sm font-semibold text-accent hover:text-accent-2 transition-colors"
+                >
+                  More from {story.writer_name} →
+                </Link>
+              </div>
             </div>
           </div>
         </div>

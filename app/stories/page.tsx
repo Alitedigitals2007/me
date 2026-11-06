@@ -4,7 +4,7 @@ import Reveal from '@/components/site/Reveal';
 import AdSlot from '@/components/site/AdSlot';
 import StoryCard from '@/components/site/StoryCard';
 import { SectionHead } from '@/components/site/Cards';
-import { searchPublishedStories, getStoryCategories } from '@/lib/data';
+import { searchPublishedStories, getStoryCategories, getStoryTopics, getStoryTags } from '@/lib/data';
 import { loadAds } from '@/lib/ads';
 
 export const metadata: Metadata = { title: 'Stories' };
@@ -14,6 +14,7 @@ export const dynamic = 'force-dynamic';
 interface SearchParams {
   q?: string;
   category?: string;
+  topic?: string;
   tag?: string;
   author?: string;
 }
@@ -23,14 +24,17 @@ export default async function StoriesPage({ searchParams }: { searchParams: Prom
   const filters = {
     q: String(sp.q || '').trim(),
     category: String(sp.category || '').trim(),
+    topic: String(sp.topic || '').trim(),
     tag: String(sp.tag || '').trim(),
     author: String(sp.author || '').trim()
   };
   const hasFilters = Object.values(filters).some(Boolean);
 
-  const [stories, categories, ads] = await Promise.all([
+  const [stories, categories, topics, tags, ads] = await Promise.all([
     searchPublishedStories(filters),
     getStoryCategories(),
+    getStoryTopics(),
+    getStoryTags(),
     loadAds()
   ]);
 
@@ -52,6 +56,7 @@ export default async function StoriesPage({ searchParams }: { searchParams: Prom
 
           <form method="GET" action="/stories" className="relative mt-7 flex flex-col sm:flex-row gap-2">
             {filters.category && <input type="hidden" name="category" value={filters.category} />}
+            {filters.topic && <input type="hidden" name="topic" value={filters.topic} />}
             {filters.author && <input type="hidden" name="author" value={filters.author} />}
             {filters.tag && <input type="hidden" name="tag" value={filters.tag} />}
             <label className="relative flex-1">
@@ -68,7 +73,7 @@ export default async function StoriesPage({ searchParams }: { searchParams: Prom
                 type="search"
                 name="q"
                 defaultValue={filters.q}
-                placeholder="Search by title, author, category or tag…"
+                placeholder="Search by title, author, category, topic or tag…"
                 className="w-full rounded-full bg-card ring-1 ring-line pl-11 pr-4 py-3 text-sm outline-none focus:ring-2 focus:ring-accent transition-shadow"
               />
             </label>
@@ -106,12 +111,68 @@ export default async function StoriesPage({ searchParams }: { searchParams: Prom
         </div>
       )}
 
+      {topics.length > 0 && (
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <span className="text-xs font-bold uppercase tracking-widest text-muted mr-1">Topics</span>
+          <Link
+            href={buildQuery({ topic: '' })}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold ring-1 transition-all ${
+              !filters.topic ? 'bg-accent-2 text-white ring-accent-2' : 'bg-card ring-line text-muted hover:text-ink hover:ring-accent-2/40'
+            }`}
+          >
+            All
+          </Link>
+          {topics.map((t) => (
+            <Link
+              key={t}
+              href={buildQuery({ topic: t })}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold ring-1 transition-all ${
+                filters.topic.toLowerCase() === t.toLowerCase()
+                  ? 'bg-accent-2 text-white ring-accent-2'
+                  : 'bg-card ring-line text-muted hover:text-ink hover:ring-accent-2/40'
+              }`}
+            >
+              {t}
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {tags.length > 0 && (
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <span className="text-xs font-bold uppercase tracking-widest text-muted mr-1">Tags</span>
+          <Link
+            href={buildQuery({ tag: '' })}
+            className={`px-3 py-1 rounded-full text-[11px] font-semibold ring-1 transition-all ${
+              !filters.tag ? 'bg-ink text-white ring-ink' : 'bg-card ring-line text-muted hover:text-ink hover:ring-ink/30'
+            }`}
+          >
+            All
+          </Link>
+          {tags.map((t) => (
+            <Link
+              key={t}
+              href={buildQuery({ tag: t })}
+              className={`px-3 py-1 rounded-full text-[11px] font-semibold ring-1 transition-all ${
+                filters.tag.toLowerCase() === t.toLowerCase()
+                  ? 'bg-ink text-white ring-ink'
+                  : 'bg-card ring-line text-muted hover:text-ink hover:ring-ink/30'
+              }`}
+            >
+              #{t}
+            </Link>
+          ))}
+        </div>
+      )}
+
       {hasFilters && (
         <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
           <span className="text-muted">
             {stories.length} {stories.length === 1 ? 'story' : 'stories'} found
           </span>
           {filters.q && <FilterPill label={`“${filters.q}”`} clearHref={buildQuery({ q: '' })} />}
+          {filters.category && <FilterPill label={`Category: ${filters.category}`} clearHref={buildQuery({ category: '' })} />}
+          {filters.topic && <FilterPill label={`Topic: ${filters.topic}`} clearHref={buildQuery({ topic: '' })} />}
           {filters.author && <FilterPill label={`Author: ${filters.author}`} clearHref={buildQuery({ author: '' })} />}
           {filters.tag && <FilterPill label={`#${filters.tag}`} clearHref={buildQuery({ tag: '' })} />}
           <Link href="/stories" className="text-accent font-semibold hover:text-accent-2 transition-colors">

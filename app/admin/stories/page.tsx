@@ -6,7 +6,7 @@ import { formatDate } from '@/lib/utils';
 
 export const metadata = { title: 'Stories' };
 
-const FILTERS = ['published', 'draft', 'all'];
+const FILTERS = ['published', 'scheduled', 'draft', 'all'];
 
 async function safeQuery(query: string, params?: any[]) {
   try {
@@ -21,7 +21,7 @@ export default async function StoriesPage({ searchParams }: { searchParams: Prom
   const { filter } = await searchParams;
   const status = FILTERS.includes(filter || '') ? filter! : 'all';
   const where = status === 'all' ? 'TRUE' : `s.status = '${status}'`;
-  const [stories, counts, activity] = await Promise.all([
+  const [stories, counts, activity, comments] = await Promise.all([
     safeQuery(
       `SELECT s.*, w.name as writer_name, w.email as writer_email
        FROM stories s
@@ -35,6 +35,12 @@ export default async function StoriesPage({ searchParams }: { searchParams: Prom
        JOIN stories s ON s.id = sa.story_id
        JOIN writer_users w ON w.id = sa.writer_id
        ORDER BY sa.created_at DESC LIMIT 50`
+    ),
+    safeQuery(
+      `SELECT c.id, c.name, c.content, c.created_at, s.title as story_title, s.slug as story_slug
+       FROM story_comments c
+       JOIN stories s ON s.id = c.story_id
+       ORDER BY c.created_at DESC LIMIT 50`
     )
   ]);
   const countMap = Object.fromEntries(counts.map((r) => [r.status, r.c]));
@@ -71,17 +77,23 @@ export default async function StoriesPage({ searchParams }: { searchParams: Prom
                     <p className="text-xs text-muted truncate">
                       by {s.writer_name} ({s.writer_email}) · {formatDate(s.updated_at)}
                     </p>
-                    {(s.category || s.tags) && (
+                    {(s.category || s.topic || s.tags) && (
                       <p className="text-xs mt-1 truncate">
                         {s.category && <span className="font-semibold text-accent">{s.category}</span>}
-                        {s.category && s.tags ? ' · ' : ''}
+                        {s.category && (s.topic || s.tags) ? ' · ' : ''}
+                        {s.topic && <span className="font-semibold text-accent-2">{s.topic}</span>}
+                        {s.topic && s.tags ? ' · ' : ''}
                         {s.tags && <span className="text-muted">#{s.tags.split(',').map((t: string) => t.trim()).filter(Boolean).join(' #')}</span>}
                       </p>
+                    )}
+                    {s.status === 'published' && (
+                      <p className="text-[11px] text-muted mt-1">{s.views || 0} views · {s.like_count || 0} likes · {s.reading_minutes || 1} min read</p>
                     )}
                   </div>
                 </div>
                 <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
                   s.status === 'published' ? 'bg-success/10 text-success' :
+                  s.status === 'scheduled' ? 'bg-warning/15 text-warning-strong' :
                   'bg-paper ring-1 ring-line text-muted'
                 }`}>
                   {s.status}
@@ -127,6 +139,36 @@ export default async function StoriesPage({ searchParams }: { searchParams: Prom
             ))
           ) : (
             <p className="p-6 text-sm text-muted">No activity yet.</p>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-12">
+        <h2 className="font-display font-bold uppercase text-xl mb-4">Recent comments</h2>
+        <div className="space-y-3">
+          {comments.length ? (
+            comments.map((c) => (
+              <div key={c.id} className="rounded-2xl bg-card ring-1 ring-line p-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm">
+                      <span className="font-semibold">{c.name}</span>{' '}
+                      <span className="text-muted">on</span>{' '}
+                      <a href={`/stories/${c.story_slug}`} target="_blank" rel="noopener noreferrer" className="font-semibold text-accent hover:text-accent-2">
+                        {c.story_title}
+                      </a>
+                    </p>
+                    <p className="text-sm text-ink-soft mt-1 break-words whitespace-pre-wrap">{c.content}</p>
+                  </div>
+                  <span className="text-xs text-muted shrink-0">{formatDate(c.created_at)}</span>
+                </div>
+                <div className="mt-3">
+                  <ActionButton url={`/api/admin/story-comments/${c.id}`} label="Delete" tone="danger" confirmText="Delete this comment?" />
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="p-6 text-sm text-muted rounded-2xl bg-card ring-1 ring-line text-center">No comments yet.</p>
           )}
         </div>
       </div>

@@ -3,9 +3,16 @@ import getPool from '@/lib/db';
 import { getWriter } from '@/lib/writer-session';
 import { ensureWriterSchema } from '@/lib/writer-schema';
 import { sendTelegram, siteUrl } from '@/lib/telegram';
-import { slugify, normalizeTags } from '@/lib/utils';
+import { slugify, normalizeTags, readingMinutes } from '@/lib/utils';
 
 export const runtime = 'nodejs';
+
+function parsePublishAt(raw: unknown): string | null {
+  const s = String(raw || '').trim();
+  if (!s) return null;
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d.toISOString();
+}
 
 export async function POST(req: NextRequest) {
   const writer = await getWriter();
@@ -22,8 +29,15 @@ export async function POST(req: NextRequest) {
     const content = String(fd.get('content') || '').trim();
     const coverImage = String(fd.get('cover_image') || '').trim();
     const category = String(fd.get('category') || '').trim().replace(/\s+/g, ' ').slice(0, 60);
+    const topic = String(fd.get('topic') || '').trim().replace(/\s+/g, ' ').slice(0, 60);
     const tags = normalizeTags(String(fd.get('tags') || '')).join(', ');
-    const status = ['draft', 'published'].includes(String(fd.get('status'))) ? String(fd.get('status')) : 'draft';
+    const status = ['draft', 'published', 'scheduled'].includes(String(fd.get('status'))) ? String(fd.get('status')) : 'draft';
+    let publishAt = parsePublishAt(fd.get('publish_at'));
+    // A scheduled story needs a future date; otherwise fall back to draft.
+    if (status === 'scheduled' && (!publishAt || new Date(publishAt).getTime() <= Date.now())) {
+      publishAt = publishAt || null;
+    }
+    const minutes = readingMinutes(content);
 
     let slug = slugBase;
     let isNewPublish = false;
@@ -39,36 +53,43 @@ export async function POST(req: NextRequest) {
 
       await getPool().query(
         `UPDATE stories SET title=$1, slug=$2, excerpt=$3, content=$4,
-         cover_image=COALESCE(NULLIF($5,''), cover_image), category=$6, tags=$7, status=$8, updated_at=now()
-         WHERE id=$9 AND writer_id=$10`,
-        [title, slug, excerpt, content, coverImage, category, tags, status, id, writer.id]
+         cover_image=COALESCE(NULLIF($5,''), cover_image), category=$6, topic=$7, tags=$8, status=$9,
+         publish_at=$10, reading_minutes=$11,
+         published_at=CASE WHEN $9='published' AND published_at IS NULL THEN now() ELSE published_at END,
+         updated_at=now()
+         WHERE id=$12 AND writer_id=$13`,
+        [title, slug, excerpt, content, coverImage, category, topic, tags, status, publishAt, minutes, id, writer.id]
       );
 
       await getPool().query(
         `INSERT INTO story_activity (story_id, writer_id, action, meta) VALUES ($1, $2, $3, $4)`,
-        [id, writer.id, isNewPublish ? 'published' : 'updated', JSON.stringify({ title, slug, category, tags })]
+        [id, writer.id, isNewPublish ? 'published' : status === 'scheduled' ? 'scheduled' : 'updated', JSON.stringify({ title, slug, category, topic, tags })]
       );
 
       if (isNewPublish) {
         sendTelegram(`📖 <b>Story published</b> — ${title} by ${writer.name}\n🔗 ${siteUrl()}/stories/${slug}`);
+      } else if (status === 'scheduled') {
+        sendTelegram(`⏰ <b>Story scheduled</b> — ${title} by ${writer.name}`);
       }
     } else {
       const { rows: dupe } = await getPool().query('SELECT id FROM stories WHERE slug=$1 LIMIT 1', [slug]);
       if (dupe.length) slug = `${slugBase}-${Date.now().toString(36)}`;
 
       const { rows } = await getPool().query(
-        `INSERT INTO stories (writer_id, title, slug, excerpt, content, cover_image, category, tags, status, published_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
-        [writer.id, title, slug, excerpt, content, coverImage, category, tags, status, status === 'published' ? new Date().toISOString() : null]
+        `INSERT INTO stories (writer_id, title, slug, excerpt, content, cover_image, category, topic, tags, status, publish_at, published_at, reading_minutes)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING id`,
+        [writer.id, title, slug, excerpt, content, coverImage, category, topic, tags, status, publishAt, status === 'published' ? new Date().toISOString() : null, minutes]
       );
 
       await getPool().query(
         `INSERT INTO story_activity (story_id, writer_id, action, meta) VALUES ($1, $2, $3, $4)`,
-        [rows[0].id, writer.id, status === 'published' ? 'published' : 'created', JSON.stringify({ title, slug, category, tags })]
+        [rows[0].id, writer.id, status === 'published' ? 'published' : status === 'scheduled' ? 'scheduled' : 'created', JSON.stringify({ title, slug, category, topic, tags })]
       );
 
       if (status === 'published') {
         sendTelegram(`📖 <b>New story published</b> — ${title} by ${writer.name}\n🔗 ${siteUrl()}/stories/${slug}`);
+      } else if (status === 'scheduled') {
+        sendTelegram(`⏰ <b>New story scheduled</b> — ${title} by ${writer.name}`);
       }
     }
 

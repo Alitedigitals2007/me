@@ -100,6 +100,12 @@ export function normalizeTags(input: string | null | undefined, max = 8): string
   return out;
 }
 
+/** Estimated reading time in whole minutes from rich-text HTML (~200 wpm, min 1). */
+export function readingMinutes(html: string, wpm = 200): number {
+  const words = plainText(html).split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.ceil(words / wpm));
+}
+
 export function cn(...classes: Array<string | false | null | undefined>): string {
   return classes.filter(Boolean).join(' ');
 }

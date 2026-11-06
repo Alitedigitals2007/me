@@ -355,15 +355,25 @@ CREATE TABLE IF NOT EXISTS stories (
   content TEXT NOT NULL DEFAULT '',
   cover_image TEXT NOT NULL DEFAULT '',
   category TEXT NOT NULL DEFAULT '',
+  topic TEXT NOT NULL DEFAULT '',
   tags TEXT NOT NULL DEFAULT '',
   status TEXT NOT NULL DEFAULT 'draft',
+  publish_at TIMESTAMPTZ,
   published_at TIMESTAMPTZ,
+  views INT NOT NULL DEFAULT 0,
+  reading_minutes INT NOT NULL DEFAULT 1,
+  like_count INT NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 ALTER TABLE stories ADD COLUMN IF NOT EXISTS category TEXT NOT NULL DEFAULT '';
+ALTER TABLE stories ADD COLUMN IF NOT EXISTS topic TEXT NOT NULL DEFAULT '';
 ALTER TABLE stories ADD COLUMN IF NOT EXISTS tags TEXT NOT NULL DEFAULT '';
+ALTER TABLE stories ADD COLUMN IF NOT EXISTS publish_at TIMESTAMPTZ;
+ALTER TABLE stories ADD COLUMN IF NOT EXISTS views INT NOT NULL DEFAULT 0;
+ALTER TABLE stories ADD COLUMN IF NOT EXISTS reading_minutes INT NOT NULL DEFAULT 1;
+ALTER TABLE stories ADD COLUMN IF NOT EXISTS like_count INT NOT NULL DEFAULT 0;
 
 CREATE TABLE IF NOT EXISTS story_activity (
   id SERIAL PRIMARY KEY,
@@ -374,12 +384,42 @@ CREATE TABLE IF NOT EXISTS story_activity (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS story_views (
+  id SERIAL PRIMARY KEY,
+  story_id INT NOT NULL REFERENCES stories(id) ON DELETE CASCADE,
+  ip_hash TEXT NOT NULL,
+  viewed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (story_id, ip_hash)
+);
+
+CREATE TABLE IF NOT EXISTS story_likes (
+  id SERIAL PRIMARY KEY,
+  story_id INT NOT NULL REFERENCES stories(id) ON DELETE CASCADE,
+  ip_hash TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (story_id, ip_hash)
+);
+
+CREATE TABLE IF NOT EXISTS story_comments (
+  id SERIAL PRIMARY KEY,
+  story_id INT NOT NULL REFERENCES stories(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  content TEXT NOT NULL,
+  ip_hash TEXT NOT NULL,
+  is_approved BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 CREATE INDEX IF NOT EXISTS stories_writer_idx ON stories (writer_id);
 CREATE INDEX IF NOT EXISTS stories_status_idx ON stories (status);
 CREATE INDEX IF NOT EXISTS stories_slug_key ON stories (slug);
 CREATE INDEX IF NOT EXISTS stories_category_idx ON stories (category);
+CREATE INDEX IF NOT EXISTS stories_topic_idx ON stories (topic);
 CREATE INDEX IF NOT EXISTS story_activity_story_idx ON story_activity (story_id);
 CREATE INDEX IF NOT EXISTS story_activity_writer_idx ON story_activity (writer_id);
+CREATE INDEX IF NOT EXISTS story_views_story_idx ON story_views (story_id);
+CREATE INDEX IF NOT EXISTS story_likes_story_idx ON story_likes (story_id);
+CREATE INDEX IF NOT EXISTS story_comments_story_idx ON story_comments (story_id);
 
 -- Birthday celebration
 CREATE TABLE IF NOT EXISTS birthday_settings (

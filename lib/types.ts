@@ -210,11 +210,24 @@ export interface Story {
   content: string;
   cover_image: string;
   category: string;
+  topic: string;
   tags: string;
-  status: 'draft' | 'published';
+  status: 'draft' | 'published' | 'scheduled';
+  publish_at: string | null;
   published_at: string | null;
+  views: number;
+  reading_minutes: number;
+  like_count: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface StoryComment {
+  id: number;
+  story_id: number;
+  name: string;
+  content: string;
+  created_at: string;
 }
 
 export interface StoryActivity {

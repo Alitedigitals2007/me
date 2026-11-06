@@ -17,11 +17,6 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
 
     await getPool().query(`DELETE FROM stories WHERE id=$1`, [id]);
 
-    await getPool().query(
-      `INSERT INTO story_activity (story_id, writer_id, action, meta) VALUES ($1, $2, $3, $4)`,
-      [id, story.writer_id, 'deleted', JSON.stringify({ title: story.title, slug: story.slug })]
-    );
-
     sendTelegram(`🗑️ <b>Story deleted (admin)</b> — ${story.title} by writer #${story.writer_id}`);
 
     return NextResponse.json({ ok: true });
