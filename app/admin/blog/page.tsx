@@ -2,19 +2,27 @@ import Link from 'next/link';
 import ActionButton from '@/components/admin/ActionButton';
 import AdminHeader from '@/components/admin/AdminHeader';
 import PostForm from '@/components/admin/PostForm';
+import LocalTime from '@/components/admin/LocalTime';
 import getPool from '@/lib/db';
-import { formatDateTime } from '@/lib/utils';
 
 export const metadata = { title: 'Blog' };
 
 export default async function BlogPage({ searchParams }: { searchParams: Promise<{ new?: string; edit?: string }> }) {
   const sp = await searchParams;
   const { rows } = await getPool().query(
-    'SELECT id,title,slug,status,publish_at,tags FROM blog_posts ORDER BY COALESCE(publish_at, created_at) DESC'
+    `SELECT bp.id, bp.title, bp.slug, bp.status, bp.publish_at, bp.tags, bp.like_count,
+            COALESCE(bc.comment_count, 0)::int AS comment_count
+     FROM blog_posts bp
+     LEFT JOIN (
+       SELECT post_id, COUNT(*) AS comment_count
+       FROM blog_comments
+       WHERE is_approved = true
+       GROUP BY post_id
+     ) bc ON bc.post_id = bp.id
+     ORDER BY COALESCE(bp.publish_at, bp.created_at) DESC`
   );
   const editing = sp.edit ? await (async () => {
     const r = await getPool().query('SELECT * FROM blog_posts WHERE id=$1', [sp.edit]);
-    if (r.rows[0]?.publish_at) r.rows[0].publish_at_local = new Date(r.rows[0].publish_at).toISOString().slice(0, 16);
     return r.rows[0] ?? null;
   })() : null;
 
@@ -38,7 +46,9 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
             <div className="min-w-0">
               <p className="font-semibold text-sm truncate">{post.title}</p>
               <p className="text-xs text-muted truncate">
-                {post.tags || 'no tags'} · {formatDateTime(post.publish_at)}
+                {post.tags || 'no tags'} · <LocalTime value={post.publish_at} /> · {post.like_count} like
+                {post.like_count === 1 ? '' : 's'} · {post.comment_count} comment
+                {post.comment_count === 1 ? '' : 's'}
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">

@@ -20,7 +20,22 @@ export async function POST(req: NextRequest) {
     const coverImage = String(fd.get('cover_image') || '').trim();
     const tags = String(fd.get('tags') || '').trim();
     const status = ['draft', 'published', 'scheduled'].includes(String(fd.get('status'))) ? String(fd.get('status')) : 'draft';
-    const publishAt = fd.get('publish_at') ? new Date(String(fd.get('publish_at'))).toISOString() : null;
+
+    let publishAt: string | null = null;
+    const rawPublishAt = String(fd.get('publish_at') || '').trim();
+    if (rawPublishAt) {
+      const parsed = new Date(rawPublishAt);
+      if (Number.isNaN(parsed.getTime())) {
+        return NextResponse.json({ error: 'Invalid publish date' }, { status: 400 });
+      }
+      publishAt = parsed.toISOString();
+    }
+    if (status === 'scheduled' && !publishAt) {
+      return NextResponse.json({ error: 'Choose a publish date for scheduled posts' }, { status: 400 });
+    }
+    if (status === 'published' && (!publishAt || new Date(publishAt).getTime() > Date.now())) {
+      publishAt = new Date().toISOString();
+    }
 
     let slug = slugBase;
     if (id) {
@@ -28,7 +43,14 @@ export async function POST(req: NextRequest) {
       if (dupe.length) slug = `${slugBase}-${id}`;
       const { rows } = await getPool().query(
         `UPDATE blog_posts SET title=$1, slug=$2, excerpt=$3, content=$4,
-         cover_image=COALESCE(NULLIF($5,''), cover_image), tags=$6, status=$7, publish_at=$8, updated_at=now()
+         cover_image=COALESCE(NULLIF($5,''), cover_image), tags=$6, status=$7,
+         publish_at=COALESCE(
+           $8::timestamptz,
+           CASE WHEN $7='published' AND status='published' THEN publish_at END,
+           CASE WHEN $7='published' THEN now() END,
+           publish_at
+         ),
+         updated_at=now()
          WHERE id=$9 RETURNING title, status`,
         [title, slug, excerpt, content, coverImage, tags, status, publishAt, id]
       );

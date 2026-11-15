@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import getPool from '@/lib/db';
+import { livePostCondition } from '@/lib/blog';
 import crypto from 'crypto';
 import { rateLimit, clientIp } from '@/lib/rate-limit';
 
@@ -20,7 +21,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
                'unknown';
     const ipHash = hashIp(ip);
 
-    const { rows: post } = await getPool().query('SELECT id FROM blog_posts WHERE slug=$1 AND status=\'published\'', [slug]);
+    const { rows: post } = await getPool().query(`SELECT id FROM blog_posts WHERE slug=$1 AND ${livePostCondition()}`, [slug]);
     if (!post.length) return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     const postId = post[0].id;
 
@@ -55,7 +56,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
               CASE WHEN bl.id IS NOT NULL THEN true ELSE false END as liked
        FROM blog_posts bp
        LEFT JOIN blog_likes bl ON bl.post_id = bp.id AND bl.ip_hash = $1
-       WHERE bp.slug = $2 AND bp.status = 'published'`,
+       WHERE bp.slug = $2 AND ${livePostCondition('bp')}`,
       [ipHash, slug]
     );
     if (!rows.length) return NextResponse.json({ error: 'Post not found' }, { status: 404 });

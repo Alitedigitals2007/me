@@ -1,5 +1,6 @@
 import getPool from './db';
 import { ensureWriterSchema } from './writer-schema';
+import { livePostCondition } from './blog';
 import { parseTags } from './utils';
 import type {
   Project, EducationItem, RoleItem, Course, BlogPost, Listing, AdSlot, AdPackage, AdSubmission, Message, SocialAccount, Story, StoryComment, WriterUser
@@ -68,12 +69,12 @@ export async function getPublishedPosts(tag?: string): Promise<BlogPost[]> {
       `SELECT bp.*, COALESCE(bc.comment_count, 0) as comment_count
        FROM blog_posts bp
        LEFT JOIN (
-         SELECT post_id, COUNT(*) as comment_count
+         SELECT post_id, COUNT(*)::int AS comment_count
          FROM blog_comments
          WHERE is_approved = true
          GROUP BY post_id
        ) bc ON bc.post_id = bp.id
-       WHERE bp.status='published' ORDER BY bp.publish_at DESC`
+       WHERE ${livePostCondition('bp')} ORDER BY bp.publish_at DESC`
     );
     const filtered = tag ? rows.filter((p) => p.tags.toLowerCase().includes(tag.toLowerCase())) : rows;
     return filtered;
@@ -88,12 +89,12 @@ export async function getPost(slug: string): Promise<BlogPost | null> {
       `SELECT bp.*, COALESCE(bc.comment_count, 0) as comment_count
        FROM blog_posts bp
        LEFT JOIN (
-         SELECT post_id, COUNT(*) as comment_count
+         SELECT post_id, COUNT(*)::int AS comment_count
          FROM blog_comments
          WHERE is_approved = true
          GROUP BY post_id
        ) bc ON bc.post_id = bp.id
-       WHERE bp.slug=$1 AND bp.status='published'`,
+       WHERE bp.slug=$1 AND ${livePostCondition('bp')}`,
       [slug]
     );
     return rows[0] ?? null;
@@ -108,12 +109,12 @@ export async function getRelatedPosts(excludeId: number, limit = 3): Promise<Blo
       `SELECT bp.id, bp.title, bp.slug, bp.excerpt, bp.cover_image, bp.tags, bp.publish_at, bp.like_count, COALESCE(bc.comment_count, 0) as comment_count
        FROM blog_posts bp
        LEFT JOIN (
-         SELECT post_id, COUNT(*) as comment_count
+         SELECT post_id, COUNT(*)::int AS comment_count
          FROM blog_comments
          WHERE is_approved = true
          GROUP BY post_id
        ) bc ON bc.post_id = bp.id
-       WHERE bp.status='published' AND bp.id != $1 ORDER BY bp.publish_at DESC LIMIT $2`,
+       WHERE ${livePostCondition('bp')} AND bp.id != $1 ORDER BY bp.publish_at DESC LIMIT $2`,
       [excludeId, limit]
     );
     return rows;

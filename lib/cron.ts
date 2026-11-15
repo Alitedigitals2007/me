@@ -6,9 +6,25 @@ import { publishDueStories } from './data';
 
 let running = false;
 
+async function oncePerDay(key: string): Promise<boolean> {
+  const day = new Date().toISOString().slice(0, 10);
+  try {
+    const { rowCount } = await getPool().query(
+      `INSERT INTO settings (key, value) VALUES ($1, $2)
+       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+       WHERE settings.value <> EXCLUDED.value`,
+      [`cron_${key}_day`, day]
+    );
+    return (rowCount ?? 0) > 0;
+  } catch {
+    return false;
+  }
+}
+
 async function dailyReport() {
   const settings = await getSettings();
   if (settings.telegram_daily_report !== 'true') return;
+  if (!(await oncePerDay('daily_report'))) return;
   try {
     const { rows } = await getPool().query(
       `SELECT
@@ -44,6 +60,7 @@ async function weeklyDigest() {
   if (settings.telegram_weekly_digest !== 'true') return;
   const isMonday = new Date().getDay() === 1;
   if (!isMonday) return;
+  if (!(await oncePerDay('weekly_digest'))) return;
   try {
     const total = await getPool().query(
       `SELECT
@@ -81,6 +98,7 @@ async function weeklyDigest() {
 async function expiringAds() {
   const settings = await getSettings();
   if (settings.telegram_expiring_ads !== 'true') return;
+  if (!(await oncePerDay('expiring_ads'))) return;
   try {
     const { rows } = await getPool().query(
       `SELECT advertiser_name, contact, end_date FROM ad_submissions
@@ -99,7 +117,7 @@ async function expiringAds() {
   }
 }
 
-export async function runScheduledTasks() {
+export async function runScheduledTasks({ reports = true }: { reports?: boolean } = {}) {
   if (running) return { skipped: true, published: 0, expired: 0 };
   running = true;
   try {
@@ -120,9 +138,11 @@ export async function runScheduledTasks() {
        WHERE status='approved' AND end_date < CURRENT_DATE RETURNING id`
     );
     await releaseExpiredCouponRedemptions();
-    await dailyReport();
-    await expiringAds();
-    await weeklyDigest();
+    if (reports) {
+      await dailyReport();
+      await expiringAds();
+      await weeklyDigest();
+    }
     return { published: (posts.rowCount ?? 0) + stories.length, expired: ads.rowCount ?? 0 };
   } finally {
     running = false;

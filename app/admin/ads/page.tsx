@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import ActionButton from '@/components/admin/ActionButton';
+import AdForm from '@/components/admin/AdForm';
 import SlotForm from '@/components/admin/SlotForm';
 import PackageForm from '@/components/admin/PackageForm';
 import AdminHeader from '@/components/admin/AdminHeader';
@@ -10,10 +11,12 @@ export const metadata = { title: 'Ads' };
 
 const FILTERS = ['pending', 'paid', 'approved', 'rejected', 'expired', 'all'];
 
-export default async function AdsPage({ searchParams }: { searchParams: Promise<{ filter?: string }> }) {
-  const { filter } = await searchParams;
+export default async function AdsPage({ searchParams }: { searchParams: Promise<{ filter?: string; new?: string }> }) {
+  const sp = await searchParams;
+  const { filter } = sp;
   const status = FILTERS.includes(filter || '') ? filter! : 'pending';
-  const where = status === 'all' ? 'TRUE' : `a.status = '${status}'`;
+  const statusValue = status === 'pending' ? 'pending_payment' : status;
+  const where = statusValue === 'all' ? 'TRUE' : `a.status = '${statusValue}'`;
   const [subs, counts, slots, packages] = await Promise.all([
     getPool().query(
       `SELECT a.*, s.name AS slot_name, s.position, p.name AS package_name, p.mediums AS package_mediums
@@ -30,7 +33,20 @@ export default async function AdsPage({ searchParams }: { searchParams: Promise<
 
   return (
     <div>
-      <AdminHeader title="Ads" sub="Submissions, slots and packages." />
+      <AdminHeader title="Ads" sub="Submissions, slots and packages.">
+        <Link
+          href="/admin/ads?new=1"
+          className="px-5 py-2.5 rounded-full text-sm font-semibold bg-gradient-cta text-white"
+        >
+          + Add advert
+        </Link>
+      </AdminHeader>
+
+      {sp.new && (
+        <div className="mt-6">
+          <AdForm slots={slots.rows} packages={packages.rows} />
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-2 mt-6">
         {FILTERS.map((f) => (
@@ -41,7 +57,7 @@ export default async function AdsPage({ searchParams }: { searchParams: Promise<
               status === f ? 'bg-accent text-white ring-accent' : 'bg-card ring-line text-muted hover:text-ink'
             }`}
           >
-            {f} {f !== 'all' ? countMap[f] ?? 0 : ''}
+            {f} {f !== 'all' ? countMap[f === 'pending' ? 'pending_payment' : f] ?? 0 : ''}
           </Link>
         ))}
       </div>

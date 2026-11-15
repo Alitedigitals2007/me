@@ -65,7 +65,12 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
       <article className="prose-alite mt-8" dangerouslySetInnerHTML={{ __html: post.content }} />
 
-      <BlogPostActions slug={slug} title={post.title} initialLikes={post.like_count} />
+      <BlogPostActions
+        slug={slug}
+        title={post.title}
+        initialLikes={post.like_count}
+        initialCommentCount={post.comment_count ?? 0}
+      />
 
       <div className="mt-12">
         <AdSlot ads={ads} position="blog_inline" />

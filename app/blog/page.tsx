@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import Reveal from '@/components/site/Reveal';
 import AdSlot from '@/components/site/AdSlot';
-import { BlogCard, SectionHead } from '@/components/site/Cards';
+import BlogGrid from '@/components/site/BlogGrid';
+import { SectionHead } from '@/components/site/Cards';
 import { getPublishedPosts } from '@/lib/data';
 import { loadAds } from '@/lib/ads';
 import { cn } from '@/lib/utils';
@@ -58,13 +59,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
         </Reveal>
       )}
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {posts.map((p, i) => (
-          <Reveal key={p.id} delay={(i % 3) * 0.08}>
-            <BlogCard p={p} />
-          </Reveal>
-        ))}
-      </div>
+      {posts.length > 0 && <BlogGrid posts={posts} />}
       {!posts.length && (
         <p className="text-muted rounded-2xl bg-card ring-1 ring-line p-10 text-center">No posts here yet.</p>
       )}

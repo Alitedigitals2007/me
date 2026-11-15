@@ -1,4 +1,5 @@
 import getPool from '@/lib/db';
+import { livePostCondition } from '@/lib/blog';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -7,7 +8,7 @@ export async function GET() {
   const base = process.env.SITE_URL || 'http://localhost:3000';
   try {
     const [posts, projects, stories] = await Promise.all([
-      getPool().query("SELECT slug FROM blog_posts WHERE status='published'"),
+      getPool().query(`SELECT slug FROM blog_posts WHERE ${livePostCondition()}`),
       getPool().query('SELECT slug FROM projects'),
       getPool().query("SELECT slug FROM stories WHERE status='published'")
     ]);

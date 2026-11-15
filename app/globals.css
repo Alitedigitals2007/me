@@ -217,7 +217,10 @@ html.intro-armed { overflow: hidden; }
 .prose-alite ul { @apply list-disc pl-6 mb-4 space-y-1 text-ink-soft; }
 .prose-alite ol { @apply list-decimal pl-6 mb-4 space-y-1 text-ink-soft; }
 .prose-alite a { @apply text-accent underline underline-offset-2 hover:text-accent-2; }
-.prose-alite img { @apply rounded-2xl my-6 shadow-card; }
+.prose-alite img { @apply rounded-2xl my-6 shadow-card max-w-full h-auto; }
+.prose-alite figure { @apply my-8; }
+.prose-alite figure img { @apply my-0 w-full; }
+.prose-alite figcaption { @apply mt-2 text-center text-xs text-muted; }
 .prose-alite strong { @apply text-ink; }
 
 @media (prefers-reduced-motion: reduce) {

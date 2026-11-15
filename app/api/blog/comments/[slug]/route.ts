@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import getPool from '@/lib/db';
+import { livePostCondition } from '@/lib/blog';
 import crypto from 'crypto';
 import { rateLimit, clientIp } from '@/lib/rate-limit';
 
@@ -12,7 +13,7 @@ function hashIp(ip: string): string {
 export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   try {
     const { slug } = await params;
-    const { rows: post } = await getPool().query('SELECT id FROM blog_posts WHERE slug=$1 AND status=\'published\'', [slug]);
+    const { rows: post } = await getPool().query(`SELECT id FROM blog_posts WHERE slug=$1 AND ${livePostCondition()}`, [slug]);
     if (!post.length) return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     const postId = post[0].id;
 
@@ -49,7 +50,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
                'unknown';
     const ipHash = hashIp(ip);
 
-    const { rows: post } = await getPool().query('SELECT id FROM blog_posts WHERE slug=$1 AND status=\'published\'', [slug]);
+    const { rows: post } = await getPool().query(`SELECT id FROM blog_posts WHERE slug=$1 AND ${livePostCondition()}`, [slug]);
     if (!post.length) return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     const postId = post[0].id;
 

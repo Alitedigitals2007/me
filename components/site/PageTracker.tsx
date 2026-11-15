@@ -14,7 +14,7 @@ export default function PageTracker() {
       body: JSON.stringify({ path: pathname })
     }).catch(() => {});
     if (Math.random() < 0.2) {
-      fetch('/api/cron').catch(() => {});
+      fetch('/api/cron/lazy').catch(() => {});
     }
   }, [pathname]);
 

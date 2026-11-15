@@ -6,6 +6,7 @@ interface BlogPostActionsProps {
   slug: string;
   title: string;
   initialLikes: number;
+  initialCommentCount: number;
 }
 
 interface Comment {
@@ -15,11 +16,13 @@ interface Comment {
   created_at: string;
 }
 
-export default function BlogPostActions({ slug, title, initialLikes }: BlogPostActionsProps) {
+export default function BlogPostActions({ slug, title, initialLikes, initialCommentCount }: BlogPostActionsProps) {
   const [likes, setLikes] = useState(initialLikes);
   const [liked, setLiked] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
+  const [commentCount, setCommentCount] = useState(initialCommentCount);
   const [showComments, setShowComments] = useState(false);
+  const [commentsLoading, setCommentsLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [commenting, setCommenting] = useState(false);
   const [name, setName] = useState('');
@@ -37,11 +40,16 @@ export default function BlogPostActions({ slug, title, initialLikes }: BlogPostA
   }, [slug]);
 
   useEffect(() => {
-    if (showComments) {
-      fetch(`/api/blog/comments/${slug}`)
-        .then(res => res.json())
-        .then(data => setComments(data.comments || []));
-    }
+    if (!showComments) return;
+    setCommentsLoading(true);
+    fetch(`/api/blog/comments/${slug}`)
+      .then(res => res.json())
+      .then(data => {
+        const list = data.comments || [];
+        setComments(list);
+        setCommentCount(list.length);
+      })
+      .finally(() => setCommentsLoading(false));
   }, [showComments, slug]);
 
   async function handleLike() {
@@ -75,7 +83,9 @@ export default function BlogPostActions({ slug, title, initialLikes }: BlogPostA
         // Refetch comments
         const fetchRes = await fetch(`/api/blog/comments/${slug}`);
         const fetchData = await fetchRes.json();
-        setComments(fetchData.comments || []);
+        const list = fetchData.comments || [];
+        setComments(list);
+        setCommentCount(list.length);
       } else {
         alert(data.error || 'Failed to post comment');
       }
@@ -139,7 +149,7 @@ export default function BlogPostActions({ slug, title, initialLikes }: BlogPostA
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
-          <span>{comments.length} Comments</span>
+          <span>{commentCount} Comment{commentCount === 1 ? '' : 's'}</span>
         </button>
 
         <button
@@ -188,9 +198,20 @@ export default function BlogPostActions({ slug, title, initialLikes }: BlogPostA
             </button>
           </form>
 
-          {comments.length > 0 && (
+          {commentsLoading && (
+            <div className="border-t border-line pt-6 space-y-3">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="rounded-xl bg-card ring-1 ring-line p-4 animate-pulse">
+                  <div className="h-3 w-28 bg-paper rounded mb-3" />
+                  <div className="h-3 w-full bg-paper rounded" />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!commentsLoading && comments.length > 0 && (
             <div className="border-t border-line pt-6 space-y-4">
-              <h3 className="font-display font-bold text-lg">{comments.length} Comment{comments.length !== 1 ? 's' : ''}</h3>
+              <h3 className="font-display font-bold text-lg">{commentCount} Comment{commentCount !== 1 ? 's' : ''}</h3>
               {comments.map((c) => (
                 <div key={c.id} className="rounded-xl bg-card ring-1 ring-line p-4">
                   <div className="flex items-center justify-between gap-2 mb-2">
@@ -203,7 +224,7 @@ export default function BlogPostActions({ slug, title, initialLikes }: BlogPostA
             </div>
           )}
 
-          {comments.length === 0 && showComments && (
+          {!commentsLoading && comments.length === 0 && (
             <p className="text-muted text-center py-8">No comments yet. Be the first!</p>
           )}
         </div>

@@ -5,6 +5,14 @@ import RichTextEditor from '@/components/admin/RichTextEditor';
 import ImageUploader from '@/components/admin/ImageUploader';
 import type { BlogPost } from '@/lib/types';
 
+function toLocalDateTime(value: string | null | undefined): string {
+  if (!value) return '';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '';
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 export default function PostForm({ editing }: { editing?: BlogPost | null }) {
   const [busy, setBusy] = useState(false);
   const [aiBusy, setAiBusy] = useState(false);
@@ -41,6 +49,25 @@ export default function PostForm({ editing }: { editing?: BlogPost | null }) {
           const fd = new FormData(e.currentTarget);
           fd.set('content', content);
           if (p) fd.set('id', String(p.id));
+
+          const publishAt = String(fd.get('publish_at') || '').trim();
+          if (String(fd.get('status')) === 'scheduled' && !publishAt) {
+            window.alert('Choose a date and time before scheduling this post.');
+            setBusy(false);
+            return;
+          }
+          if (publishAt) {
+            const parsed = new Date(publishAt);
+            if (Number.isNaN(parsed.getTime())) {
+              window.alert('Invalid publish date.');
+              setBusy(false);
+              return;
+            }
+            fd.set('publish_at', parsed.toISOString());
+          } else {
+            fd.delete('publish_at');
+          }
+
           const res = await fetch('/api/admin/posts', { method: 'POST', body: fd });
           const data = await res.json();
           if (!res.ok) throw new Error(data.error || 'Save failed');
@@ -82,8 +109,9 @@ export default function PostForm({ editing }: { editing?: BlogPost | null }) {
         </select>
       </label>
       <label>
-        <span className="text-xs font-semibold text-ink-soft">Publish date (for scheduled)</span>
-        <input name="publish_at" type="datetime-local" defaultValue={String(p?.publish_at_local ?? '')} className="mt-1 w-full rounded-lg bg-paper ring-1 ring-line px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-accent" />
+        <span className="text-xs font-semibold text-ink-soft">Publish date &amp; time (for scheduled)</span>
+        <input name="publish_at" type="datetime-local" defaultValue={toLocalDateTime(p?.publish_at)} className="mt-1 w-full rounded-lg bg-paper ring-1 ring-line px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-accent" />
+        <span className="mt-1 block text-[11px] text-muted">Uses your local time — scheduled posts go live automatically when due.</span>
       </label>
       <div className="sm:col-span-2 flex justify-end gap-2">
         <a href="/admin/blog" className="px-5 py-2 rounded-lg text-sm font-semibold bg-paper ring-1 ring-line">Cancel</a>
