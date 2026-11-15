@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import Reveal from '@/components/site/Reveal';
 import AdSlot from '@/components/site/AdSlot';
+import AdInvite from '@/components/site/AdInvite';
+import WriterInvite from '@/components/site/WriterInvite';
 import BlogGrid from '@/components/site/BlogGrid';
 import { SectionHead } from '@/components/site/Cards';
 import { getPublishedPosts } from '@/lib/data';
@@ -66,6 +68,10 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
 
       <div className="mt-14">
         <AdSlot ads={ads} position="sidebar" />
+        <div className="mt-4 space-y-3">
+          <AdInvite />
+          <WriterInvite />
+        </div>
       </div>
     </div>
   );

@@ -134,6 +134,19 @@ export default function AdvertiseForm({ packages, slots }: { packages: AdPackage
           <span className="text-sm font-semibold text-ink-soft">Link your ad points to *</span>
           <input name="target_url" placeholder="https://..." required className="mt-1.5 w-full rounded-xl bg-paper ring-1 ring-line px-4 py-3 focus:ring-2 focus:ring-accent outline-none transition-shadow" />
         </label>
+        <label className="block sm:col-span-2">
+          <span className="text-sm font-semibold text-ink-soft">Brief message (optional)</span>
+          <textarea
+            name="caption"
+            rows={2}
+            maxLength={200}
+            placeholder="e.g. 50% off all courses — this weekend only"
+            className="mt-1.5 w-full rounded-xl bg-paper ring-1 ring-line px-4 py-3 focus:ring-2 focus:ring-accent outline-none transition-shadow"
+          />
+          <span className="mt-1.5 block text-xs text-muted">
+            Shown under your ad with a “Promotion” badge. Max 200 characters.
+          </span>
+        </label>
         <div className="sm:col-span-2 flex flex-wrap items-center justify-between gap-4 mt-2">
           <p className="font-display font-bold text-2xl text-accent">
             Total: <span className="text-gradient">{formatMoney(total)}</span>

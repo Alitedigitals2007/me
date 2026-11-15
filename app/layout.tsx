@@ -6,9 +6,10 @@ import Footer from '@/components/site/Footer';
 import PageTracker from '@/components/site/PageTracker';
 import CinematicIntro from '@/components/site/CinematicIntro';
 import MotionProvider from '@/components/site/MotionProvider';
+import SiteChrome from '@/components/site/SiteChrome';
 import { getSettings } from '@/lib/settings';
 
-const INTRO_ARM_SCRIPT = `try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches&&location.pathname.indexOf('/admin')!==0&&location.pathname.indexOf('/login')!==0&&!sessionStorage.getItem('alite:intro-seen')){sessionStorage.setItem('alite:intro-seen','1');document.documentElement.classList.add('intro-armed');setTimeout(function(){document.documentElement.classList.remove('intro-armed')},3600)}}catch(e){}`;
+const INTRO_ARM_SCRIPT = `try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches&&location.pathname.indexOf('/admin')!==0&&location.pathname.indexOf('/writer')!==0&&location.pathname.indexOf('/login')!==0&&!sessionStorage.getItem('alite:intro-seen')){sessionStorage.setItem('alite:intro-seen','1');document.documentElement.classList.add('intro-armed');setTimeout(function(){document.documentElement.classList.remove('intro-armed')},3600)}}catch(e){}`;
 
 const syne = Syne({
   subsets: ['latin'],
@@ -49,12 +50,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <script dangerouslySetInnerHTML={{ __html: INTRO_ARM_SCRIPT }} />
         <MotionProvider>
-          <CinematicIntro siteName={s.site_name} tagline={s.tagline} />
-          <Navbar />
-          <div className="min-h-screen flex flex-col">
-            <main className="flex-1">{children}</main>
-            <Footer settings={s} />
-          </div>
+          <SiteChrome
+            nav={<Navbar />}
+            footer={<Footer settings={s} />}
+            intro={<CinematicIntro siteName={s.site_name} tagline={s.tagline} />}
+          >
+            {children}
+          </SiteChrome>
           <PageTracker />
         </MotionProvider>
       </body>

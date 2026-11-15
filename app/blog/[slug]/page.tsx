@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import AdSlot from '@/components/site/AdSlot';
+import AdInvite from '@/components/site/AdInvite';
+import WriterInvite from '@/components/site/WriterInvite';
 import { BlogCard, SectionHead } from '@/components/site/Cards';
 import { getPost, getRelatedPosts } from '@/lib/data';
 import { loadAds } from '@/lib/ads';
@@ -74,6 +76,10 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
       <div className="mt-12">
         <AdSlot ads={ads} position="blog_inline" />
+        <div className="mt-4 space-y-3">
+          <AdInvite />
+          <WriterInvite />
+        </div>
       </div>
 
       {related.length > 0 && (

@@ -8,7 +8,7 @@ export default function WriterLogoutPage() {
 
   useEffect(() => {
     fetch('/api/writer/logout', { method: 'POST' }).finally(() => {
-      router.push('/writer/login');
+      router.push('/login');
       router.refresh();
     });
   }, [router]);

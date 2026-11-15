@@ -159,6 +159,7 @@ CREATE TABLE IF NOT EXISTS ad_submissions (
   contact TEXT NOT NULL,
   image_url TEXT NOT NULL DEFAULT '',
   target_url TEXT NOT NULL DEFAULT '',
+  caption TEXT NOT NULL DEFAULT '',
   duration_days INT NOT NULL DEFAULT 7,
   start_date DATE NOT NULL DEFAULT CURRENT_DATE,
   end_date DATE NOT NULL DEFAULT CURRENT_DATE + 7,
@@ -265,6 +266,7 @@ ALTER TABLE marketplace_listings ADD COLUMN IF NOT EXISTS file_id UUID;
 -- Migrate ad submissions (package-based pricing, slot optional)
 ALTER TABLE ad_submissions ADD COLUMN IF NOT EXISTS package_id INT;
 ALTER TABLE ad_submissions ADD COLUMN IF NOT EXISTS mediums TEXT NOT NULL DEFAULT '';
+ALTER TABLE ad_submissions ADD COLUMN IF NOT EXISTS caption TEXT NOT NULL DEFAULT '';
 ALTER TABLE ad_submissions ALTER COLUMN slot_id DROP NOT NULL;
 
 -- Migrate blog posts (likes + comments)

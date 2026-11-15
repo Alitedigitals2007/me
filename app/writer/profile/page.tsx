@@ -18,7 +18,7 @@ async function safeQuery(query: string, params?: any[]) {
 
 export default async function WriterProfilePage() {
   const writer = await getWriter();
-  if (!writer) return redirect('/writer/login');
+  if (!writer) return redirect('/login?next=/writer/dashboard');
 
   await ensureWriterSchema();
   const rows = await safeQuery(
@@ -26,7 +26,7 @@ export default async function WriterProfilePage() {
     [writer.id]
   );
   const profile = rows[0];
-  if (!profile) return redirect('/writer/login');
+  if (!profile) return redirect('/login?next=/writer/dashboard');
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-10">

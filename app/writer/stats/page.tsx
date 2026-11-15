@@ -35,7 +35,7 @@ function Stat({ label, value, tone = 'accent' }: { label: string; value: string 
 
 export default async function WriterStatsPage() {
   const writer = await getWriter();
-  if (!writer) return redirect('/writer/login');
+  if (!writer) return redirect('/login?next=/writer/dashboard');
 
   await ensureWriterSchema();
   const [stories, viewsByDay, commentsCount] = await Promise.all([

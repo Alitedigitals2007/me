@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import getPool from '@/lib/db';
+import { ensureAdsSchema } from '@/lib/ads-schema';
 import { getSettings } from '@/lib/settings';
 import { sendTelegram, siteUrl } from '@/lib/telegram';
 import { initializePayment, makeReference, hasPaystackKeys } from '@/lib/paystack';
@@ -12,6 +13,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Too many submissions. Try again later.' }, { status: 429 });
   }
   try {
+    await ensureAdsSchema();
     const fd = await req.formData();
     const packageId = String(fd.get('package_id') || '');
     const days = parseInt(String(fd.get('duration_days') || '7'), 10) || 7;
@@ -19,6 +21,7 @@ export async function POST(req: NextRequest) {
     const contact = String(fd.get('contact') || '').trim();
     const imageUrl = String(fd.get('image_url') || '').trim();
     const targetUrl = String(fd.get('target_url') || '').trim();
+    const caption = String(fd.get('caption') || '').trim().slice(0, 200);
     const slotId = String(fd.get('slot_id') || '') || null;
 
     if (!packageId || !advertiserName || !contact || !imageUrl || !targetUrl) {
@@ -51,9 +54,9 @@ export async function POST(req: NextRequest) {
     const end = new Date(start.getTime() + days * 24 * 60 * 60 * 1000);
 
     const { rows: sub } = await getPool().query(
-      `INSERT INTO ad_submissions (slot_id, package_id, mediums, advertiser_name, contact, image_url, target_url, duration_days, start_date, end_date, amount_paid, status)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'pending_payment') RETURNING id`,
-      [slotId, pkg.id, pkg.mediums, advertiserName, contact, imageUrl, targetUrl, days,
+      `INSERT INTO ad_submissions (slot_id, package_id, mediums, advertiser_name, contact, image_url, target_url, caption, duration_days, start_date, end_date, amount_paid, status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'pending_payment') RETURNING id`,
+      [slotId, pkg.id, pkg.mediums, advertiserName, contact, imageUrl, targetUrl, caption, days,
         start.toISOString().slice(0, 10), end.toISOString().slice(0, 10), amount]
     );
     const ref = makeReference('ad');

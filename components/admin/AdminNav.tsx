@@ -48,6 +48,12 @@ export default function AdminNav({ compact = false }: { compact?: boolean }) {
             </Link>
           );
         })}
+        <Link
+          href="/"
+          className="shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold text-cyan-accent hover:bg-ink/5"
+        >
+          Back to site
+        </Link>
       </>
     );
   }
@@ -73,6 +79,13 @@ export default function AdminNav({ compact = false }: { compact?: boolean }) {
           </Link>
         );
       })}
+      <Link
+        href="/"
+        className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-semibold text-ink-soft hover:bg-ink/5 hover:text-ink border-t border-line pt-3 mt-2"
+      >
+        <span className="w-5 text-center text-base leading-none text-cyan-accent">🏠</span>
+        Back to site
+      </Link>
     </nav>
   );
 }

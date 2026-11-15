@@ -1,5 +1,6 @@
 import Hero from '@/components/site/Hero';
 import AdSlot from '@/components/site/AdSlot';
+import AdInvite from '@/components/site/AdInvite';
 import Reveal from '@/components/site/Reveal';
 import { BlogCard, ListingCard, ProjectCard, SectionHead } from '@/components/site/Cards';
 import { getFeaturedProjects, getPublishedPosts, getActiveListings } from '@/lib/data';
@@ -23,6 +24,9 @@ export default async function HomePage() {
 
       <div className="mx-auto max-w-6xl px-5">
         <AdSlot ads={ads} position="home_banner" />
+        <div className="mt-4">
+          <AdInvite />
+        </div>
       </div>
 
       <section className="mx-auto max-w-6xl px-5 py-16 md:py-20">

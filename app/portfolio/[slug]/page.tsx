@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import AdSlot from '@/components/site/AdSlot';
+import AdInvite from '@/components/site/AdInvite';
 import ProjectGallery from '@/components/site/ProjectGallery';
 import { getAllProjects, getProject } from '@/lib/data';
 import { loadAds } from '@/lib/ads';
@@ -163,6 +164,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
 
       <div className="mt-16">
         <AdSlot ads={ads} position="sidebar" />
+        <div className="mt-4">
+          <AdInvite />
+        </div>
       </div>
     </div>
   );

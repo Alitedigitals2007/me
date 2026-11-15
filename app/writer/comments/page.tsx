@@ -19,7 +19,7 @@ async function safeQuery(query: string, params?: any[]) {
 
 export default async function WriterCommentsPage() {
   const writer = await getWriter();
-  if (!writer) return redirect('/writer/login');
+  if (!writer) return redirect('/login?next=/writer/dashboard');
 
   await ensureWriterSchema();
   const [comments, counts] = await Promise.all([

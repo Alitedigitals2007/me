@@ -138,6 +138,7 @@ export interface AdSubmission {
   contact: string;
   image_url: string;
   target_url: string;
+  caption: string;
   duration_days: number;
   start_date: string;
   end_date: string;
@@ -167,6 +168,7 @@ export interface Ad {
   id: number;
   image_url: string;
   target_url: string;
+  caption: string;
   position: string;
 }
 

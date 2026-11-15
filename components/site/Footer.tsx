@@ -38,7 +38,10 @@ export default async function Footer({ settings }: { settings: Settings }) {
               <Link href="/portfolio" className="text-ink-soft hover:text-accent transition-colors">Portfolio</Link>
               <Link href="/blog" className="text-ink-soft hover:text-accent transition-colors">Blog</Link>
               <Link href="/marketplace" className="text-ink-soft hover:text-accent transition-colors">Marketplace</Link>
-              <Link href="/advertise" className="text-ink-soft hover:text-accent transition-colors">Advertise</Link>
+              <Link href="/advertise" className="text-ink-soft hover:text-accent transition-colors">Place your advert</Link>
+              <Link href="/login?mode=signup&role=writer" className="text-ink-soft hover:text-accent transition-colors">
+                Want to be a writer?
+              </Link>
             </div>
             <div className="flex flex-col gap-2 text-sm">
               <span className="text-xs uppercase tracking-widest text-muted font-semibold">Connect</span>

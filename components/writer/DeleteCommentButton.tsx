@@ -13,7 +13,7 @@ export default function DeleteCommentButton({ id }: { id: number }) {
     try {
       const res = await fetch(`/api/writer/story-comments/${id}`, { method: 'POST' });
       if (res.status === 401) {
-        window.location.href = '/writer/login';
+        window.location.href = '/login?next=/writer/dashboard';
         return;
       }
       if (!res.ok) {

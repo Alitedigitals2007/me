@@ -22,7 +22,7 @@ async function safeQuery(query: string, params?: any[]) {
 
 export default async function EditStoryPage({ params }: Props) {
   const writer = await getWriter();
-  if (!writer) return redirect('/writer/login');
+  if (!writer) return redirect('/login?next=/writer/dashboard');
 
   const { id } = await params;
   const rows = await safeQuery('SELECT * FROM stories WHERE id=$1 AND writer_id=$2', [id, writer.id]);

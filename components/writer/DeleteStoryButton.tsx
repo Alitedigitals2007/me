@@ -23,7 +23,7 @@ export default function DeleteStoryButton({
     try {
       const res = await fetch(`/api/writer/stories/delete/${id}`, { method: 'POST' });
       if (res.status === 401) {
-        window.location.href = '/writer/login';
+        window.location.href = '/login?next=/writer/dashboard';
         return;
       }
       if (!res.ok) {

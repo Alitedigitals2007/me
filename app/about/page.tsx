@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Reveal from '@/components/site/Reveal';
 import AdSlot from '@/components/site/AdSlot';
+import AdInvite from '@/components/site/AdInvite';
 import OrbitSystem from '@/components/site/OrbitSystem';
 import { getEducation, getRoles } from '@/lib/data';
 import { loadAds } from '@/lib/ads';
@@ -179,6 +180,9 @@ export default async function AboutPage() {
 
       <div className="mt-16">
         <AdSlot ads={ads} position="sidebar" />
+        <div className="mt-4">
+          <AdInvite />
+        </div>
       </div>
     </div>
   );

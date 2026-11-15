@@ -7,7 +7,7 @@ export default function PageTracker() {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (pathname.startsWith('/admin')) return;
+    if (pathname.startsWith('/admin') || pathname.startsWith('/writer')) return;
     fetch('/api/track', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

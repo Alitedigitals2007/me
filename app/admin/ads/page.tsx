@@ -5,19 +5,22 @@ import SlotForm from '@/components/admin/SlotForm';
 import PackageForm from '@/components/admin/PackageForm';
 import AdminHeader from '@/components/admin/AdminHeader';
 import getPool from '@/lib/db';
+import { ensureAdsSchema } from '@/lib/ads-schema';
 import { formatDate, formatMoney } from '@/lib/utils';
 
 export const metadata = { title: 'Ads' };
 
 const FILTERS = ['pending', 'paid', 'approved', 'rejected', 'expired', 'all'];
 
-export default async function AdsPage({ searchParams }: { searchParams: Promise<{ filter?: string; new?: string }> }) {
+export default async function AdsPage({ searchParams }: { searchParams: Promise<{ filter?: string; new?: string; edit?: string }> }) {
   const sp = await searchParams;
   const { filter } = sp;
   const status = FILTERS.includes(filter || '') ? filter! : 'pending';
   const statusValue = status === 'pending' ? 'pending_payment' : status;
   const where = statusValue === 'all' ? 'TRUE' : `a.status = '${statusValue}'`;
-  const [subs, counts, slots, packages] = await Promise.all([
+  await ensureAdsSchema();
+  const editId = parseInt(sp.edit || '', 10);
+  const [subs, counts, slots, packages, editing] = await Promise.all([
     getPool().query(
       `SELECT a.*, s.name AS slot_name, s.position, p.name AS package_name, p.mediums AS package_mediums
        FROM ad_submissions a
@@ -27,7 +30,10 @@ export default async function AdsPage({ searchParams }: { searchParams: Promise<
     ),
     getPool().query('SELECT status, COUNT(*)::int AS c FROM ad_submissions GROUP BY status'),
     getPool().query('SELECT * FROM ad_slots ORDER BY id ASC'),
-    getPool().query('SELECT * FROM ad_packages ORDER BY id ASC')
+    getPool().query('SELECT * FROM ad_packages ORDER BY id ASC'),
+    Number.isFinite(editId)
+      ? getPool().query('SELECT * FROM ad_submissions WHERE id=$1', [editId])
+      : Promise.resolve({ rows: [] as unknown[], rowCount: 0 })
   ]);
   const countMap = Object.fromEntries(counts.rows.map((r) => [r.status, r.c]));
 
@@ -42,10 +48,33 @@ export default async function AdsPage({ searchParams }: { searchParams: Promise<
         </Link>
       </AdminHeader>
 
-      {sp.new && (
+      {sp.new && !sp.edit && (
         <div className="mt-6">
           <AdForm slots={slots.rows} packages={packages.rows} />
         </div>
+      )}
+
+      {sp.edit && editing.rows.length > 0 && (
+        <div className="mt-6">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-semibold uppercase tracking-widest text-accent">
+              Editing advert #{editing.rows[0].id}
+            </p>
+            <Link href="/admin/ads?filter=all" className="text-xs font-semibold text-muted hover:text-ink">
+              Close editor
+            </Link>
+          </div>
+          <AdForm slots={slots.rows} packages={packages.rows} editing={editing.rows[0]} />
+        </div>
+      )}
+
+      {sp.edit && editing.rows.length === 0 && (
+        <p className="mt-6 rounded-2xl bg-card ring-1 ring-line p-6 text-sm text-muted">
+          That advert no longer exists.{' '}
+          <Link href="/admin/ads?filter=all" className="font-semibold text-accent">
+            Back to adverts
+          </Link>
+        </p>
       )}
 
       <div className="flex flex-wrap gap-2 mt-6">
@@ -77,6 +106,11 @@ export default async function AdsPage({ searchParams }: { searchParams: Promise<
                       {a.package_name || '—'} {a.slot_name ? `· ${a.slot_name}` : ''} · {a.duration_days} days · {formatMoney(a.amount_paid)} · {formatDate(a.start_date)} → {formatDate(a.end_date)}
                     </p>
                     {a.target_url && <p className="text-xs text-accent break-all">{a.target_url}</p>}
+                    {a.caption && (
+                      <p className="text-xs text-ink-soft mt-1">
+                        <span className="font-semibold">Brief message:</span> {a.caption}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
@@ -94,7 +128,13 @@ export default async function AdsPage({ searchParams }: { searchParams: Promise<
                   Off-site ad — post the image on your {a.mediums.split(',').join(' and ')} for {a.duration_days} day{a.duration_days > 1 ? 's' : ''} (download it above).
                 </p>
               )}
-              <div className="flex gap-2 mt-3">
+              <div className="flex flex-wrap gap-2 mt-3">
+                <Link
+                  href={`/admin/ads?edit=${a.id}&filter=${status}`}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold bg-paper ring-1 ring-line text-ink-soft hover:text-ink hover:ring-accent/50 transition-all"
+                >
+                  Edit
+                </Link>
                 {(a.status === 'paid' || a.status === 'pending_payment') && (
                   <>
                     <ActionButton url={`/api/admin/ads/approve/${a.id}`} label="Approve & go live" tone="success" />

@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import AdSlot from '@/components/site/AdSlot';
+import AdInvite from '@/components/site/AdInvite';
+import WriterInvite from '@/components/site/WriterInvite';
 import StoryCard from '@/components/site/StoryCard';
 import StoryPostActions from '@/components/site/StoryPostActions';
 import StoryViewTracker from '@/components/site/StoryViewTracker';
@@ -113,6 +115,10 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
 
       <div className="mt-12">
         <AdSlot ads={ads} position="story_inline" />
+        <div className="mt-4 space-y-3">
+          <AdInvite />
+          <WriterInvite />
+        </div>
       </div>
 
       {related.length > 0 && (

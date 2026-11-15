@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Reveal from '@/components/site/Reveal';
 import AdSlot from '@/components/site/AdSlot';
+import AdInvite from '@/components/site/AdInvite';
 import PortfolioExplorer from '@/components/site/PortfolioExplorer';
 import { getAllProjects } from '@/lib/data';
 import { loadAds } from '@/lib/ads';
@@ -74,6 +75,9 @@ export default async function PortfolioPage() {
       {ads && (
         <div className="mt-16">
           <AdSlot ads={ads} position="sidebar" />
+          <div className="mt-4">
+            <AdInvite />
+          </div>
         </div>
       )}
     </div>

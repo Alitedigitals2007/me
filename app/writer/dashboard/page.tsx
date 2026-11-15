@@ -21,7 +21,7 @@ async function safeQuery(query: string, params?: any[]) {
 
 export default async function WriterDashboard({ searchParams }: { searchParams: Promise<{ filter?: string }> }) {
   const writer = await getWriter();
-  if (!writer) return redirect('/writer/login');
+  if (!writer) return redirect('/login?next=/writer/dashboard');
 
   const { filter } = await searchParams;
   const status = (FILTERS as readonly string[]).includes(filter || '') ? filter! : 'all';

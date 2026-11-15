@@ -7,7 +7,7 @@ export const metadata = { title: 'New Story' };
 
 export default async function NewStoryPage() {
   const writer = await getWriter();
-  if (!writer) return redirect('/writer/login');
+  if (!writer) return redirect('/login?next=/writer/dashboard');
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-10">

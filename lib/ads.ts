@@ -1,10 +1,12 @@
 import getPool from './db';
+import { ensureAdsSchema } from './ads-schema';
 import type { Ad } from './types';
 
 export async function loadAds(): Promise<Record<string, Ad[]>> {
   try {
+    await ensureAdsSchema();
     const { rows } = await getPool().query(
-      `SELECT a.id, a.image_url, a.target_url, s.position
+      `SELECT a.id, a.image_url, a.target_url, a.caption, s.position
        FROM ad_submissions a
        JOIN ad_slots s ON s.id = a.slot_id
        WHERE a.status='approved' AND s.is_active = true AND a.start_date <= CURRENT_DATE AND a.end_date >= CURRENT_DATE`
